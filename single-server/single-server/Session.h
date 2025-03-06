@@ -1,24 +1,19 @@
 #pragma once
 
-#include <boost/asio.hpp>
-#include <memory>
-#include <string>
+#include "Essential.h"
 
-#include "PacketHeader.h"
+#define MAX_BUF 1024
 
-using namespace boost::asio;
-
-class Session
+class Session : public std::enable_shared_from_this<Session>
 {
 public:
-	Session(io_context& io);
+	Session(socket_sptr socket);
 	~Session();
 
-	void StartSession();
-	void SendData(PacketHeader& packet);
-	void RecvData(PacketHeader& packet);
-
 private:
-	ip::tcp::socket socket_;
+	socket_sptr socket_;
+	std::size_t maxBufferSize_;
+
+	void RecvData();
 };
 

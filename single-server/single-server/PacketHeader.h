@@ -1,6 +1,5 @@
-#pragma once
-#include <iostream>
-#include <string>
+#ifndef PACKET_HEADER_H
+#define PACKET_HEADER_H
 
 enum EPacketType
 {
@@ -23,3 +22,4 @@ struct PACKET_HEADER
 	std::string data;
 }typedef PacketHeader;
 
+#endif // PACKET_HEADER_H
