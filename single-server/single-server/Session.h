@@ -10,6 +10,8 @@ public:
 	Session(socket_sptr socket);
 	~Session();
 
+	socket_sptr& GetSocket() { return socket_; }
+
 private:
 	socket_sptr socket_;
 	std::size_t maxBufferSize_;
