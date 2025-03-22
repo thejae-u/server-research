@@ -15,6 +15,7 @@ public:
 	void StartSession();
 	void AsyncRecv();
 	void AsyncSend();
+	bool IsConnected() const { return _socket.is_open(); }
 
 private:
 	io_context& _io;
