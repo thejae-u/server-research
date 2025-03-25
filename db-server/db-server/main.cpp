@@ -3,18 +3,6 @@
 #include <chrono>
 #include <iomanip>
 
-void printTimestamp(const mysqlx::Value& value) {
-    if (value.isNumber()) {
-        std::time_t time = static_cast<std::time_t>(value); // TIMESTAMP 값 변환
-        std::tm* tm = std::gmtime(&time); // UTC 기준으로 변환
-
-        std::cout << "Timestamp: " << std::put_time(tm, "%Y-%m-%d %H:%M:%S") << std::endl;
-    }
-    else {
-        std::cout << "Invalid timestamp format." << std::endl;
-    }
-}
-
 int main() 
 {
     try 
@@ -26,12 +14,12 @@ int main()
 
         int tmpCount = 0;
 
-        for (auto row : usersTable.select("uuid", "user_name", "user_password", "created_at").execute())
+        for (auto row : usersTable.select("uuid", "user_name", "user_password", "DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s')").execute())
         {
             std::cout << ++tmpCount << " uuid: " << row[0] << ", user_name: " << row[1] << "\npassword: " << row[2] << "\n";
-            
-            auto created_at = row[3].
+			std::cout << "created_at: " << row[3] << "\n";
 
+            std::cout << "\n";
         }
     }
     catch (const mysqlx::Error& err) {
