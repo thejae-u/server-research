@@ -1,7 +1,5 @@
 #include <iostream>
 #include <mysqlx/xdevapi.h>  // 최신 MySQL X DevAPI 헤더 파일
-#include <chrono>
-#include <iomanip>
 
 int main() 
 {
