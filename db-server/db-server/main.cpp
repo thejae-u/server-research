@@ -1,5 +1,5 @@
-#include <iostream>
-#include <mysqlx/xdevapi.h>  // ÃÖ½Å MySQL X DevAPI Çì´õ ÆÄÀÏ
+ï»¿#include <iostream>
+#include <mysqlx/xdevapi.h>  // ìµœì‹  MySQL X DevAPI í—¤ë” íŒŒì¼
 
 int main() 
 {
