@@ -1,4 +1,4 @@
-#ifndef SERVER_H
+﻿#ifndef SERVER_H
 #define	SERVER_H
 
 #include <boost/asio.hpp>
@@ -8,6 +8,7 @@
 #include <memory>
 #include <mysqlx/xdevapi.h>
 #include "NetworkData.h"
+#include "RequestProcess.h"
 
 using io_context = boost::asio::io_context;
 
@@ -16,6 +17,8 @@ class Server
 public:
 	Server(io_context& io);
 	~Server();
+
+	bool IsInitValid() { return _dbSessionPtr != nullptr && _dbSchemaPtr != nullptr; }
 
 	void Start();
 	void Stop();
@@ -26,6 +29,8 @@ private:
 	io_context& _io;
 	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
 	std::shared_ptr<mysqlx::Schema> _dbSchemaPtr;
+	std::shared_ptr<RequestProcess> _reqProcessPtr;
+	
 };
 
 #endif // !SERVER_H
