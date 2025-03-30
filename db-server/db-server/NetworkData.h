@@ -1,4 +1,4 @@
-#ifdef _WIN32
+Ôªø#ifdef _WIN32
 #define MYLIBRARY_API __declspec(dllexport)
 #else
 #define MYLIBRARY_API
@@ -8,21 +8,41 @@
 
 extern "C" {
 
-    // ø≠∞≈«¸ ¡§¿«
+    // Ïó¥Í±∞Ìòï Ï†ïÏùò
     enum class ENetworkType{
-        OPTION_ONE,
-        OPTION_TWO,
-        OPTION_THREE
+        // User Data Type
+        LOGIN = 0,
+        REGISTER,
+        RETRIEVE,
+        ACCESS,
+        LOGOUT,
+
+		// System Data Type
+        SYSTMEM_OPTION_1 = 100,
+		SYSTEM_OPTION_2,
+		SYSTEM_OPTION_3,
+
+        ADMIN_SERVER_OFF = 900,
+        ADMIN_SERVER_ON,
+		ADMIN_SERVER_REBOOT,
     };
 
-    // ±∏¡∂√º ¡§¿«
+    enum class ELoginError
+    {
+        USER_NOT_FOUND,
+        USER_ALREADY_EXIST,
+        INCORRECT,
+    };
+
+    // Íµ¨Ï°∞Ï≤¥ Ï†ïÏùò
     struct MYLIBRARY_API SNetworkData{
+        std::string uuid;
         ENetworkType type;
         std::size_t bufSize;
         std::string data;
     };
 
-    //// ≈¨∑°Ω∫ ¡§¿«
+    //// ÌÅ¥ÎûòÏä§ Ï†ïÏùò
     //class MYLIBRARY_API MyClass {
     //public:
     //    MyClass();
@@ -30,7 +50,7 @@ extern "C" {
     //    void PrintInfo(const MyStruct& data);
     //};
 
-    //// ∞¥√º ª˝º∫ π◊ ªË¡¶ «‘ºˆ
+    //// Í∞ùÏ≤¥ ÏÉùÏÑ± Î∞è ÏÇ≠Ï†ú Ìï®Ïàò
     //MYLIBRARY_API MyClass* CreateInstance();
     //MYLIBRARY_API void DestroyInstance(MyClass* instance);
 

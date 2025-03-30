@@ -1,21 +1,48 @@
 ﻿#include <iostream>
 #include "Server.h"
 
-int main() 
+int main()
 {
 	boost::asio::io_context io;
+	std::string id;
+	std::string password;
 
-	std::unique_ptr<Server> server = std::make_unique<Server>(io);
+	std::cout << "DB User: ";
+	std::cin >> id;
+	std::cout << "DB Password: ";
+	std::cin >> password;
 
-	if (!server->IsInitValid())
+	std::unique_ptr<Server> server = std::make_unique<Server>(io, id, password); // io, db user, db password init
+
+	server->Start(); // connect to db
+
+	if (server->IsInitValid()) // if connection is valid
 	{
-		std::cerr << "Server initialization failed.\n";
+		std::cout << "Server is running\n";
+	}
+	else
+	{
+		std::cout << "Server failed to start\n";
 		return -1;
 	}
 
-	server->Start();
+	std::thread ioThread([&io]() { io.run(); }); // start io thread
 
-	server->ProcessReq({ ENetworkType::OPTION_ONE, 0, nullptr });
+	// temp data for test 
+	SNetworkData loginReq;
+	loginReq.type = ENetworkType::LOGIN;
+	loginReq.data = "alice,password1";
+	loginReq.bufSize = loginReq.data.size();
+	server->AddReq(loginReq);
+
+	SNetworkData registerReq;
+	registerReq.type = ENetworkType::REGISTER;
+	registerReq.data = "jaeu,hellojaeu";
+	registerReq.bufSize = registerReq.data.size();
+	server->AddReq(registerReq);
+
+	if (ioThread.joinable())
+		ioThread.join();
 
 	return 0;
 }
