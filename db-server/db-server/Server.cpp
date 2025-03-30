@@ -32,14 +32,14 @@ void Server::Start()
 
 	_isRunning = true;
 
-	_io.post([this]() { ProcessReq(); });
+	_io.post([&]() { ProcessReq(); });
 }
 
 void Server::Stop()
 {
 	_isRunning = false;
 
-	_io.post([=]() { _reqProcessPtr->SaveServerLog("Server Off"); });
+	_io.post([&]() { _reqProcessPtr->SaveServerLog("Server Off"); });
 }
 
 void Server::AddReq(SNetworkData req)
@@ -77,28 +77,28 @@ void Server::ProcessReq()
 		case ENetworkType::LOGIN:
 			if(_reqProcessPtr->RetreiveUserID(splitedData) == ELastErrorCode::USER_NOT_FOUND) // Not found user in db
 			{
-				_io.post([=]() { _reqProcessPtr->SaveServerLog("User not found"); });
+				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("User not found"); });
 				break;
 			}
 
 			if (_reqProcessPtr->Login(splitedData) == ELastErrorCode::SUCCESS)
-				_io.post([=]() { _reqProcessPtr->SaveServerLog("Login Success user_name " + splitedData[0]); });
+				_io.post([&, splitedData]{ _reqProcessPtr->SaveServerLog("Login Success user_name " + splitedData[0]); });
 			else
-				_io.post([=]() { _reqProcessPtr->SaveServerLog("Login Failed user_name " + splitedData[0]); });
+				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("Login Failed user_name " + splitedData[0]); });
 
 			break;
 
 		case ENetworkType::REGISTER:
 			if (_reqProcessPtr->RetreiveUserID(splitedData) == ELastErrorCode::USER_ALREADY_EXIST)
 			{
-				_io.post([=]() { _reqProcessPtr->SaveServerLog("User " + splitedData[0] + " already exist"); });
+				_io.post([&, splitedData] { _reqProcessPtr->SaveServerLog("User " + splitedData[0] + " already exist"); });
 				break;
 			}
 
 			if (_reqProcessPtr->Register(splitedData) == ELastErrorCode::SUCCESS)
-				_io.post([=]() { _reqProcessPtr->SaveServerLog("Register Success user_name " + splitedData[0]); });
+				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("Register Success user_name " + splitedData[0]); });
 			else
-				_io.post([=]() { _reqProcessPtr->SaveServerLog("Register Failed user_name " + splitedData[0]); });
+				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("Register Failed user_name " + splitedData[0]); });
 			break;
 
 		case ENetworkType::ADMIN_SERVER_OFF:
@@ -115,7 +115,7 @@ void Server::ProcessReq()
 
 			std::string log = "Invalid request: " + req.uuid + " " + req.data;
 
-			_io.post([=]() { _reqProcessPtr->SaveServerLog(log); });
+			_io.post([&, log]() { _reqProcessPtr->SaveServerLog(log); });
 
 			break;
 		}
