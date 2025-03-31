@@ -22,15 +22,14 @@ ELastErrorCode RequestProcess::RetreiveUserID(std::vector<std::string> userName)
 		{
 			return ELastErrorCode::USER_NOT_FOUND;
 		}
-
-		return ELastErrorCode::USER_ALREADY_EXIST;
 	}
 	catch (const mysqlx::Error& err)
 	{
 		std::cerr << "Error: " << err.what() << "\n";
+		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
-	return ELastErrorCode::UNKNOWN_ERROR;
+	return ELastErrorCode::USER_ALREADY_EXIST;
 }
 
 ELastErrorCode RequestProcess::Login(std::vector<std::string> loginData)
@@ -50,15 +49,14 @@ ELastErrorCode RequestProcess::Login(std::vector<std::string> loginData)
 		{
 			return ELastErrorCode::INCORRECT;
 		}
-
-		return ELastErrorCode::SUCCESS;
 	}
 	catch (const mysqlx::Error& err)
 	{
 		std::cerr << "Error: " << err.what() << "\n";
+		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
-	return ELastErrorCode::UNKNOWN_ERROR;
+	return ELastErrorCode::SUCCESS;
 }
 
 ELastErrorCode RequestProcess::Register(std::vector<std::string> registerData)
@@ -72,14 +70,14 @@ ELastErrorCode RequestProcess::Register(std::vector<std::string> registerData)
 			.values(registerData[0], registerData[1])
 			.execute();
 
-		return ELastErrorCode::SUCCESS;
 	}
 	catch (const mysqlx::Error& err)
 	{
 		std::cerr << "Error: " << err.what() << "\n";
+		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
-	return ELastErrorCode::UNKNOWN_ERROR;
+	return ELastErrorCode::SUCCESS;
 }
 
 ELastErrorCode RequestProcess::SaveServerLog(std::string log)
