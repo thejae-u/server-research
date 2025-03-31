@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+
 #include "Server.h"
 
 int main()
@@ -26,23 +27,19 @@ int main()
 		return -1;
 	}
 
-	std::thread ioThread([&io]() { io.run(); }); // start io thread
+	std::size_t threadCount = std::thread::hardware_concurrency() * 2; // get hardware concurrency * 2
+	std::vector<std::shared_ptr<std::thread>> ioThreads;
 
-	// temp data for test 
-	SNetworkData loginReq;
-	loginReq.type = ENetworkType::LOGIN;
-	loginReq.data = "alice,password1";
-	loginReq.bufSize = loginReq.data.size();
-	server->AddReq(loginReq);
-
-	SNetworkData registerReq;
-	registerReq.type = ENetworkType::REGISTER;
-	registerReq.data = "jaeu,hellojaeu";
-	registerReq.bufSize = registerReq.data.size();
-	server->AddReq(registerReq);
-
-	if (ioThread.joinable())
-		ioThread.join();
+	for (std::size_t i = 0; i < threadCount; i++) // create io threads
+	{
+		ioThreads.emplace_back(std::make_shared<std::thread>([&io]() { io.run(); }));
+	}
+	
+	for (auto& ioThread : ioThreads) // block until all threads are finished
+	{
+		if(ioThread->joinable())
+			ioThread->join();
+	}
 
 	return 0;
 }
