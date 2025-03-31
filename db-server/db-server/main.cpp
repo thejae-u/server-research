@@ -1,38 +1,49 @@
 ﻿#include <iostream>
-#include <mysqlx/xdevapi.h>  // 최신 MySQL X DevAPI 헤더 파일
+#include "Server.h"
 
-int main() 
+int main()
 {
-    try 
-    {
-        mysqlx::Session sess = mysqlx::getSession("localhost", 33060, "root", "thejaeu");
-        mysqlx::Schema db = sess.getSchema("mmo_server_data");
+	boost::asio::io_context io;
+	std::string id;
+	std::string password;
 
-		mysqlx::Table usersTable = db.getTable("users");
+	std::cout << "DB User: ";
+	std::cin >> id;
+	std::cout << "DB Password: ";
+	std::cin >> password;
 
-        int tmpCount = 0;
+	std::unique_ptr<Server> server = std::make_unique<Server>(io, id, password); // io, db user, db password init
 
-        for (auto row : usersTable.select("uuid", "user_name", "user_password", "DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s')").execute())
-        {
-            std::cout << ++tmpCount << " uuid: " << row[0] << ", user_name: " << row[1] << "\npassword: " << row[2] << "\n";
-			std::cout << "created_at: " << row[3] << "\n";
+	server->Start(); // connect to db
 
-            std::cout << "\n";
-        }
-    }
-    catch (const mysqlx::Error& err) {
-        std::cerr << "Error: " << err.what() << std::endl;
-        return 1;
-    }
-    catch (std::exception& ex) {
-        std::cerr << "STD Exception: " << ex.what() << std::endl;
-        return 1;
-    }
-    catch (...) {
-        std::cerr << "Unknown error!" << std::endl;
-        return 1;
-    }
+	if (server->IsInitValid()) // if connection is valid
+	{
+		std::cout << "Server is running\n";
+	}
+	else
+	{
+		std::cout << "Server failed to start\n";
+		return -1;
+	}
 
-    return 0;
+	std::thread ioThread([&io]() { io.run(); }); // start io thread
+
+	// temp data for test 
+	SNetworkData loginReq;
+	loginReq.type = ENetworkType::LOGIN;
+	loginReq.data = "alice,password1";
+	loginReq.bufSize = loginReq.data.size();
+	server->AddReq(loginReq);
+
+	SNetworkData registerReq;
+	registerReq.type = ENetworkType::REGISTER;
+	registerReq.data = "jaeu,hellojaeu";
+	registerReq.bufSize = registerReq.data.size();
+	server->AddReq(registerReq);
+
+	if (ioThread.joinable())
+		ioThread.join();
+
+	return 0;
 }
 
