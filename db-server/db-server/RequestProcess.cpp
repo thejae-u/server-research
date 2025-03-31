@@ -32,6 +32,28 @@ ELastErrorCode RequestProcess::RetreiveUserID(std::vector<std::string> userName)
 	return ELastErrorCode::USER_ALREADY_EXIST;
 }
 
+int RequestProcess::GetUserID(std::string userName)
+{
+	try
+	{
+		auto data = GetTable(USER_TABLE).select("uuid").where("user_name = :name").bind("name", userName).execute();
+		if (data.count() == 0)
+		{
+			return -1;
+		}
+
+		auto row = data.fetchOne();
+
+		return row[0];
+	}
+	catch (const mysqlx::Error& err)
+	{
+		std::cerr << "Error: " << err.what() << "\n";
+	}
+
+	return -1;
+}
+
 ELastErrorCode RequestProcess::Login(std::vector<std::string> loginData)
 {
 	assert(loginData.size() == 2);
@@ -89,9 +111,26 @@ ELastErrorCode RequestProcess::SaveServerLog(std::string log)
 	catch (const mysqlx::Error& err)
 	{
 		std::cerr << "Error: " << err.what() << "\n";
+		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
 	std::cout << System_Util::GetCurrentTime() << " " << log << "\n";
+	return ELastErrorCode::SUCCESS;
+}
+
+ELastErrorCode RequestProcess::SaveUserLog(std::string userName, std::string log)
+{
+	try
+	{
+		GetTable("user_log").insert("uuid", "log_text").values(GetUserID(userName), log).execute(); // insert log to user_log table
+	}
+	catch (const mysqlx::Error& err)
+	{
+		std::cerr << "Error: " << err.what() << "\n";
+		return ELastErrorCode::UNKNOWN_ERROR;
+	}
+
+	std::cout << System_Util::GetCurrentTime() << " " << userName << " user log saved\n";
 
 	return ELastErrorCode::SUCCESS;
 }

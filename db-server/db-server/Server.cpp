@@ -77,12 +77,19 @@ void Server::ProcessReq()
 		case ENetworkType::LOGIN:
 			if(_reqProcessPtr->RetreiveUserID(splitedData) == ELastErrorCode::USER_NOT_FOUND) // Not found user in db
 			{
-				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("User not found"); });
+				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("User not found " + splitedData[0]); });
 				break;
 			}
 
 			if (_reqProcessPtr->Login(splitedData) == ELastErrorCode::SUCCESS)
-				_io.post([&, splitedData]{ _reqProcessPtr->SaveServerLog("Login Success user_name " + splitedData[0]); });
+			{
+				_io.post([&, splitedData]
+					{
+						std::string userName = splitedData[0];
+						_reqProcessPtr->SaveServerLog("Login Success user_name"+ userName);
+						_reqProcessPtr->SaveUserLog(userName, "Login Success");
+					});
+			}
 			else
 				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("Login Failed user_name " + splitedData[0]); });
 
@@ -91,19 +98,27 @@ void Server::ProcessReq()
 		case ENetworkType::REGISTER:
 			if (_reqProcessPtr->RetreiveUserID(splitedData) == ELastErrorCode::USER_ALREADY_EXIST)
 			{
-				_io.post([&, splitedData] { _reqProcessPtr->SaveServerLog("User " + splitedData[0] + " already exist"); });
+				std::string userName = splitedData[0];
+				_io.post([&, userName] { _reqProcessPtr->SaveServerLog("User " + userName + " already exist"); });
 				break;
 			}
 
 			if (_reqProcessPtr->Register(splitedData) == ELastErrorCode::SUCCESS)
-				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("Register Success user_name " + splitedData[0]); });
+			{
+				std::string userName = splitedData[0];
+				_io.post([&, userName]()
+					{
+						_reqProcessPtr->SaveServerLog("Register Success user_name " + userName);
+						_reqProcessPtr->SaveUserLog(userName, "First Register");
+					});
+			}
 			else
-				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("Register Failed user_name " + splitedData[0]); });
+				_io.post([&]() {_reqProcessPtr->SaveServerLog("Register Failed by UnknownError"); });
 			break;
 
 		case ENetworkType::ADMIN_SERVER_OFF:
 			Stop();
-
+			_io.post([&]() { _reqProcessPtr->SaveServerLog("Server Off"); });
 			break;
 
 		case ENetworkType::ACCESS: // Not implemented
@@ -111,15 +126,13 @@ void Server::ProcessReq()
 
 		default:
 			std::cerr << "Invalid request\n";
-			// Save Log to db (server_log Table)
 
 			std::string log = "Invalid request: " + req.uuid + " " + req.data;
-
-			_io.post([&, log]() { _reqProcessPtr->SaveServerLog(log); });
+			_io.post([&, log] () { _reqProcessPtr->SaveServerLog(log); });
 
 			break;
 		}
 	}
 
-	_io.post([=]() { ProcessReq(); });
+	_io.post([&]() { ProcessReq(); });
 }

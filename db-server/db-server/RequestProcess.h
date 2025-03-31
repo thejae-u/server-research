@@ -25,6 +25,8 @@ public:
 	ELastErrorCode Login(std::vector<std::string> loginData); // Return Logic Server Connection
 	ELastErrorCode Register(std::vector<std::string> registerData);
 	ELastErrorCode SaveServerLog(std::string log);
+	ELastErrorCode SaveUserLog(std::string userName, std::string log);
+	int GetUserID(std::string userName);
 
 private:
 	std::shared_ptr<mysqlx::Schema> _dbPtr;
