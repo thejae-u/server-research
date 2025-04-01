@@ -17,8 +17,12 @@ public:
 	DBSession(io_context& io, std::string ip, std::string id, std::string password);
 	~DBSession();
 
+	void Stop();
+
 	void AddReq(SNetworkData req);
 	void ProcessReq();
+	
+	bool IsConnected() const; 
 
 private:
 	io_context& _io; // io context onwer by Server main thread
@@ -28,5 +32,12 @@ private:
 
 	std::queue<SNetworkData> _reqQueue;
 	std::mutex _reqMutex;
+
+	bool _isRunning;
+
+	std::shared_ptr<mysqlx::Table> GetTable(std::string tableName)
+	{
+		return std::make_shared<mysqlx::Table>(_dbSchemaPtr->getTable(tableName));
+	};
 };
 

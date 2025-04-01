@@ -9,6 +9,7 @@
 
 #include "RequestProcess.h"
 #include "Session.h"
+#include "DBSession.h"
 
 using io_context = boost::asio::io_context;
 using boost_socket = boost::asio::ip::tcp::socket;
@@ -25,7 +26,7 @@ public:
 	~Server();
 
 	void Start();
-	void Stop();
+	void Stop(); // Stop All Sessions
 
 	void AddReq(SNetworkData req);
 	void ProcessReq();
@@ -35,27 +36,17 @@ public:
 private:
 	std::string _dbUser;
 	std::string _dbPassword;
+	std::shared_ptr<DBSession> _dbSessionPtr;
 
 	io_context& _io;
 	boost_acceptor& _acceptor;
 
 	std::set<std::shared_ptr<Session>> _sessions;
-
-	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
-	std::shared_ptr<mysqlx::Schema> _dbSchemaPtr;
-	std::shared_ptr<RequestProcess> _reqProcessPtr;
-
 	std::shared_ptr<std::vector<std::thread>> _processThreads;
 
 	std::queue<SNetworkData> _reqQueue;
 	std::mutex _reqMutex;
-	std::condition_variable _reqCV;
 
 	bool _isRunning;
-
-	mysqlx::Table GetTable(std::string tableName)
-	{
-		return _dbSchemaPtr->getTable(tableName, true);
-	}
 };
 
