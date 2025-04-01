@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <mysqlx/xdevapi.h>
+#include <mutex>
 
 #define USER_TABLE "users"
 
@@ -18,7 +19,7 @@ enum class ELastErrorCode
 class RequestProcess
 {
 public:
-	RequestProcess(std::shared_ptr<mysqlx::Schema> dbPtr);
+	RequestProcess(std::shared_ptr<mysqlx::Session> dbSessionPtr, std::shared_ptr<mysqlx::Schema> dbPtr);
 	~RequestProcess();
 
 	ELastErrorCode RetreiveUserID(std::vector<std::string> userName);
@@ -30,10 +31,11 @@ public:
 
 private:
 	std::shared_ptr<mysqlx::Schema> _dbPtr;
+	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
+	std::mutex _transactionMutex;
 
 	mysqlx::Table GetTable(std::string tableName)
 	{
 		return _dbPtr->getTable(tableName, true);
 	}
 };
-

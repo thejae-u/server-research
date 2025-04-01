@@ -1,7 +1,7 @@
 ﻿#include "Server.h"
 #include "db-server-class-utility.h"
 
-Server::Server(io_context& io, std::string id, std::string password) : _io(io), _isRunning(false)
+Server::Server(io_context& io, boost_acceptor& acceptor, std::string id, std::string password) : _io(io), _acceptor(acceptor), _isRunning(false)
 {
 	_dbUser = id;
 	_dbPassword = password;
@@ -9,13 +9,25 @@ Server::Server(io_context& io, std::string id, std::string password) : _io(io), 
 
 Server::~Server()
 {
+	for (auto& session : _sessions)
+	{
+		session->Stop();
+	}
+
+	_sessions.clear();
+
+	for (auto& process : *_processThreads)
+	{
+		if (process.joinable())
+			process.join();
+	}
 }
 
 void Server::Start()
 {
 	try
 	{
-		auto session = std::make_shared<mysqlx::Session>(mysqlx::getSession("localhost", 33060, _dbUser, _dbPassword));
+		auto session = std::make_shared<mysqlx::Session>(mysqlx::getSession("localhost", 33060, _dbUser, _dbPassword)); // DBMS connection
 		auto db = std::make_shared<mysqlx::Schema>(session->getSchema("mmo_server_data"));
 
 		_dbSessionPtr = session;
@@ -28,28 +40,59 @@ void Server::Start()
 		_dbSchemaPtr = nullptr;
 	}
 
-	_reqProcessPtr = std::make_shared<RequestProcess>(_dbSchemaPtr);
+	if (_dbSessionPtr == nullptr || _dbSchemaPtr == nullptr)
+	{
+		_isRunning = false;
+		return;
+	}
 
 	_isRunning = true;
 
-	_io.post([&]() { ProcessReq(); });
+	AcceptClient();
+
+	_reqProcessPtr = std::make_shared<RequestProcess>(_dbSessionPtr, _dbSchemaPtr);
+
+	boost::asio::post(_io, [this]() { ProcessReq(); });
+}
+
+void Server::AcceptClient() // Accept Login or Logic Sessions
+{
+	auto self = shared_from_this();
+
+	std::shared_ptr<Session> newSessionPtr = std::make_shared<Session>(_io, self, _sessions.size());
+
+	_acceptor.async_accept(newSessionPtr->GetSocket(), [this, self, newSessionPtr](const boost_ec& ec)
+		{
+			if (!ec)
+			{
+				_sessions.insert(newSessionPtr);
+				newSessionPtr->Start();
+				std::cout << "New Session Connected : " << newSessionPtr->GetSocket().remote_endpoint().address() << "\n";
+			}
+			else
+			{
+				std::cerr << "Error: " << ec.message() << "\n";
+			}
+
+			AcceptClient();
+		});
 }
 
 void Server::Stop()
 {
 	_isRunning = false;
 
-	_io.post([&]() { _reqProcessPtr->SaveServerLog("Server Off"); });
+	boost::asio::post(_io, [this]() {_reqProcessPtr->SaveServerLog("Server Off"); });
 }
 
 void Server::AddReq(SNetworkData req)
 {
-	_reqMutex.lock(); // lock mutex
+	_reqMutex.lock();
 	_reqQueue.push(req);
-	_reqMutex.unlock(); // return mutex
+	_reqMutex.unlock();
 }
 
-void Server::ProcessReq()
+void Server::ProcessReq() 
 {
 	if (!_isRunning)
 	{
@@ -62,63 +105,76 @@ void Server::ProcessReq()
 
 	if (_reqQueue.empty())
 	{
-		_reqMutex.unlock();
+		// Do nothing
+		_reqMutex.unlock(); // return mutex
 	}
 	else
 	{
 		SNetworkData req = _reqQueue.front();
 		_reqQueue.pop();
+		std::cout << "Request Popped\n";
+
 		_reqMutex.unlock(); // return mutex
 
-		std::vector<std::string> splitedData = Server_Util::SplitString(req.data); // split data by ','
+		std::shared_ptr<std::vector<std::string>> splitedData = std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req.data)); // split data by ','
 
 		switch (req.type)
 		{
 		case ENetworkType::LOGIN:
-			if(_reqProcessPtr->RetreiveUserID(splitedData) == ELastErrorCode::USER_NOT_FOUND) // Not found user in db
+			if(_reqProcessPtr->RetreiveUserID(*splitedData) == ELastErrorCode::USER_NOT_FOUND) // Not found user in db
 			{
-				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("User not found " + splitedData[0]); });
+				boost::asio::post(_io, [this, splitedData]() { _reqProcessPtr->SaveServerLog("User not found" + (*splitedData)[0]); });
 				break;
 			}
 
-			if (_reqProcessPtr->Login(splitedData) == ELastErrorCode::SUCCESS)
+			if (_reqProcessPtr->Login(*splitedData) == ELastErrorCode::SUCCESS)
 			{
-				_io.post([&, splitedData]
+				boost::asio::post(_io,
+					[this, splitedData]()
 					{
-						std::string userName = splitedData[0];
-						_reqProcessPtr->SaveServerLog("Login Success user_name"+ userName);
-						_reqProcessPtr->SaveUserLog(userName, "Login Success");
+						std::string userName = (*splitedData)[0];
+						_reqProcessPtr->SaveServerLog("Login Success user_name" + userName);
+						_reqProcessPtr->SaveUserLog(userName, "Login Success");	
 					});
 			}
 			else
-				_io.post([&, splitedData]() { _reqProcessPtr->SaveServerLog("Login Failed user_name " + splitedData[0]); });
-
+			{
+				boost::asio::post(_io, [this, splitedData]()
+					{
+						std::string userName = (*splitedData)[0];
+						_reqProcessPtr->SaveServerLog("Login Failed " + userName);
+					});
+			}
 			break;
 
 		case ENetworkType::REGISTER:
-			if (_reqProcessPtr->RetreiveUserID(splitedData) == ELastErrorCode::USER_ALREADY_EXIST)
+			if (_reqProcessPtr->RetreiveUserID(*splitedData) == ELastErrorCode::USER_ALREADY_EXIST)
 			{
-				std::string userName = splitedData[0];
-				_io.post([&, userName] { _reqProcessPtr->SaveServerLog("User " + userName + " already exist"); });
+				std::string userName = (*splitedData)[0];
+				boost::asio::post(_io, [this, splitedData]()
+					{
+						std::string userName = (*splitedData)[0];
+						_reqProcessPtr->SaveUserLog(userName, "Already Exist");
+					});
 				break;
 			}
 
-			if (_reqProcessPtr->Register(splitedData) == ELastErrorCode::SUCCESS)
+			if (_reqProcessPtr->Register(*splitedData) == ELastErrorCode::SUCCESS)
 			{
-				std::string userName = splitedData[0];
-				_io.post([&, userName]()
+				std::string userName = (*splitedData)[0];
+				boost::asio::post(_io, [this, userName]()
 					{
-						_reqProcessPtr->SaveServerLog("Register Success user_name " + userName);
+						_reqProcessPtr->SaveServerLog("Register Success " + userName);
 						_reqProcessPtr->SaveUserLog(userName, "First Register");
 					});
 			}
-			else
-				_io.post([&]() {_reqProcessPtr->SaveServerLog("Register Failed by UnknownError"); });
+			else // System Error
+				boost::asio::post(_io, [this]() { _reqProcessPtr->SaveServerLog("Register Failed by UnknownError"); });
 			break;
 
 		case ENetworkType::ADMIN_SERVER_OFF:
 			Stop();
-			_io.post([&]() { _reqProcessPtr->SaveServerLog("Server Off"); });
+			boost::asio::post(_io, [this]() { _reqProcessPtr->SaveServerLog("Server Off"); });
 			break;
 
 		case ENetworkType::ACCESS: // Not implemented
@@ -128,11 +184,10 @@ void Server::ProcessReq()
 			std::cerr << "Invalid request\n";
 
 			std::string log = "Invalid request: " + req.uuid + " " + req.data;
-			_io.post([&, log] () { _reqProcessPtr->SaveServerLog(log); });
-
+			boost::asio::post(_io, [this, log]() { _reqProcessPtr->SaveServerLog(log); });
 			break;
 		}
 	}
 
-	_io.post([&]() { ProcessReq(); });
+	boost::asio::post(_io, [this]() { ProcessReq(); });
 }
