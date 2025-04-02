@@ -6,8 +6,10 @@
 #include <mutex>
 #include <thread>
 
-#include "NetworkData.h"
-#include "db-server-class-utility.h"
+#include "Server.h"
+
+class Server;
+class RequestProcess;
 
 using io_context = boost::asio::io_context;
 
@@ -29,15 +31,13 @@ private:
 
 	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
 	std::shared_ptr<mysqlx::Schema> _dbSchemaPtr;
+	std::shared_ptr<RequestProcess> _reqProcessPtr;
 
 	std::queue<SNetworkData> _reqQueue;
 	std::mutex _reqMutex;
 
-	bool _isRunning;
+	std::mutex _processMutex;
 
-	std::shared_ptr<mysqlx::Table> GetTable(std::string tableName)
-	{
-		return std::make_shared<mysqlx::Table>(_dbSchemaPtr->getTable(tableName));
-	};
+	bool _isRunning;
 };
 

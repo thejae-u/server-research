@@ -1,7 +1,7 @@
 ﻿#include "DBSession.h"
 
 DBSession::DBSession(io_context& io, std::string ip, std::string id, std::string password)
-	: _io(io)
+	: _io(io), _isRunning(false)
 {
 	try
 	{
@@ -26,10 +26,12 @@ DBSession::DBSession(io_context& io, std::string ip, std::string id, std::string
 
 	std::cout << "DBMS Connected\n";
 
+	_reqProcessPtr = std::make_shared<RequestProcess>(_dbSessionPtr, _dbSchemaPtr);
+
 	_isRunning = true;
 
 	// Start DB Session
-	boost::asio::post(_io, [this]() { ProcessReq(); })
+	boost::asio::post(_io, [this]() { ProcessReq(); });
 }
 
 DBSession::~DBSession()
@@ -50,17 +52,14 @@ void DBSession::AddReq(SNetworkData req)
 {
 	std::lock_guard<std::mutex> lock(_reqMutex);
 	_reqQueue.push(req);
-
-	std::cout << "Hello\n";
 }
 
 void DBSession::ProcessReq()
 {
-	_reqMutex.lock();
+	std::lock_guard<std::mutex> lock(_reqMutex);
 
 	if (_reqQueue.empty())
 	{
-		_reqMutex.unlock();
 		boost::asio::post(_io, [this]() { ProcessReq(); }); // Restart ProcessReq Async
 		return;
 	}
@@ -68,7 +67,6 @@ void DBSession::ProcessReq()
 	{
 		SNetworkData req = _reqQueue.front();
 		_reqQueue.pop(); // Remove from Queue
-		_reqMutex.unlock();
 
 		/*
 			Mutex can't be locked under this line
@@ -77,28 +75,37 @@ void DBSession::ProcessReq()
 		std::shared_ptr<std::vector<std::string>> splitedData =
 			std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req.data)); // split data by ','
 
+		ELastErrorCode ec = ELastErrorCode::UNKNOWN_ERROR;
+
 		switch (req.type)
 		{
 		case ENetworkType::LOGIN:
 		{
 			std::string userName = (*splitedData)[0];
 			std::string userPassword = (*splitedData)[1];
-			
-			auto rowResult = GetTable("users")->select("user_name", "user_password")
-				.where("user_name = :name AND user_password = :password")
-				.bind("name", userName)
-				.bind("password", userPassword)
-				.execute();
 
-			if (rowResult.count() == 0)
+			std::lock_guard<std::mutex> lock(_processMutex);
+
+			ec = _reqProcessPtr->Login({ userName, userPassword });
+
+			std::string serverLog;
+			std::string userLog;
+
+			if (ec == ELastErrorCode::SUCCESS)
 			{
-				std::cout << "Login Failed\n";
+				// Send Logic Server Connection
+				serverLog = "User " + userName + " Login Success";
+				userLog = "Login Success";
 			}
 			else
 			{
-				std::cout << "Login Success\n";
+				// Send Error Message
+				serverLog = "User " + userName + " Login Failed";
+				userLog = "Login Failed";
 			}
-
+		
+			boost::asio::post(_io, [this, serverLog]() { _reqProcessPtr->SaveServerLog(serverLog); });
+			boost::asio::post(_io, [this, userName, userLog]() { _reqProcessPtr->SaveUserLog(userName, userLog); });
 			break;
 		}
 		case ENetworkType::REGISTER:
@@ -113,8 +120,6 @@ void DBSession::ProcessReq()
 
 		boost::asio::post(_io, [this]() { ProcessReq(); }); // Restart ProcessReq Async
 	}
-
-	assert(false); // This line should not be reached
 }
 
 bool DBSession::IsConnected() const

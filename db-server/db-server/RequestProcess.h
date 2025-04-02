@@ -6,6 +6,11 @@
 
 #define USER_TABLE "users"
 
+/*
+	Pr태	그가 붙은 함수는 트랜잭션 내에서 사용하는 함수로 외부에서 호출할 수 없음
+	(Private Function)
+*/
+
 enum class ELastErrorCode
 {
 	SUCCESS,
@@ -27,12 +32,15 @@ public:
 	ELastErrorCode Register(std::vector<std::string> registerData);
 	ELastErrorCode SaveServerLog(std::string log);
 	ELastErrorCode SaveUserLog(std::string userName, std::string log);
-	int GetUserID(std::string userName);
+	ELastErrorCode GetUserID(std::string userName, int& uuid);
 
 private:
 	std::shared_ptr<mysqlx::Schema> _dbPtr;
 	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
 	std::mutex _transactionMutex;
+
+	int PrGetuserID(std::string userName);
+	
 
 	mysqlx::Table GetTable(std::string tableName)
 	{

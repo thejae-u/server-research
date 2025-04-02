@@ -3,7 +3,6 @@
 #include <boost/asio.hpp>
 #include <memory>
 
-#include "NetworkData.h"
 #include "Server.h"
 
 class Server;
@@ -34,9 +33,6 @@ public:
 	void RecvReq();
 
 	// Test Code
-	void TestAddReq();
-	void TestAddReq2();
-	void TestAddReq3();
 
 private:
 	std::size_t _sessionID;

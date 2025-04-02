@@ -8,7 +8,7 @@
 
 namespace Server_Util
 {
-	std::vector<std::string> SplitString(std::string data)
+	std::vector<std::string> static SplitString(std::string data)
 	{
 		std::vector<std::string> splitedData;
 		std::string buffer;

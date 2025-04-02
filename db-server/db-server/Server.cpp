@@ -1,5 +1,4 @@
 ﻿#include "Server.h"
-#include "db-server-class-utility.h"
 
 Server::Server(io_context& io, boost_acceptor& acceptor, std::string id, std::string password) : _io(io), _acceptor(acceptor), _isRunning(false)
 {
@@ -25,7 +24,7 @@ Server::~Server()
 
 void Server::Start()
 {
-	_dbSessionPtr = std::make_shared<DBSession>(_io, _dbUser, _dbPassword);
+	_dbSessionPtr = std::make_shared<DBSession>(_io, "localhost", _dbUser, _dbPassword);
 	if (!_dbSessionPtr->IsConnected()) // DBMS Connection Failed
 	{
 		std::cerr << "DB Connection Failed\n";
@@ -35,7 +34,7 @@ void Server::Start()
 	_isRunning = true;
 	AcceptClient();
 
-	boost::asio::post(_io, [this]() { ProcessReq(); });
+	boost::asio::post(_io, [this]() { ProcessReq();	});
 }
 
 void Server::AcceptClient() // Accept Login or Logic Sessions
@@ -83,11 +82,10 @@ void Server::AddReq(SNetworkData req) // Add Request to Server
 
 void Server::ProcessReq() 
 {
-	_reqMutex.lock();
+	std::lock_guard<std::mutex> lock(_reqMutex);
 
 	if (_reqQueue.empty())
 	{
-		_reqMutex.unlock();
 		boost::asio::post(_io, [this]() { ProcessReq(); });
 
 		return;
@@ -96,11 +94,6 @@ void Server::ProcessReq()
 	{
 		SNetworkData req = _reqQueue.front();
 		_reqQueue.pop();
-		_reqMutex.unlock();
-
-		/*
-			_reqMutex can't be locked under this line
-		*/
 
 		_dbSessionPtr->AddReq(req);
 

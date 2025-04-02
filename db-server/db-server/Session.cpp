@@ -30,37 +30,17 @@ void Session::RecvReq()
 
 	std::shared_ptr<std::string> recvBuffer;
 
-	/*_socket->async_read_some(boost::asio::buffer(*recvBuffer), [this, self, recvBuffer](const boost_ec& ec)
+	_socket->async_read_some(boost::asio::buffer(*recvBuffer), [this, self, recvBuffer](const boost_ec& ec)
 		{
-
-		});*/
+			if (!ec)
+			{
+				// Add Request to Server
+			}
+			else
+			{
+				// Error Handling
+			}
+		});
 }
 
 // Test Code Area
-void Session::TestAddReq()
-{
-	SNetworkData req;
-	req.type = ENetworkType::LOGIN;
-	req.data = "alice,test";
-	req.bufSize = req.data.size();
-	_serverPtr->AddReq(req);
-}
-
-void Session::TestAddReq2()
-{
-	SNetworkData req;
-	req.type = ENetworkType::REGISTER;
-	req.data = "bob,test";
-	req.bufSize = req.data.size();
-
-	_serverPtr->AddReq(req);
-}
-
-void Session::TestAddReq3()
-{
-	SNetworkData req;
-	req.type = ENetworkType::LOGIN;
-	req.data = "jaeu,hellojaeu";
-	req.bufSize = req.data.size();
-	_serverPtr->AddReq(req);
-}

@@ -7,9 +7,14 @@
 #include <vector>
 #include <mysqlx/xdevapi.h>
 
-#include "RequestProcess.h"
+#include "NetworkData.h"
 #include "Session.h"
 #include "DBSession.h"
+#include "RequestProcess.h"
+#include "db-server-class-utility.h"
+
+class DBSession;
+class Session;
 
 using io_context = boost::asio::io_context;
 using boost_socket = boost::asio::ip::tcp::socket;
