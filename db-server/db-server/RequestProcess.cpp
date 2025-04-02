@@ -151,7 +151,7 @@ ELastErrorCode RequestProcess::SaveServerLog(std::string log)
 		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
-	std::cout << System_Util::GetCurrentTime() << " " << log << "\n";
+	std::cout << System_Util::GetNowTime() << " " << log << "\n";
 	return ELastErrorCode::SUCCESS;
 }
 
@@ -175,7 +175,7 @@ ELastErrorCode RequestProcess::SaveUserLog(std::string userName, std::string log
 		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
-	std::cout << System_Util::GetCurrentTime() << " " << userName << " user log saved\n";
+	std::cout << System_Util::GetNowTime() << " " << userName << " user log saved\n";
 
 	return ELastErrorCode::SUCCESS;
 }

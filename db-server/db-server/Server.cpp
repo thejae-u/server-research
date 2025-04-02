@@ -3,7 +3,6 @@
 #include "DBSession.h"
 #include "RequestProcess.h"
 #include "db-server-class-utility.h"
-#include "NetworkData.h"
 
 Server::Server(io_context& io, boost_acceptor& acceptor, std::string id, std::string password) : _io(io), _acceptor(acceptor), _isRunning(false)
 {
@@ -82,7 +81,7 @@ void Server::Stop()
 void Server::AddReq(SNetworkData req) // Add Request to Server
 {
 	std::lock_guard<std::mutex> lock(_reqMutex);
-	_reqQueue.push(&req);
+	_reqQueue.push(req);
 }
 
 void Server::ProcessReq() 
@@ -97,10 +96,10 @@ void Server::ProcessReq()
 	}
 	else
 	{
-		SNetworkData req = *_reqQueue.front();
+		SNetworkData req = _reqQueue.front();
 		_reqQueue.pop();
 
-		_dbSessionPtr->AddReq(&req);
+		_dbSessionPtr->AddReq(req);
 
 		boost::asio::post(_io, [this]() { ProcessReq(); });
 	}

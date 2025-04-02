@@ -6,7 +6,7 @@
 #include <memory>
 #include <mysqlx/xdevapi.h>
 
-struct SNetworkData;
+#include "NetworkData.h"
 
 class RequestProcess;
 class DBSession;
@@ -45,7 +45,7 @@ private:
 	std::set<std::shared_ptr<Session>> _sessions;
 	std::shared_ptr<std::vector<std::thread>> _processThreads;
 
-	std::queue<SNetworkData*> _reqQueue;
+	std::queue<SNetworkData> _reqQueue;
 	std::mutex _reqMutex;
 
 	bool _isRunning;

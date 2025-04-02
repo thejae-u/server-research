@@ -1,5 +1,7 @@
 ﻿#include "Session.h"
 #include "Server.h"
+#include "db-system-utility.h"
+#include "NetworkData.h"
 
 Session::Session(io_context& io, std::shared_ptr<Server> serverPtr, std::size_t sessionID)
 	: _io(io), _serverPtr(serverPtr), _sessionID(sessionID)
@@ -16,6 +18,21 @@ void Session::Start()
 {
 	// start session
 	std::cout << "Session Started : " << _socket->remote_endpoint().address() << "\n";
+
+	std::chrono::time_point<std::chrono::system_clock> start; // System_Util::StartTime()
+	System_Util::StartTime(start);
+
+	for (auto i = 0; i < 100; ++i)
+	{
+		SNetworkData req;
+		req.type = ENetworkType::LOGIN;
+		req.data = "alice,1234";
+		req.bufSize = req.data.size();
+
+		_serverPtr->AddReq(req);
+	}
+
+	std::cout << "elapsed time: " << System_Util::EndTime(start).count() << "\n";
 }
 
 void Session::Stop()

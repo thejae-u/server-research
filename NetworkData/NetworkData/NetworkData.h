@@ -1,4 +1,5 @@
-﻿#ifdef _WIN32
+﻿#pragma once
+#ifdef _WIN32
 #define MYLIBRARY_API __declspec(dllexport)
 #else
 #define MYLIBRARY_API
@@ -36,6 +37,7 @@ extern "C" {
 
     // 구조체 정의
     struct MYLIBRARY_API SNetworkData{
+        std::string ip;
         std::string uuid;
         ENetworkType type;
         std::size_t bufSize;

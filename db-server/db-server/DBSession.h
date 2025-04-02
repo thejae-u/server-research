@@ -6,7 +6,7 @@
 #include <mutex>
 #include <thread>
 
-struct SNetworkData;
+#include "NetworkData.h"
 
 class RequestProcess;
 class Session;
@@ -21,7 +21,7 @@ public:
 
 	void Stop();
 
-	void AddReq(SNetworkData* req);
+	void AddReq(SNetworkData req);
 	void ProcessReq();
 	
 	bool IsConnected() const; 
@@ -33,7 +33,7 @@ private:
 	std::shared_ptr<mysqlx::Schema> _dbSchemaPtr;
 	std::shared_ptr<RequestProcess> _reqProcessPtr;
 
-	std::queue<SNetworkData*> _reqQueue;
+	std::queue<SNetworkData> _reqQueue;
 	std::mutex _reqMutex;
 
 	std::mutex _processMutex;

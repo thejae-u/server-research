@@ -140,6 +140,7 @@
     <ClInclude Include="db-server-class-utility.h" />
     <ClInclude Include="db-system-utility.h" />
     <ClInclude Include="DBSession.h" />
+    <ClInclude Include="NetworkData.h" />
     <ClInclude Include="RequestProcess.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Session.h" />
