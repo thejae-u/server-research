@@ -3,8 +3,6 @@
 #include <boost/asio.hpp>
 #include <memory>
 
-#include "Server.h"
-
 class Server;
 
 // for Login, Logic Server Connection

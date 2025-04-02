@@ -1,4 +1,7 @@
 ﻿#include "DBSession.h"
+#include "NetworkData.h"
+#include "RequestProcess.h"
+#include "db-server-class-utility.h"
 
 DBSession::DBSession(io_context& io, std::string ip, std::string id, std::string password)
 	: _io(io), _isRunning(false)
@@ -48,7 +51,7 @@ void DBSession::Stop()
 	_dbSessionPtr->close();
 }
 
-void DBSession::AddReq(SNetworkData req)
+void DBSession::AddReq(SNetworkData* req)
 {
 	std::lock_guard<std::mutex> lock(_reqMutex);
 	_reqQueue.push(req);
@@ -65,7 +68,7 @@ void DBSession::ProcessReq()
 	}
 	else
 	{
-		SNetworkData req = _reqQueue.front();
+		SNetworkData req = *_reqQueue.front();
 		_reqQueue.pop(); // Remove from Queue
 
 		/*

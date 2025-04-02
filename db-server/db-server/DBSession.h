@@ -6,10 +6,10 @@
 #include <mutex>
 #include <thread>
 
-#include "Server.h"
+struct SNetworkData;
 
-class Server;
 class RequestProcess;
+class Session;
 
 using io_context = boost::asio::io_context;
 
@@ -21,7 +21,7 @@ public:
 
 	void Stop();
 
-	void AddReq(SNetworkData req);
+	void AddReq(SNetworkData* req);
 	void ProcessReq();
 	
 	bool IsConnected() const; 
@@ -33,7 +33,7 @@ private:
 	std::shared_ptr<mysqlx::Schema> _dbSchemaPtr;
 	std::shared_ptr<RequestProcess> _reqProcessPtr;
 
-	std::queue<SNetworkData> _reqQueue;
+	std::queue<SNetworkData*> _reqQueue;
 	std::mutex _reqMutex;
 
 	std::mutex _processMutex;

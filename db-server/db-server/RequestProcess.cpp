@@ -1,4 +1,5 @@
 ﻿#include "RequestProcess.h"
+#include "Server.h"
 #include "db-system-utility.h"
 
 /*

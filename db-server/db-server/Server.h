@@ -4,15 +4,11 @@
 #include <mutex>
 #include <thread>
 #include <memory>
-#include <vector>
 #include <mysqlx/xdevapi.h>
 
-#include "NetworkData.h"
-#include "Session.h"
-#include "DBSession.h"
-#include "RequestProcess.h"
-#include "db-server-class-utility.h"
+struct SNetworkData;
 
+class RequestProcess;
 class DBSession;
 class Session;
 
@@ -49,7 +45,7 @@ private:
 	std::set<std::shared_ptr<Session>> _sessions;
 	std::shared_ptr<std::vector<std::thread>> _processThreads;
 
-	std::queue<SNetworkData> _reqQueue;
+	std::queue<SNetworkData*> _reqQueue;
 	std::mutex _reqMutex;
 
 	bool _isRunning;
