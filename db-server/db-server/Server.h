@@ -1,53 +1,53 @@
-﻿#ifndef SERVER_H
-#define	SERVER_H
-
+﻿#pragma once
 #include <boost/asio.hpp>
 #include <queue>
 #include <mutex>
 #include <thread>
 #include <memory>
-#include <vector>
-
 #include <mysqlx/xdevapi.h>
+
 #include "NetworkData.h"
-#include "RequestProcess.h"
+
+class RequestProcess;
+class DBSession;
+class Session;
 
 using io_context = boost::asio::io_context;
+using boost_socket = boost::asio::ip::tcp::socket;
+using boost_acceptor = boost::asio::ip::tcp::acceptor;
+using boost_ep = boost::asio::ip::tcp::endpoint;
+using boost_ec = boost::system::error_code;
 
-class Server
+class Session;
+
+class Server : public std::enable_shared_from_this<Server>
 {
 public:
-	Server(io_context& io, std::string id, std::string password);
+	Server(io_context& io, boost_acceptor& acceptor, std::string id, std::string password);
 	~Server();
 
-	bool IsInitValid() { return _dbSessionPtr != nullptr && _dbSchemaPtr != nullptr; }
-
 	void Start();
-	void Stop();
+	void Stop(); // Stop All Sessions
 
 	void AddReq(SNetworkData req);
 	void ProcessReq();
 
+	void AcceptClient();
+
 private:
 	std::string _dbUser;
 	std::string _dbPassword;
+	std::shared_ptr<DBSession> _dbSessionPtr;
 
 	io_context& _io;
-	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
-	std::shared_ptr<mysqlx::Schema> _dbSchemaPtr;
-	std::shared_ptr<RequestProcess> _reqProcessPtr;
+	boost_acceptor& _acceptor;
+
+	std::set<std::shared_ptr<Session>> _sessions;
+	std::shared_ptr<std::vector<std::thread>> _processThreads;
 
 	std::queue<SNetworkData> _reqQueue;
 	std::mutex _reqMutex;
-	std::condition_variable _reqCV;
 
 	bool _isRunning;
-
-	mysqlx::Table GetTable(std::string tableName)
-	{
-		return _dbSchemaPtr->getTable(tableName, true);
-	}
 };
-
-#endif // !SERVER_H
 

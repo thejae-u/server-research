@@ -1,9 +1,10 @@
-﻿#include <iostream>
+﻿#pragma once
+#include <iostream>
+
 #include "Server.h"
 
 int main()
 {
-	boost::asio::io_context io;
 	std::string id;
 	std::string password;
 
@@ -12,37 +13,28 @@ int main()
 	std::cout << "DB Password: ";
 	std::cin >> password;
 
-	std::unique_ptr<Server> server = std::make_unique<Server>(io, id, password); // io, db user, db password init
+	io_context io;
+	boost_acceptor acceptor(io, boost_ep(boost::asio::ip::tcp::v4(), 55000)); // acceptor init
+
+	std::shared_ptr<Server> server = std::make_shared<Server>(io, acceptor, id, password); // io, db user, db password init
 
 	server->Start(); // connect to db
 
-	if (server->IsInitValid()) // if connection is valid
+	std::size_t threadCount = static_cast<size_t>(std::thread::hardware_concurrency()) * 2; // get hardware concurrency * 2
+	std::vector<std::shared_ptr<std::thread>> ioThreads;
+
+	for (std::size_t i = 0; i < threadCount; i++) // create io threads
 	{
-		std::cout << "Server is running\n";
+		ioThreads.emplace_back(std::make_shared<std::thread>([&io]() { io.run(); }));
 	}
-	else
+	
+	for (auto& ioThread : ioThreads) // block until all threads are finished
 	{
-		std::cout << "Server failed to start\n";
-		return -1;
+		if(ioThread->joinable())
+			ioThread->join();
 	}
 
-	std::thread ioThread([&io]() { io.run(); }); // start io thread
-
-	// temp data for test 
-	SNetworkData loginReq;
-	loginReq.type = ENetworkType::LOGIN;
-	loginReq.data = "alice,password1";
-	loginReq.bufSize = loginReq.data.size();
-	server->AddReq(loginReq);
-
-	SNetworkData registerReq;
-	registerReq.type = ENetworkType::REGISTER;
-	registerReq.data = "jaeu,hellojaeu";
-	registerReq.bufSize = registerReq.data.size();
-	server->AddReq(registerReq);
-
-	if (ioThread.joinable())
-		ioThread.join();
+	acceptor.close(); // close acceptor
 
 	return 0;
 }

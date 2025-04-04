@@ -1,5 +1,11 @@
 # MMO Hybrid-Lockstep Synchronization Research
 
-# OS : Windows
-
-# DBMS : MySQL
+### Contents
+- OS : Windows
+- Language : C++
+- Using Library
+  - Network : Boost.Asio
+  - Serialization : Protobuf
+  - Database : SQL Connector
+- IDE : Rider, Visual Studio
+- Game Engine : Unity6

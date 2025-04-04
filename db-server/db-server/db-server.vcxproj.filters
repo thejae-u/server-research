@@ -24,6 +24,12 @@
     <ClCompile Include="RequestProcess.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Session.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="DBSession.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server.h">
@@ -36,6 +42,15 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="db-system-utility.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Session.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="DBSession.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkData.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
