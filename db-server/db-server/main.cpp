@@ -15,7 +15,7 @@ int main()
 
 	io_context io;
 	boost_acceptor acceptor(io, boost_ep(boost::asio::ip::tcp::v4(), 55000)); // acceptor init
-
+	
 	std::shared_ptr<Server> server = std::make_shared<Server>(io, acceptor, id, password); // io, db user, db password init
 
 	server->Start(); // connect to db

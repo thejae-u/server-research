@@ -2,13 +2,13 @@
 #include "RequestProcess.h"
 #include "db-server-class-utility.h"
 
-DBSession::DBSession(io_context& io, std::string ip, std::string id, std::string password)
+DBSession::DBSession(io_context& io, const std::string& ip, const std::string& id, const std::string& password)
 	: _io(io), _isRunning(false)
 {
 	try
 	{
-		auto session = std::make_shared<mysqlx::Session>(mysqlx::getSession(ip, 33060, id, password)); // DBMS connection
-		auto db = std::make_shared<mysqlx::Schema>(session->getSchema("mmo_server_data"));
+		const auto session = std::make_shared<mysqlx::Session>(mysqlx::getSession(ip, 33060, id, password)); // DBMS connection
+		const auto db = std::make_shared<mysqlx::Schema>(session->getSchema("mmo_server_data"));
 
 		_dbSessionPtr = session;
 		_dbSchemaPtr = db;
@@ -50,7 +50,7 @@ void DBSession::Stop()
 	_dbSessionPtr->close();
 }
 
-void DBSession::AddReq(SNetworkData req)
+void DBSession::AddReq(const std::shared_ptr<SNetworkData>& req)
 {
 	std::lock_guard<std::mutex> lock(_reqMutex);
 	_reqQueue.push(req);
@@ -66,7 +66,7 @@ void DBSession::ProcessReq()
 		return;
 	}
 	
-	SNetworkData req = _reqQueue.front();
+	const std::shared_ptr<SNetworkData> req = _reqQueue.front();
 	_reqQueue.pop(); // Remove from Queue
 
 	/*
@@ -74,35 +74,35 @@ void DBSession::ProcessReq()
 	*/
 
 	std::shared_ptr<std::vector<std::string>> splittedData =
-		std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req.data)); // split data by ','
+		std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req->data)); // split data by ','
 
 	ELastErrorCode ec = ELastErrorCode::UNKNOWN_ERROR;
 
-	switch (req.type)
+	switch (req->type)
 	{
 	case ENetworkType::LOGIN:
 		{
-			std::string userName = (*splittedData)[0];
+			std::lock_guard<std::mutex> loginLock(_processMutex);
+			
+			auto userName = std::make_shared<std::string>((*splittedData)[0]);
 			std::string userPassword = (*splittedData)[1];
 
-			std::lock_guard<std::mutex> lock(_processMutex);
+			ec = _reqProcessPtr->Login({ *userName, userPassword }); // Login transaction
 
-			ec = _reqProcessPtr->Login({ userName, userPassword });
-
-			std::string serverLog;
-			std::string userLog;
+			auto serverLog = std::make_shared<std::string>();
+			auto userLog = std::make_shared<std::string>();
 
 			if (ec == ELastErrorCode::SUCCESS)
 			{
 				// Send Logic Server Connection
-				serverLog = "User " + userName + " Login Success";
-				userLog = "Login Success";
+				*serverLog = "User " + *userName + " Login Success";
+				*userLog = "Login Success";
 			}
 			else
 			{
 				// Send Error Message
-				serverLog = "User " + userName + " Login Failed";
-				userLog = "Login Failed";
+				*serverLog = "User " + *userName + " Login Failed";
+				*userLog = "Login Failed";
 			}
 		
 			boost::asio::post(_io, [this, serverLog]() { _reqProcessPtr->SaveServerLog(serverLog); });

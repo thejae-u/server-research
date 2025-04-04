@@ -4,7 +4,7 @@
 #include "RequestProcess.h"
 #include "db-server-class-utility.h"
 
-Server::Server(io_context& io, boost_acceptor& acceptor, std::string id, std::string password) : _io(io), _acceptor(acceptor), _isRunning(false)
+Server::Server(io_context& io, boost_acceptor& acceptor, const std::string& id, const std::string& password) : _io(io), _acceptor(acceptor), _isRunning(false)
 {
 	_dbUser = id;
 	_dbPassword = password;
@@ -45,9 +45,9 @@ void Server::AcceptClient() // Accept Login or Logic Sessions
 {
 	auto self = shared_from_this();
 
-	std::shared_ptr<Session> newSessionPtr = std::make_shared<Session>(_io, self, _sessions.size());
+	auto newSessionPtr = std::make_shared<Session>(_io, self, _sessions.size());
 
-	_acceptor.async_accept(newSessionPtr->GetSocket(), [this, self, newSessionPtr](const boost_ec& ec)
+	_acceptor.async_accept(newSessionPtr->GetSocket(), [this, newSessionPtr](const boost_ec& ec)
 		{
 			if (!ec)
 			{
@@ -78,7 +78,7 @@ void Server::Stop()
 	_sessions.clear();
 }
 
-void Server::AddReq(SNetworkData req) // Add Request to Serve
+void Server::AddReq(const std::shared_ptr<SNetworkData>& req) // Add Request to Serve
 {
 	std::lock_guard<std::mutex> lock(_reqMutex);
 	_reqQueue.push(req);
@@ -96,7 +96,7 @@ void Server::ProcessReq()
 	}
 	else
 	{
-		SNetworkData req = _reqQueue.front();
+		const std::shared_ptr<SNetworkData> req = _reqQueue.front();
 		_reqQueue.pop();
 
 		_dbSessionPtr->AddReq(req);

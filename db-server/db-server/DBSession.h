@@ -15,12 +15,12 @@ using io_context = boost::asio::io_context;
 class DBSession : public std::enable_shared_from_this<DBSession>
 {
 public:
-	DBSession(io_context& io, std::string ip, std::string id, std::string password);
+	DBSession(io_context& io, const std::string& ip, const std::string& id, const std::string& password);
 	~DBSession();
 
 	void Stop();
 
-	void AddReq(SNetworkData req);
+	void AddReq(const std::shared_ptr<SNetworkData>& req);
 	void ProcessReq();
 	
 	bool IsConnected() const; 
@@ -32,7 +32,7 @@ private:
 	std::shared_ptr<mysqlx::Schema> _dbSchemaPtr;
 	std::shared_ptr<RequestProcess> _reqProcessPtr;
 
-	std::queue<SNetworkData> _reqQueue;
+	std::queue<std::shared_ptr<SNetworkData>> _reqQueue;
 	std::mutex _reqMutex;
 
 	std::mutex _processMutex;

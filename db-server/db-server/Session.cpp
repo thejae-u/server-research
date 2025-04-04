@@ -3,7 +3,7 @@
 #include "db-system-utility.h"
 #include "NetworkData.h"
 
-Session::Session(io_context& io, std::shared_ptr<Server> serverPtr, std::size_t sessionId)
+Session::Session(io_context& io, const std::shared_ptr<Server>& serverPtr, const std::size_t sessionId)
 	: _io(io), _serverPtr(serverPtr), _sessionID(sessionId)
 {
 	_socket = std::make_shared<boost_socket>(io); // empty socket
@@ -29,10 +29,12 @@ void Session::Start()
 		req.data = "alice,1234";
 		req.bufSize = req.data.size();
 
-		_serverPtr->AddReq(req);
+		auto reqPtr = std::make_shared<SNetworkData>(req);
+		
+		_serverPtr->AddReq(reqPtr);
 	}
 
-	std::cout << "elapsed time: " << System_Util::EndTime(start).count() << "\n";
+	std::cout << "elapsed time: " << System_Util::EndTime(start).count() << "ms" <<  "\n";
 }
 
 void Session::Stop()

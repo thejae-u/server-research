@@ -8,7 +8,7 @@
 	만약 반복적으로 사용하는 함수 (유저 아이디 조회 등)이 있다면 트랜잭션을 다시 시작 하지 않도록 구현하여야 함
 */
 
-RequestProcess::RequestProcess(std::shared_ptr<mysqlx::Session> dbSessionPtr, std::shared_ptr<mysqlx::Schema> dbPtr)
+RequestProcess::RequestProcess(const std::shared_ptr<mysqlx::Session>& dbSessionPtr, const std::shared_ptr<mysqlx::Schema>& dbPtr)
 	: _dbPtr(dbPtr), _dbSessionPtr(dbSessionPtr)
 {
 }
@@ -17,9 +17,9 @@ RequestProcess::~RequestProcess()
 {
 }
 
-ELastErrorCode RequestProcess::RetrieveUserId(std::vector<std::string> userName)
+ELastErrorCode RequestProcess::RetrieveUserId(const std::shared_ptr<std::vector<std::string>>& userName)
 {
-	assert(!userName.empty());
+	assert(!userName->empty());
 	std::lock_guard<std::mutex> lock(_transactionMutex);
 
 	// select Users
@@ -27,7 +27,7 @@ ELastErrorCode RequestProcess::RetrieveUserId(std::vector<std::string> userName)
 	{
 		_dbSessionPtr->startTransaction();
 
-		auto data = GetTable(USER_TABLE).select("uuid").where("user_name = :name").bind("name", userName[0]).execute();
+		auto data = GetTable(USER_TABLE).select("uuid").where("user_name = :name").bind("name", (*userName)[0]).execute();
 
 		if (data.count() == 0)
 		{
@@ -45,7 +45,7 @@ ELastErrorCode RequestProcess::RetrieveUserId(std::vector<std::string> userName)
 	return ELastErrorCode::USER_ALREADY_EXIST;
 }
 
-ELastErrorCode RequestProcess::GetUserID(std::string userName, int& uuid)
+ELastErrorCode RequestProcess::GetUserId(const std::shared_ptr<std::string>& userName, std::shared_ptr<int> uuid)
 {
 	std::lock_guard<std::mutex> lock(_transactionMutex);
 
@@ -53,7 +53,7 @@ ELastErrorCode RequestProcess::GetUserID(std::string userName, int& uuid)
 	{
 		_dbSessionPtr->startTransaction();
 
-		auto data = GetTable(USER_TABLE).select("uuid").where("user_name = :name").bind("name", userName).execute();
+		auto data = GetTable(USER_TABLE).select("uuid").where("user_name = :name").bind("name", *userName).execute();
 
 		if (data.count() == 0)
 		{
@@ -61,7 +61,7 @@ ELastErrorCode RequestProcess::GetUserID(std::string userName, int& uuid)
 			return ELastErrorCode::USER_NOT_FOUND;
 		}
 
-		uuid = data.fetchOne();
+		uuid = std::make_shared<int>(data.fetchOne());
 		_dbSessionPtr->commit();
 
 		return ELastErrorCode::SUCCESS;
@@ -73,7 +73,7 @@ ELastErrorCode RequestProcess::GetUserID(std::string userName, int& uuid)
 	}
 }
 
-ELastErrorCode RequestProcess::Login(std::vector<std::string> loginData)
+ELastErrorCode RequestProcess::Login(const std::vector<std::string>& loginData)
 {
 	assert(loginData.size() == 2);
 	std::lock_guard<std::mutex> lock(_transactionMutex);
@@ -106,9 +106,9 @@ ELastErrorCode RequestProcess::Login(std::vector<std::string> loginData)
 	return ELastErrorCode::SUCCESS;
 }
 
-ELastErrorCode RequestProcess::Register(std::vector<std::string> registerData)
+ELastErrorCode RequestProcess::Register(const std::shared_ptr<std::vector<std::string>>& registerData)
 {
-	assert(registerData.size() == 2);
+	assert(registerData->size() == 2);
 	std::lock_guard<std::mutex> lock(_transactionMutex);
 
 	try
@@ -117,7 +117,7 @@ ELastErrorCode RequestProcess::Register(std::vector<std::string> registerData)
 
 		GetTable(USER_TABLE)
 			.insert("user_name", "user_password")
-			.values(registerData[0], registerData[1])
+			.values((*registerData)[0], (*registerData)[1])
 			.execute();
 
 		_dbSessionPtr->commit();
@@ -131,7 +131,7 @@ ELastErrorCode RequestProcess::Register(std::vector<std::string> registerData)
 	return ELastErrorCode::SUCCESS;
 }
 
-ELastErrorCode RequestProcess::SaveServerLog(std::string log)
+ELastErrorCode RequestProcess::SaveServerLog(const std::shared_ptr<std::string>& log)
 {
 	std::lock_guard<std::mutex> lock(_transactionMutex);
 
@@ -139,7 +139,7 @@ ELastErrorCode RequestProcess::SaveServerLog(std::string log)
 	{
 		_dbSessionPtr->startTransaction();
 
-		GetTable("server_log").insert("log_text").values(log).execute(); // insert log to server_log table
+		GetTable("server_log").insert("log_text").values(*log).execute(); // insert log to server_log table
 
 		_dbSessionPtr->commit();
 	}
@@ -149,11 +149,11 @@ ELastErrorCode RequestProcess::SaveServerLog(std::string log)
 		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
-	std::cout << System_Util::GetNowTime() << " " << log << "\n";
+	std::cout << System_Util::GetNowTime() << " " << *log << "\n";
 	return ELastErrorCode::SUCCESS;
 }
 
-ELastErrorCode RequestProcess::SaveUserLog(std::string userName, std::string log)
+ELastErrorCode RequestProcess::SaveUserLog(const std::shared_ptr<std::string>& userName, const std::shared_ptr<std::string>& log)
 {
 	std::lock_guard<std::mutex> lock(_transactionMutex);
 
@@ -161,9 +161,9 @@ ELastErrorCode RequestProcess::SaveUserLog(std::string userName, std::string log
 	{
 		_dbSessionPtr->startTransaction();
 
-		auto uuid = PrGetUserId(userName); // check user exist
+		const auto uuid = PrGetUserId(userName); // check user exist
 
-		GetTable("user_log").insert("uuid", "log_text").values(uuid, log).execute(); // insert log to user_log table
+		GetTable("user_log").insert("uuid", "log_text").values(uuid, *log).execute(); // insert log to user_log table
 
 		_dbSessionPtr->commit();
 	}
@@ -173,18 +173,18 @@ ELastErrorCode RequestProcess::SaveUserLog(std::string userName, std::string log
 		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
-	std::cout << System_Util::GetNowTime() << " " << userName << " user log saved\n";
+	std::cout << std::this_thread::get_id() << " : " << System_Util::GetNowTime() << " " << *userName << " user log saved\n";
 
 	return ELastErrorCode::SUCCESS;
 }
 
 // Private Function Area
 
-int RequestProcess::PrGetUserId(std::string userName)
+int RequestProcess::PrGetUserId(const std::shared_ptr<std::string>& userName) const
 {
 	try
 	{
-		auto data = GetTable(USER_TABLE).select("uuid").where("user_name = :name").bind("name", userName).execute();
+		auto data = GetTable(USER_TABLE).select("uuid").where("user_name = :name").bind("name", *userName).execute();
 		if (data.count() == 0)
 		{
 			return -1;

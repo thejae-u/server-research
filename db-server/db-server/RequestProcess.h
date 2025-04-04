@@ -6,10 +6,8 @@
 
 #define USER_TABLE "users"
 
-#include "NetworkData.h"
-
 /*
-	Pr태	그가 붙은 함수는 트랜잭션 내에서 사용하는 함수로 외부에서 호출할 수 없음
+	Pr태그가 붙은 함수는 트랜잭션 내에서 사용하는 함수로 외부에서 호출할 수 없음
 	(Private Function)
 */
 
@@ -26,25 +24,24 @@ enum class ELastErrorCode
 class RequestProcess
 {
 public:
-	RequestProcess(std::shared_ptr<mysqlx::Session> dbSessionPtr, std::shared_ptr<mysqlx::Schema> dbPtr);
+	RequestProcess(const std::shared_ptr<mysqlx::Session>& dbSessionPtr, const std::shared_ptr<mysqlx::Schema>& dbPtr);
 	~RequestProcess();
 
-	ELastErrorCode RetrieveUserId(std::vector<std::string> userName);
-	ELastErrorCode Login(std::vector<std::string> loginData); // Return Logic Server Connection
-	ELastErrorCode Register(std::vector<std::string> registerData);
-	ELastErrorCode SaveServerLog(std::string log);
-	ELastErrorCode SaveUserLog(std::string userName, std::string log);
-	ELastErrorCode GetUserID(std::string userName, int& uuid);
+	ELastErrorCode RetrieveUserId(const std::shared_ptr<std::vector<std::string>>& userName);
+	ELastErrorCode Login(const std::vector<std::string>& loginData); // Return Logic Server Connection
+	ELastErrorCode Register(const std::shared_ptr<std::vector<std::string>>& registerData);
+	ELastErrorCode SaveServerLog(const std::shared_ptr<std::string>& log);
+	ELastErrorCode SaveUserLog(const std::shared_ptr<std::string>& userName, const std::shared_ptr<std::string>& log);
+	ELastErrorCode GetUserId(const std::shared_ptr<std::string>& userName, std::shared_ptr<int> uuid);
 
 private:
 	std::shared_ptr<mysqlx::Schema> _dbPtr;
 	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
 	std::mutex _transactionMutex;
 
-	int PrGetUserId(std::string userName);
-	
+	int PrGetUserId(const std::shared_ptr<std::string>& userName) const;
 
-	mysqlx::Table GetTable(std::string tableName)
+	mysqlx::Table GetTable(const std::string& tableName) const
 	{
 		return _dbPtr->getTable(tableName, true);
 	}
