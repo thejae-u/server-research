@@ -65,26 +65,25 @@ void DBSession::ProcessReq()
 		boost::asio::post(_io, [this]() { ProcessReq(); }); // Restart ProcessReq Async
 		return;
 	}
-	else
+	
+	SNetworkData req = _reqQueue.front();
+	_reqQueue.pop(); // Remove from Queue
+
+	/*
+		Mutex can't be locked under this line
+	*/
+
+	std::shared_ptr<std::vector<std::string>> splittedData =
+		std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req.data)); // split data by ','
+
+	ELastErrorCode ec = ELastErrorCode::UNKNOWN_ERROR;
+
+	switch (req.type)
 	{
-		SNetworkData req = _reqQueue.front();
-		_reqQueue.pop(); // Remove from Queue
-
-		/*
-			Mutex can't be locked under this line
-		*/
-
-		std::shared_ptr<std::vector<std::string>> splitedData =
-			std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req.data)); // split data by ','
-
-		ELastErrorCode ec = ELastErrorCode::UNKNOWN_ERROR;
-
-		switch (req.type)
+	case ENetworkType::LOGIN:
 		{
-		case ENetworkType::LOGIN:
-		{
-			std::string userName = (*splitedData)[0];
-			std::string userPassword = (*splitedData)[1];
+			std::string userName = (*splittedData)[0];
+			std::string userPassword = (*splittedData)[1];
 
 			std::lock_guard<std::mutex> lock(_processMutex);
 
@@ -110,18 +109,17 @@ void DBSession::ProcessReq()
 			boost::asio::post(_io, [this, userName, userLog]() { _reqProcessPtr->SaveUserLog(userName, userLog); });
 			break;
 		}
-		case ENetworkType::REGISTER:
+	case ENetworkType::REGISTER:
 		{
 			break;
 		}
 
 		// Other cases are not implemented
-		default:
-			break;
-		}
-
-		boost::asio::post(_io, [this]() { ProcessReq(); }); // Restart ProcessReq Async
+	default:
+		break;
 	}
+
+	boost::asio::post(_io, [this]() { ProcessReq(); }); // Restart ProcessReq Async
 }
 
 bool DBSession::IsConnected() const

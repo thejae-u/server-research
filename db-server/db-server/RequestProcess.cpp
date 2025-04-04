@@ -17,9 +17,9 @@ RequestProcess::~RequestProcess()
 {
 }
 
-ELastErrorCode RequestProcess::RetreiveUserID(std::vector<std::string> userName)
+ELastErrorCode RequestProcess::RetrieveUserId(std::vector<std::string> userName)
 {
-	assert(userName.size() != 0);
+	assert(!userName.empty());
 	std::lock_guard<std::mutex> lock(_transactionMutex);
 
 	// select Users
@@ -71,8 +71,6 @@ ELastErrorCode RequestProcess::GetUserID(std::string userName, int& uuid)
 		std::cerr << "Error: " << err.what() << "\n";
 		return ELastErrorCode::UNKNOWN_ERROR;
 	}
-
-	return ELastErrorCode::UNKNOWN_ERROR;
 }
 
 ELastErrorCode RequestProcess::Login(std::vector<std::string> loginData)
@@ -163,7 +161,7 @@ ELastErrorCode RequestProcess::SaveUserLog(std::string userName, std::string log
 	{
 		_dbSessionPtr->startTransaction();
 
-		auto uuid = PrGetuserID(userName); // check user exist
+		auto uuid = PrGetUserId(userName); // check user exist
 
 		GetTable("user_log").insert("uuid", "log_text").values(uuid, log).execute(); // insert log to user_log table
 
@@ -182,7 +180,7 @@ ELastErrorCode RequestProcess::SaveUserLog(std::string userName, std::string log
 
 // Private Function Area
 
-int RequestProcess::PrGetuserID(std::string userName)
+int RequestProcess::PrGetUserId(std::string userName)
 {
 	try
 	{
@@ -199,5 +197,4 @@ int RequestProcess::PrGetuserID(std::string userName)
 		std::cerr << "Error: " << err.what() << "\n";
 		return -1;
 	}
-	return -1;
 }

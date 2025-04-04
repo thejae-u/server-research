@@ -20,14 +20,14 @@ namespace System_Util
 		return ss.str();
 	}
 
-	void static StartTime(std::chrono::time_point<std::chrono::system_clock>& start)
+	static void StartTime(std::chrono::time_point<std::chrono::system_clock>& start)
 	{
 		start = std::chrono::system_clock::now();
 	}
 
-	std::chrono::milliseconds static EndTime(std::chrono::time_point<std::chrono::system_clock>& start)
+	std::chrono::milliseconds static EndTime(const std::chrono::time_point<std::chrono::system_clock>& start)
 	{
-		auto end = std::chrono::system_clock::now();
+		const auto end = std::chrono::system_clock::now();
 		return std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 	}
 }

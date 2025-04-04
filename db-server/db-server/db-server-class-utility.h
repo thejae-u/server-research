@@ -10,15 +10,15 @@ namespace Server_Util
 {
 	std::vector<std::string> static SplitString(std::string data)
 	{
-		std::vector<std::string> splitedData;
+		std::vector<std::string> splitData;
 		std::string buffer;
 		std::istringstream iss(data);
 
 		while (std::getline(iss, buffer, ','))
 		{
-			splitedData.push_back(buffer);
+			splitData.push_back(buffer);
 		}
 
-		return splitedData;
+		return splitData;
 	}
 }

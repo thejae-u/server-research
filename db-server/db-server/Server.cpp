@@ -78,7 +78,7 @@ void Server::Stop()
 	_sessions.clear();
 }
 
-void Server::AddReq(SNetworkData req) // Add Request to Server
+void Server::AddReq(SNetworkData req) // Add Request to Serve
 {
 	std::lock_guard<std::mutex> lock(_reqMutex);
 	_reqQueue.push(req);

@@ -29,7 +29,7 @@ public:
 	RequestProcess(std::shared_ptr<mysqlx::Session> dbSessionPtr, std::shared_ptr<mysqlx::Schema> dbPtr);
 	~RequestProcess();
 
-	ELastErrorCode RetreiveUserID(std::vector<std::string> userName);
+	ELastErrorCode RetrieveUserId(std::vector<std::string> userName);
 	ELastErrorCode Login(std::vector<std::string> loginData); // Return Logic Server Connection
 	ELastErrorCode Register(std::vector<std::string> registerData);
 	ELastErrorCode SaveServerLog(std::string log);
@@ -41,7 +41,7 @@ private:
 	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
 	std::mutex _transactionMutex;
 
-	int PrGetuserID(std::string userName);
+	int PrGetUserId(std::string userName);
 	
 
 	mysqlx::Table GetTable(std::string tableName)

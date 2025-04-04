@@ -3,8 +3,8 @@
 #include "db-system-utility.h"
 #include "NetworkData.h"
 
-Session::Session(io_context& io, std::shared_ptr<Server> serverPtr, std::size_t sessionID)
-	: _io(io), _serverPtr(serverPtr), _sessionID(sessionID)
+Session::Session(io_context& io, std::shared_ptr<Server> serverPtr, std::size_t sessionId)
+	: _io(io), _serverPtr(serverPtr), _sessionID(sessionId)
 {
 	_socket = std::make_shared<boost_socket>(io); // empty socket
 }

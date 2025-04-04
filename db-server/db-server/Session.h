@@ -23,10 +23,10 @@ enum class ESessionReq
 class Session : public std::enable_shared_from_this<Session>
 {
 public:
-	Session(io_context& io, std::shared_ptr<Server> serverPtr, std::size_t sessionID);
+	Session(io_context& io, std::shared_ptr<Server> serverPtr, std::size_t sessionId);
 	~Session();
 
-	boost_socket& GetSocket() { return *_socket; }
+	boost_socket& GetSocket() const { return *_socket; }
 
 	void Start();
 	void Stop();
@@ -36,7 +36,6 @@ public:
 
 private:
 	std::size_t _sessionID;
-
 	io_context& _io;
 
 	std::shared_ptr<Server> _serverPtr;

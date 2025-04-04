@@ -1,10 +1,9 @@
 ﻿#pragma once
-#include <memory>
 #include <mysqlx/xdevapi.h>
 #include <boost/asio.hpp>
 #include <queue>
 #include <mutex>
-#include <thread>
+#include <memory>
 
 #include "NetworkData.h"
 
@@ -27,7 +26,7 @@ public:
 	bool IsConnected() const; 
 
 private:
-	io_context& _io; // io context onwer by Server main thread
+	io_context& _io; // io context owner by Server main thread
 
 	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
 	std::shared_ptr<mysqlx::Schema> _dbSchemaPtr;
