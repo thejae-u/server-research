@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "NetworkData.h"
+#include <condition_variable>
 
 class RequestProcess;
 class Session;
@@ -15,7 +16,8 @@ using io_context = boost::asio::io_context;
 class DBSession : public std::enable_shared_from_this<DBSession>
 {
 public:
-	DBSession(io_context& io, const std::string& ip, const std::string& id, const std::string& password);
+	DBSession(io_context& io, const std::size_t threadCount,
+		const std::string& ip, const std::string& id, const std::string& password);
 	~DBSession();
 
 	void Stop();
@@ -36,6 +38,12 @@ private:
 	std::mutex _reqMutex;
 
 	std::mutex _processMutex;
+	std::condition_variable _reqCondVar;
+	std::condition_variable _reqProcessCondVar;
+
+	std::size_t _processedCount;
+	std::mutex _processedMutex;
+	std::condition_variable _processedCondVar;
 
 	bool _isRunning;
 };

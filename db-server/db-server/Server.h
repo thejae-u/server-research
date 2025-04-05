@@ -23,8 +23,11 @@ class Session;
 class Server : public std::enable_shared_from_this<Server>
 {
 public:
-	Server(io_context& io, boost_acceptor& acceptor, const std::string& id, const std::string& password);
+	Server(io_context& io, boost_acceptor& acceptor,const std::size_t& threadCount,
+		const std::string& id, const std::string& password);
 	~Server();
+
+	bool IsRunning() const { return _isRunning; }
 
 	void Start();
 	void Stop(); // Stop All Sessions
@@ -45,8 +48,12 @@ private:
 	std::set<std::shared_ptr<Session>> _sessions;
 	std::shared_ptr<std::vector<std::thread>> _processThreads;
 
+	std::size_t _dbAvailableThreadCount;
+	std::size_t _networkAvailableThreadCount;
+	
 	std::queue<std::shared_ptr<SNetworkData>> _reqQueue;
 	std::mutex _reqMutex;
+	std::condition_variable _reqCondVar;
 
 	bool _isRunning;
 };

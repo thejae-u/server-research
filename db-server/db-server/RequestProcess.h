@@ -3,6 +3,7 @@
 #include <memory>
 #include <mysqlx/xdevapi.h>
 #include <mutex>
+#include <chrono>
 
 #define USER_TABLE "users"
 
@@ -10,6 +11,8 @@
 	Pr태그가 붙은 함수는 트랜잭션 내에서 사용하는 함수로 외부에서 호출할 수 없음
 	(Private Function)
 */
+
+using time_point = std::chrono::system_clock::time_point;
 
 enum class ELastErrorCode
 {
@@ -38,11 +41,13 @@ private:
 	std::shared_ptr<mysqlx::Schema> _dbPtr;
 	std::shared_ptr<mysqlx::Session> _dbSessionPtr;
 	std::mutex _transactionMutex;
+	mutable std::mutex _tableLock;
 
 	int PrGetUserId(const std::shared_ptr<std::string>& userName) const;
 
 	mysqlx::Table GetTable(const std::string& tableName) const
 	{
+		std::unique_lock<std::mutex> lock(_tableLock);
 		return _dbPtr->getTable(tableName, true);
 	}
 };

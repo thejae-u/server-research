@@ -15,13 +15,15 @@ int main()
 
 	io_context io;
 	boost_acceptor acceptor(io, boost_ep(boost::asio::ip::tcp::v4(), 55000)); // acceptor init
-	
-	std::shared_ptr<Server> server = std::make_shared<Server>(io, acceptor, id, password); // io, db user, db password init
+	const std::size_t threadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 20; // get hardware concurrency * 10
 
+	// other threads are spare threads
+	
+	auto server = std::make_shared<Server>(io, acceptor, threadCount, id, password); // io, db user, db password init
 	server->Start(); // connect to db
 
-	std::size_t threadCount = static_cast<size_t>(std::thread::hardware_concurrency()) * 2; // get hardware concurrency * 2
 	std::vector<std::shared_ptr<std::thread>> ioThreads;
+	ioThreads.reserve(threadCount);
 
 	for (std::size_t i = 0; i < threadCount; i++) // create io threads
 	{

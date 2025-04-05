@@ -4,10 +4,15 @@
 #include "RequestProcess.h"
 #include "db-server-class-utility.h"
 
-Server::Server(io_context& io, boost_acceptor& acceptor, const std::string& id, const std::string& password) : _io(io), _acceptor(acceptor), _isRunning(false)
+Server::Server(io_context& io, boost_acceptor& acceptor, const std::size_t& threadCount,
+	const std::string& id, const std::string& password)
+: _io(io), _acceptor(acceptor), _isRunning(false)
 {
 	_dbUser = id;
 	_dbPassword = password;
+	
+	_dbAvailableThreadCount = threadCount / 2; // DB Thread Count
+	_networkAvailableThreadCount = (threadCount - _dbAvailableThreadCount) / 2; // Network Thread Count
 }
 
 Server::~Server()
@@ -28,7 +33,7 @@ Server::~Server()
 
 void Server::Start()
 {
-	_dbSessionPtr = std::make_shared<DBSession>(_io, "localhost", _dbUser, _dbPassword);
+	_dbSessionPtr = std::make_shared<DBSession>(_io, _dbAvailableThreadCount, "localhost", _dbUser, _dbPassword);
 	if (!_dbSessionPtr->IsConnected()) // DBMS Connection Failed
 	{
 		std::cerr << "DB Connection Failed\n";
@@ -38,7 +43,8 @@ void Server::Start()
 	_isRunning = true;
 	AcceptClient();
 
-	boost::asio::post(_io, [this]() { ProcessReq();	});
+	for (std::size_t i = 0; i < _networkAvailableThreadCount; ++i) // make process threads by thread count
+		boost::asio::post(_io, [this]() { ProcessReq();	});
 }
 
 void Server::AcceptClient() // Accept Login or Logic Sessions
@@ -80,27 +86,31 @@ void Server::Stop()
 
 void Server::AddReq(const std::shared_ptr<SNetworkData>& req) // Add Request to Serve
 {
-	std::lock_guard<std::mutex> lock(_reqMutex);
-	_reqQueue.push(req);
+	{
+		std::unique_lock<std::mutex> lock(_reqMutex);
+		_reqCondVar.wait(lock, [this]() { return _isRunning; });
+		
+		_reqQueue.push(req);
+	}
+
+	_reqCondVar.notify_one(); // Notify ProcessReq
 }
 
-void Server::ProcessReq() 
+void Server::ProcessReq()
 {
-	std::lock_guard<std::mutex> lock(_reqMutex);
+	std::shared_ptr<SNetworkData> req;
 
-	if (_reqQueue.empty())
 	{
-		boost::asio::post(_io, [this]() { ProcessReq(); });
+		std::unique_lock<std::mutex> lock(_reqMutex);
+		_reqCondVar.wait(lock, [this]() { return !_reqQueue.empty() || !_isRunning; });
 
-		return;
-	}
-	else
-	{
-		const std::shared_ptr<SNetworkData> req = _reqQueue.front();
+		if (!_isRunning && _reqQueue.empty())
+			return;
+
+		req = _reqQueue.front();
 		_reqQueue.pop();
-
-		_dbSessionPtr->AddReq(req);
-
-		boost::asio::post(_io, [this]() { ProcessReq(); });
 	}
+	
+	_dbSessionPtr->AddReq(req);
+	boost::asio::post(_io, [this]() { ProcessReq(); });
 }

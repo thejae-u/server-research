@@ -73,15 +73,12 @@ ELastErrorCode RequestProcess::GetUserId(const std::shared_ptr<std::string>& use
 	}
 }
 
-ELastErrorCode RequestProcess::Login(const std::vector<std::string>& loginData)
+ELastErrorCode RequestProcess::Login(const std::vector<std::string>& loginData) 
 {
 	assert(loginData.size() == 2);
-	std::lock_guard<std::mutex> lock(_transactionMutex);
-
+	
 	try
 	{
-		_dbSessionPtr->startTransaction();
-
 		auto data = GetTable(USER_TABLE)
 			.select("uuid")
 			.where("user_name = :name AND user_password = SHA2(:pass, 256)")
@@ -91,11 +88,8 @@ ELastErrorCode RequestProcess::Login(const std::vector<std::string>& loginData)
 
 		if (data.count() == 0)
 		{
-			_dbSessionPtr->rollback();
 			return ELastErrorCode::INCORRECT;
 		}
-
-		_dbSessionPtr->commit();
 	}
 	catch (const mysqlx::Error& err)
 	{
@@ -173,7 +167,7 @@ ELastErrorCode RequestProcess::SaveUserLog(const std::shared_ptr<std::string>& u
 		return ELastErrorCode::UNKNOWN_ERROR;
 	}
 
-	std::cout << std::this_thread::get_id() << " : " << System_Util::GetNowTime() << " " << *userName << " user log saved\n";
+	std::cout << System_Util::GetNowTime() << " " << *userName << " user log saved\n";
 
 	return ELastErrorCode::SUCCESS;
 }
@@ -184,7 +178,10 @@ int RequestProcess::PrGetUserId(const std::shared_ptr<std::string>& userName) co
 {
 	try
 	{
-		auto data = GetTable(USER_TABLE).select("uuid").where("user_name = :name").bind("name", *userName).execute();
+		std::unique_lock<std::mutex> lock(_tableLock);
+		auto table = _dbPtr->getTable(USER_TABLE, true);
+		
+		auto data = table.select("uuid").where("user_name = :name").bind("name", *userName).execute();
 		if (data.count() == 0)
 		{
 			return -1;

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <cstddef>
+#include <chrono>
 
 extern "C" {
 
@@ -19,8 +20,14 @@ extern "C" {
         ACCESS,
         LOGOUT,
 
+        MOVE = 100,
+        ATTACK,
+        DROP_ITEM,
+        USE_ITEM,
+        USE_SKILL,
+
 		// System Data Type
-        SYSTEM_OPTION_1 = 100,
+        SYSTEM_OPTION_1 = 200,
 		SYSTEM_OPTION_2,
 		SYSTEM_OPTION_3,
 
@@ -43,6 +50,7 @@ extern "C" {
         ENetworkType type;
         std::size_t bufSize;
         std::string data;
+        std::chrono::system_clock::time_point createdAt;
     };
 } // extern "C"
 

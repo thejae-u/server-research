@@ -17,24 +17,6 @@ Session::~Session()
 void Session::Start()
 {
 	// start session
-	std::cout << "Session Started : " << _socket->remote_endpoint().address() << "\n";
-
-	std::chrono::time_point<std::chrono::system_clock> start; // System_Util::StartTime()
-	System_Util::StartTime(start);
-
-	for (auto i = 0; i < 100; ++i)
-	{
-		SNetworkData req;
-		req.type = ENetworkType::LOGIN;
-		req.data = "alice,1234";
-		req.bufSize = req.data.size();
-
-		auto reqPtr = std::make_shared<SNetworkData>(req);
-		
-		_serverPtr->AddReq(reqPtr);
-	}
-
-	std::cout << "elapsed time: " << System_Util::EndTime(start).count() << "ms" <<  "\n";
 }
 
 void Session::Stop()
