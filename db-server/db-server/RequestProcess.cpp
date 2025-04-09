@@ -2,12 +2,6 @@
 #include "Server.h"
 #include "db-system-utility.h"
 
-/*
-	DB Transaction 단위로 처리
-	트랜잭션 내에서 다른 함수를 호출하지 않도록 구현하여야 함
-	만약 반복적으로 사용하는 함수 (유저 아이디 조회 등)이 있다면 트랜잭션을 다시 시작 하지 않도록 구현하여야 함
-*/
-
 RequestProcess::RequestProcess(const std::shared_ptr<mysqlx::Session>& dbSessionPtr, const std::shared_ptr<mysqlx::Schema>& dbPtr)
 	: _dbPtr(dbPtr), _dbSessionPtr(dbSessionPtr)
 {

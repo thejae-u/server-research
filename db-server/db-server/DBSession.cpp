@@ -2,9 +2,9 @@
 #include "RequestProcess.h"
 #include "db-server-class-utility.h"
 #include "db-system-utility.h"
+#include "Session.h"
 
-DBSession::DBSession(io_context& io, const std::size_t threadCount,
-                     const std::string& ip, const std::string& id, const std::string& password)
+DBSession::DBSession(io_context& io, const std::size_t threadCount, const std::string& ip, const std::string& id, const std::string& password)
 	: _io(io), _isRunning(false)
 {
 	try
@@ -28,14 +28,12 @@ DBSession::DBSession(io_context& io, const std::size_t threadCount,
 		return;
 	}
 
-	std::cout << "DBMS Connected\n";
-
 	_reqProcessPtr = std::make_shared<RequestProcess>(_dbSessionPtr, _dbSchemaPtr);
 
 	_isRunning = true;
 
 	// Start DB Session
-	for (std::size_t i = 0; i < threadCount ; ++i)
+	for (std::size_t i = 0; i < threadCount; ++i) // make process threads by thread count
 		boost::asio::post(_io, [this]() { ProcessReq(); });
 }
 
@@ -50,7 +48,7 @@ void DBSession::Stop()
 	_dbSessionPtr->close();
 }
 
-void DBSession::AddReq(const std::shared_ptr<SNetworkData>& req)
+void DBSession::AddReq(const std::pair<std::shared_ptr<Session>, std::shared_ptr<n_data>>& req)
 {
 	{
 		std::unique_lock<std::mutex> lock(_reqMutex);
@@ -62,7 +60,8 @@ void DBSession::AddReq(const std::shared_ptr<SNetworkData>& req)
 
 void DBSession::ProcessReq()
 {
-	std::shared_ptr<SNetworkData> req;
+	std::shared_ptr<n_data> req;
+	std::shared_ptr<Session> reqPtr = nullptr;
 	
 	{
 		std::unique_lock<std::mutex> lock(_reqMutex);
@@ -74,66 +73,76 @@ void DBSession::ProcessReq()
 		if (!_isRunning && !_reqQueue.empty())
 			return;
 
-		req = _reqQueue.front();
+		req = _reqQueue.front().second;
+	 	reqPtr = _reqQueue.front().first;
+		
 		_reqQueue.pop();
 	}
 
-	assert(req != nullptr);
-
 	const auto splitData =
-		std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req->data)); // split data by ','
+		std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req->data())); // split data by ','
 
-	auto ec = ELastErrorCode::UNKNOWN_ERROR;
+	auto lastErrorCode = ELastErrorCode::UNKNOWN_ERROR;
 
-	switch (req->type)
+	switch (req->type())
 	{
-	case ENetworkType::LOGIN:
+	case n_type::LOGIN:
 		{
 			auto userName = std::make_shared<std::string>((*splitData)[0]);
 			
 			{
 				std::string userPassword = (*splitData)[1];
 				std::unique_lock<std::mutex> lock(_processMutex);
-				ec = _reqProcessPtr->Login({ *userName, userPassword }); // Login transaction
+				//lastErrorCode = _reqProcessPtr->Login({ *userName, userPassword }); // Login transaction
 			}
 
 			auto serverLog = std::make_shared<std::string>();
 			auto userLog = std::make_shared<std::string>();
 
-			if (ec == ELastErrorCode::SUCCESS)
+			n_data replyData;
+
+			if (lastErrorCode == ELastErrorCode::SUCCESS)
 			{
 				// Send Logic Server Connection
 				*serverLog = "User " + *userName + " Login Success";
 				*userLog = "Login Success";
+
+				replyData.set_type(n_type::ACCESS);
 			}
 			else
 			{
 				// Send Error Message
 				*serverLog = "User " + *userName + " Login Failed";
 				*userLog = "Login Failed";
+
+				replyData.set_type(n_type::REJECT);
 			}
 
+			reqPtr->ReplyLoginReq(replyData);
+			
 			std::thread serverLogThread([this, serverLog]()
 			{
 				std::unique_lock<std::mutex> lock(_processMutex);
-				_reqProcessPtr->SaveServerLog(serverLog);
+				//_reqProcessPtr->SaveServerLog(serverLog);
 			});
 
 			serverLogThread.detach();
 
 			break;
 		}
-	case ENetworkType::REGISTER:
-		{
-			break;
-		}
-
-		// Other cases are not implemented
+		
+	// Other cases are not implemented
+	case n_type::REGISTER:
 	default:
 		break;
 	}
 
 	boost::asio::post(_io, [this]() { ProcessReq(); }); // Restart ProcessReq Async
+}
+
+void DBSession::ReplyReq(const std::shared_ptr<std::pair<Session, std::shared_ptr<n_data>>>& replyData)
+{
+	// Reply to Session
 }
 
 bool DBSession::IsConnected() const

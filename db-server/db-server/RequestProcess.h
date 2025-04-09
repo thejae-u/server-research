@@ -5,12 +5,9 @@
 #include <mutex>
 #include <chrono>
 
-#define USER_TABLE "users"
+#include "NetworkData.pb.h"
 
-/*
-	Pr태그가 붙은 함수는 트랜잭션 내에서 사용하는 함수로 외부에서 호출할 수 없음
-	(Private Function)
-*/
+#define USER_TABLE "users"
 
 using time_point = std::chrono::system_clock::time_point;
 

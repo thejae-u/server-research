@@ -5,14 +5,15 @@
 #include "db-server-class-utility.h"
 
 Server::Server(io_context& io, boost_acceptor& acceptor, const std::size_t& threadCount,
-	const std::string& id, const std::string& password)
-: _io(io), _acceptor(acceptor), _isRunning(false)
+	const std::string& dbIp, const std::string& id, const std::string& password)
+	: _io(io), _acceptor(acceptor), _isRunning(false)
 {
+	_dbIp = dbIp;
 	_dbUser = id;
 	_dbPassword = password;
-	
-	_dbAvailableThreadCount = threadCount / 2; // DB Thread Count
-	_networkAvailableThreadCount = (threadCount - _dbAvailableThreadCount) / 2; // Network Thread Count
+	_networkAvailableThreadCount = threadCount / 10;
+	_sessionAvailableThreadCount = threadCount - _networkAvailableThreadCount;
+	_sessionIdCounter = 0;
 }
 
 Server::~Server()
@@ -23,35 +24,26 @@ Server::~Server()
 	}
 
 	_sessions.clear();
-
-	for (auto& process : *_processThreads)
-	{
-		if (process.joinable())
-			process.join();
-	}
 }
 
 void Server::Start()
 {
-	_dbSessionPtr = std::make_shared<DBSession>(_io, _dbAvailableThreadCount, "localhost", _dbUser, _dbPassword);
-	if (!_dbSessionPtr->IsConnected()) // DBMS Connection Failed
-	{
-		std::cerr << "DB Connection Failed\n";
-		return;
-	}
-
 	_isRunning = true;
 	AcceptClient();
-
-	for (std::size_t i = 0; i < _networkAvailableThreadCount; ++i) // make process threads by thread count
-		boost::asio::post(_io, [this]() { ProcessReq();	});
 }
 
 void Server::AcceptClient() // Accept Login or Logic Sessions
 {
 	auto self = shared_from_this();
 
-	auto newSessionPtr = std::make_shared<Session>(_io, self, _sessions.size());
+	{
+		std::unique_lock<std::mutex> sessionsLock(_sessionsMutex);
+		_sessionsCondition.wait(sessionsLock, [this]() { return _isRunning || _sessions.size() < _sessionAvailableThreadCount / 10; });
+	}
+
+	_sessionsCondition.notify_one();
+	
+	auto newSessionPtr = std::make_shared<Session>(_io, self, ++_sessionIdCounter);
 
 	_acceptor.async_accept(newSessionPtr->GetSocket(), [this, newSessionPtr](const boost_ec& ec)
 		{
@@ -70,11 +62,46 @@ void Server::AcceptClient() // Accept Login or Logic Sessions
 		});
 }
 
+void Server::RemoveSession(const std::shared_ptr<Session>& session)
+{
+	{
+		std::unique_lock<std::mutex> sessionsLock(_sessionsMutex);
+		_sessionsCondition.wait(sessionsLock, [this]() { return _isRunning; });
+		
+		_sessions.erase(session);
+	}
+
+	_sessionsCondition.notify_one();
+}
+
+void Server::FlushSessions()
+{
+	// Remove socket closed sessions
+	{
+		std::unique_lock<std::mutex> sessionsLock(_sessionsMutex);
+		_sessionsCondition.wait(sessionsLock, [this]() { return _isRunning; });
+
+		for (auto it = _sessions.begin(); it != _sessions.end();)
+		{
+			if (!(*it)->GetSocket().is_open())
+			{
+				it = _sessions.erase(it);
+				continue;
+			}
+
+			++it;
+		}
+	}
+
+	_sessionsCondition.notify_one();
+
+	FlushSessions();
+}
+
+
 void Server::Stop()
 {
 	_isRunning = false;
-
-	_dbSessionPtr->Stop();
 
 	for (auto& session : _sessions)
 	{
@@ -82,35 +109,4 @@ void Server::Stop()
 	}
 
 	_sessions.clear();
-}
-
-void Server::AddReq(const std::shared_ptr<SNetworkData>& req) // Add Request to Serve
-{
-	{
-		std::unique_lock<std::mutex> lock(_reqMutex);
-		_reqCondVar.wait(lock, [this]() { return _isRunning; });
-		
-		_reqQueue.push(req);
-	}
-
-	_reqCondVar.notify_one(); // Notify ProcessReq
-}
-
-void Server::ProcessReq()
-{
-	std::shared_ptr<SNetworkData> req;
-
-	{
-		std::unique_lock<std::mutex> lock(_reqMutex);
-		_reqCondVar.wait(lock, [this]() { return !_reqQueue.empty() || !_isRunning; });
-
-		if (!_isRunning && _reqQueue.empty())
-			return;
-
-		req = _reqQueue.front();
-		_reqQueue.pop();
-	}
-	
-	_dbSessionPtr->AddReq(req);
-	boost::asio::post(_io, [this]() { ProcessReq(); });
 }

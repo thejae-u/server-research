@@ -3,6 +3,8 @@
 
 #include "Server.h"
 
+const extern int PORT = 53000; // DBMS Port
+
 int main()
 {
 	std::string id;
@@ -14,12 +16,12 @@ int main()
 	std::cin >> password;
 
 	io_context io;
-	boost_acceptor acceptor(io, boost_ep(boost::asio::ip::tcp::v4(), 55000)); // acceptor init
-	const std::size_t threadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 20; // get hardware concurrency * 10
+	boost_acceptor acceptor(io, boost_ep(boost::asio::ip::tcp::v4(), PORT)); // acceptor init
+	const std::size_t threadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 20; // get hardware concurrency * 20
 
 	// other threads are spare threads
 	
-	auto server = std::make_shared<Server>(io, acceptor, threadCount, id, password); // io, db user, db password init
+	auto server = std::make_shared<Server>(io, acceptor, threadCount, "localhost", id, password); // need to be changed ip
 	server->Start(); // connect to db
 
 	std::vector<std::shared_ptr<std::thread>> ioThreads;

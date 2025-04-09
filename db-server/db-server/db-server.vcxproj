@@ -110,7 +110,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(_ZVcpkgCurrentInstalledDir)$(_ZVcpkgConfigSubdir)lib;$(_ZVcpkgCurrentInstalledDir)$(_ZVcpkgConfigSubdir)lib\manual-link</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClCompile Include="DBSession.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NetworkData.pb.cc" />
     <ClCompile Include="RequestProcess.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="Session.cpp" />
@@ -140,7 +141,7 @@
     <ClInclude Include="db-server-class-utility.h" />
     <ClInclude Include="db-system-utility.h" />
     <ClInclude Include="DBSession.h" />
-    <ClInclude Include="NetworkData.h" />
+    <ClInclude Include="NetworkData.pb.h" />
     <ClInclude Include="RequestProcess.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Session.h" />
