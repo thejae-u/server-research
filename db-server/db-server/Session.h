@@ -55,6 +55,9 @@ private:
 	std::uint32_t _netSize;
 	std::uint32_t _dataSize;
 	std::vector<char> _buffer;
+
+	bool _isConnected;
+	std::mutex _sessionMutex;
 	
 	void AsyncReceiveData();
 };

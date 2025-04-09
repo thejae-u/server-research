@@ -93,7 +93,7 @@ void DBSession::ProcessReq()
 			{
 				std::string userPassword = (*splitData)[1];
 				std::unique_lock<std::mutex> lock(_processMutex);
-				//lastErrorCode = _reqProcessPtr->Login({ *userName, userPassword }); // Login transaction
+				lastErrorCode = _reqProcessPtr->Login({ *userName, userPassword }); // Login transaction
 			}
 
 			auto serverLog = std::make_shared<std::string>();
@@ -123,7 +123,7 @@ void DBSession::ProcessReq()
 			std::thread serverLogThread([this, serverLog]()
 			{
 				std::unique_lock<std::mutex> lock(_processMutex);
-				//_reqProcessPtr->SaveServerLog(serverLog);
+				_reqProcessPtr->SaveServerLog(serverLog);
 			});
 
 			serverLogThread.detach();

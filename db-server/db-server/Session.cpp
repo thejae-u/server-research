@@ -7,14 +7,15 @@
 #include <boost/endian.hpp>
 
 Session::Session(io_context& io, const std::shared_ptr<Server>& server, std::size_t sessionId)
-	: _io(io), _serverPtr(server), _sessionId(sessionId)
+	: _io(io), _serverPtr(server), _sessionId(sessionId), _netSize(0), _dataSize(0), _isConnected(false)
 {
 	_socket = std::make_shared<boost_socket>(io); // empty socket
 
 	std::size_t dbThreadCount = 9; // can be changed
 
 	_dbSessionPtr =
-		std::make_shared<DBSession>(io, dbThreadCount, _serverPtr->GetDbIp(), _serverPtr->GetDbUser(), _serverPtr->GetDbPassword());
+		std::make_shared<DBSession>(io, dbThreadCount, _serverPtr->GetDbIp(), _serverPtr->GetDbUser(),
+		                            _serverPtr->GetDbPassword());
 
 	if (!_dbSessionPtr->IsConnected())
 	{
@@ -24,7 +25,7 @@ Session::Session(io_context& io, const std::shared_ptr<Server>& server, std::siz
 
 	std::cout << "DB Connection Success : " << std::this_thread::get_id() << " Session id - " << _sessionId << "\n";
 
-	_buffer.resize(0);
+	_buffer.resize(_dataSize);
 }
 
 Session::~Session()
@@ -37,6 +38,8 @@ Session::~Session()
 
 void Session::Start()
 {
+	_isConnected = true;
+	
 	// start session
 	AsyncReceiveSize();
 	std::cout << "Session Start : " << _socket->remote_endpoint().address() << "\n";
@@ -50,6 +53,11 @@ void Session::Stop()
 	
 	// stop session
 	_socket->close();
+
+	{
+		std::unique_lock<std::mutex> lock(_sessionMutex);
+		_isConnected = false;
+	}
 }
 
 void Session::AsyncReceiveSize()
@@ -88,7 +96,7 @@ void Session::AsyncReceiveData()
 	auto self(shared_from_this());
 
 	boost::asio::async_read(*_socket, boost::asio::buffer(_buffer),
-		[this](const boost::system::error_code& ec, std::size_t)
+		[this, self](const boost::system::error_code& ec, std::size_t)
 		{
 			if (!ec)
 			{
@@ -108,14 +116,7 @@ void Session::AsyncReceiveData()
                     return;
                 }
 
-				switch (deserializedData.type())
-				{
-				case n_type::LOGIN:
-					break;
-					
-				default:
-					break;
-				}
+				_dbSessionPtr->AddReq(std::make_pair(self, std::make_shared<n_data>(deserializedData)));
 
 				_netSize = 0;
 				_dataSize = 0;
@@ -132,13 +133,23 @@ void Session::AsyncReceiveData()
 
 void Session::ReplyLoginReq(const n_data& req)
 {
+	{
+		std::unique_lock<std::mutex> lock(_sessionMutex);
+		if (!_isConnected)
+		{
+			return;
+		}
+	}
+
 	switch (req.type())
 	{
 	case n_type::ACCESS:
 		// Send Logic Server Connection
+		std::cout << "Session " << _sessionId << " Login Success : " << _socket->remote_endpoint().address() << "\n";
 		break;
 
 	case n_type::REJECT:
+		std::cout << "Session " << _sessionId << " Login Failed : " << _socket->remote_endpoint().address() << "\n";
 		break;
 		
 	default:
