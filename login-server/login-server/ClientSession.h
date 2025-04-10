@@ -7,16 +7,18 @@ using boost_acceptor = boost::asio::ip::tcp::acceptor;
 using boost_socket = boost::asio::ip::tcp::socket;
 
 class Server;
+class DBConnectSession;
 
-class Session : std::enable_shared_from_this<Session>
+class ClientSession : std::enable_shared_from_this<ClientSession>
 {
 public:
-	Session(io_context& io, const std::shared_ptr<Server>& serverPtr, std::size_t sessionId);
-	~Session();
+	ClientSession(io_context& io, const std::shared_ptr<Server>& serverPtr, std::size_t sessionId);
+	~ClientSession();
 	void Start();
+	void Stop();
 
-	void ProcessReq();
-	void ReceiveReq();
+	void ReceiveSize();
+	void ReceiveData();
 
 	boost_socket& GetSocket() const { return *_socketPtr; }
 
@@ -24,5 +26,10 @@ private:
 	io_context& _io;
 	std::shared_ptr<boost_socket> _socketPtr;
 	std::shared_ptr<Server> _serverPtr;
+	std::shared_ptr<DBConnectSession> _dbConnectSessionPtr;
 	std::size_t _sessionId;
+
+	std::uint32_t _netSize;
+	std::uint32_t _dataSize;
+	std::vector<char> _buffer;
 };

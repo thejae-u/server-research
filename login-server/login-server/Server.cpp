@@ -1,7 +1,18 @@
 #include "Server.h"
-#include "Session.h"
+#include "ClientSession.h"
 
-#include <iostream>
+Server::Server(io_context& io, boost_acceptor& acceptor, std::string dbIp, const int dbPort)
+    : _io(io), _acceptor(acceptor), _dbServerIp(dbIp), _dbServerPort(dbPort), _isRunning(false)
+{
+    _sessionIdCounter = 0;
+    _sessionsPtr = std::make_shared<std::set<std::shared_ptr<ClientSession>>>();
+    _reqQueue = std::make_shared<std::queue<n_data>>();
+}
+
+Server::~Server()
+{
+    std::cout << "Server Closed\n";
+}
 
 void Server::Start()
 {
@@ -12,34 +23,24 @@ void Server::Start()
 void Server::Stop()
 {
     _isRunning = false;
-
-    if (!_sessionsPtr->empty()) // if session exist close all sessions
+    
+    if (_sessionsPtr->empty())
     {
-        for (const auto& session : *_sessionsPtr)
-        {
-            session->GetSocket().close();
-            _sessionsPtr->erase(session);
-        }
+        return;
     }
-}
-
-void Server::AddReq(const n_data& req)
-{
+    
+    for (auto it = _sessionsPtr->begin(); it != _sessionsPtr->end();)
     {
-        std::unique_lock<std::mutex> lock(_reqQueueMutex);
-        _reqQueueCondVar.wait(lock, [this]() { return _isRunning; }); // Wait for Request
-        
-        _reqQueue->push(req);
+        (*it)->Stop();
+        it = _sessionsPtr->erase(it);
     }
-
-    _reqQueueCondVar.notify_one();
 }
 
 void Server::AsyncAccept()
 {
     auto self = shared_from_this();
 
-    auto newSessionPtr = std::make_shared<Session>(_io, self, ++_sessionIdCounter);
+    auto newSessionPtr = std::make_shared<ClientSession>(_io, self, ++_sessionIdCounter);
     
     _acceptor.async_accept(newSessionPtr->GetSocket(), [this, newSessionPtr](const boost_ec& ec)
     {
@@ -62,41 +63,4 @@ void Server::AsyncAccept()
 
         AsyncAccept(); // Accept next client
     });
-}
-
-void Server::ProcessReq()
-{
-    n_data req;
-
-    {
-        std::unique_lock<std::mutex> lock(_reqQueueMutex);
-        _reqQueueCondVar.wait(lock, [this]() { return !_reqQueue->empty() || !_isRunning; });
-
-        if (!_isRunning && _reqQueue->empty())
-            return;
-
-        req = _reqQueue->front();
-        _reqQueue->pop();
-    }
-
-    switch (req.type)
-    {
-    case n_data_type::LOGIN:
-        // Send to DB Server
-        break;
-
-    // Not Implemented Types
-    case n_data_type::REGISTER:
-    default:
-        break;
-    }
-
-    // Process Request
-    // ...
-
-    // Notify all sessions to process request
-    for (const auto& session : *_sessionsPtr)
-    {
-        session->ProcessReq();
-    }
 }

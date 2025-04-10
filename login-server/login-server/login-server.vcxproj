@@ -127,16 +127,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="DBSession.cpp" />
+    <ClCompile Include="DBConnectSession.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Server.cpp" />
-    <ClCompile Include="Session.cpp" />
+    <ClCompile Include="ClientSession.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DBSession.h" />
-    <ClInclude Include="Essential.h" />
+    <ClInclude Include="DBConnectSession.h" />
     <ClInclude Include="Server.h" />
-    <ClInclude Include="Session.h" />
+    <ClInclude Include="ClientSession.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
