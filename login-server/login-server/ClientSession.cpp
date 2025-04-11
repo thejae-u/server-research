@@ -6,6 +6,9 @@ ClientSession::ClientSession(io_context& io, const std::shared_ptr<Server>& serv
     : _io(io), _serverPtr(serverPtr), _sessionId(sessionId)
 {
     _socketPtr = std::make_shared<boost_socket>(io); // empty socket
+
+    _netSize = 0;
+    _dataSize = 0;
 }
 
 ClientSession::~ClientSession()

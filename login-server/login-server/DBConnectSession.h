@@ -17,7 +17,7 @@ class ClientSession;
 class DBConnectSession : std::enable_shared_from_this<DBConnectSession>
 {
 public:
-    DBConnectSession(io_context& io, const std::shared_ptr<ClientSession>& clientSessionPtr);
+    DBConnectSession(io_context& io, std::shared_ptr<ClientSession> clientSessionPtr, const std::string& dbIp, const unsigned short dbPort);
     ~DBConnectSession();
 
     void Start();
@@ -31,5 +31,6 @@ private:
     std::shared_ptr<boost_socket> _socketPtr;
     std::shared_ptr<ClientSession> _clientSessionPtr;
 
-    
+    std::string _dbIp;
+    unsigned short _dbPort;
 };

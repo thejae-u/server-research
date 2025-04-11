@@ -2,9 +2,13 @@
 #include <memory>
 #include <boost/asio.hpp>
 
+#include "NetworkData.pb.h"
+
 using io_context = boost::asio::io_context;
 using boost_acceptor = boost::asio::ip::tcp::acceptor;
 using boost_socket = boost::asio::ip::tcp::socket;
+
+using n_data = NetworkData::NetworkData;
 
 class Server;
 class DBConnectSession;
@@ -19,6 +23,8 @@ public:
 
 	void ReceiveSize();
 	void ReceiveData();
+
+	void ReplyReq(n_data& reply);
 
 	boost_socket& GetSocket() const { return *_socketPtr; }
 
