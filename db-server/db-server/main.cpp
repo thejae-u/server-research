@@ -3,7 +3,7 @@
 
 #include "Server.h"
 
-const extern int PORT = 53000; // DBMS Port
+const extern int PORT = 53000; // DB Server Port
 
 int main()
 {
