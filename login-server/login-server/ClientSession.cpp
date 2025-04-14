@@ -21,10 +21,17 @@ ClientSession::~ClientSession()
 
 void ClientSession::Start()
 {
-    _dbConnectSessionPtr = std::make_shared<DBConnectSession>(_io, shared_from_this());
+    auto self(shared_from_this());
+    _dbConnectSessionPtr = std::make_shared<DBConnectSession>(_io, self, _serverPtr->GetEndPoint());
+    _dbConnectSessionPtr->Start();
     
     // Start Receiving Request
-    boost::asio::post(_io, [this] { ReceiveSize(); });
+    //boost::asio::post(_io, [this] { ReceiveSize(); });
+}
+
+void ClientSession::Stop()
+{
+    std::cout << "Not implemented\n";
 }
 
 void ClientSession::ReceiveSize()
@@ -74,4 +81,9 @@ void ClientSession::ReceiveData()
                 _dataSize = 0;
             }
         });
+}
+
+void ClientSession::ReplyReq(n_data& reply)
+{
+    std::cout << "Not implemented\n";
 }

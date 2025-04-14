@@ -13,7 +13,7 @@ using n_data = NetworkData::NetworkData;
 class Server;
 class DBConnectSession;
 
-class ClientSession : std::enable_shared_from_this<ClientSession>
+class ClientSession : public std::enable_shared_from_this<ClientSession>
 {
 public:
 	ClientSession(io_context& io, const std::shared_ptr<Server>& serverPtr, std::size_t sessionId);

@@ -1,8 +1,8 @@
 #include "Server.h"
 #include "ClientSession.h"
 
-Server::Server(io_context& io, boost_acceptor& acceptor, std::string dbIp, const int dbPort)
-    : _io(io), _acceptor(acceptor), _dbServerIp(dbIp), _dbServerPort(dbPort), _isRunning(false)
+Server::Server(io_context& io, boost_acceptor& acceptor, const std::shared_ptr<boost_ep>& endPoint)
+    : _io(io), _acceptor(acceptor), _dbEndPointPtr(endPoint), _isRunning(false)
 {
     _sessionIdCounter = 0;
     _sessionsPtr = std::make_shared<std::set<std::shared_ptr<ClientSession>>>();
@@ -16,7 +16,7 @@ Server::~Server()
 
 void Server::Start()
 {
-    std::cout << "Login Server Started\n";
+    std::cout << "Server Started\n";
     boost::asio::post(_io, [this]() { AsyncAccept(); }); // Start Accepting Clients
 }
 
@@ -38,8 +38,7 @@ void Server::Stop()
 
 void Server::AsyncAccept()
 {
-    auto self = shared_from_this();
-
+    auto self(shared_from_this());
     auto newSessionPtr = std::make_shared<ClientSession>(_io, self, ++_sessionIdCounter);
     
     _acceptor.async_accept(newSessionPtr->GetSocket(), [this, newSessionPtr](const boost_ec& ec)
