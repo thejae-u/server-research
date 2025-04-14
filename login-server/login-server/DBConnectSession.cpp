@@ -58,21 +58,30 @@ void DBConnectSession::ProcessRequest(const n_data& req)
 {
     auto self(shared_from_this());
 
-    n_data replyData;
+    // send to DB Server
+    std::string serializedData;
+    req.SerializeToString(&serializedData);
+    uint32_t dataSize = static_cast<uint32_t>(serializedData.size());
+    uint32_t netDataSize = htonl(dataSize);
+    boost::asio::async_write(*_socketPtr, boost::asio::buffer(&netDataSize, sizeof(netDataSize)),
+        [this, self, serializedData](const boost_ec& sizeEc, std::size_t)
+        {
+            if (sizeEc)
+            {
+                std::cerr << "Error Sending Size: " << sizeEc.message() << "\n";
+                return;
+            }
 
-    // Send To DB Server and Receive Reply
-    switch (req.type())
-    {
-    case NetworkData::LOGIN:
-        break;
-    case NetworkData::REGISTER:
-        break;
+            boost::asio::async_write(*_socketPtr, boost::asio::buffer(serializedData),
+                [this, self](const boost_ec& dataEc, std::size_t)
+                {
+                    if (dataEc)
+                    {
+                        std::cerr << "Error Sending Data: " << dataEc.message() << "\n";
+                        return;
+                    }
 
-    // Not Implemented Cases are handled here
-    default:
-        break;
-    }
-
-    // Reply to Client Session
-    _clientSessionPtr->ReplyReq(replyData);
+                    std::cout << "DBConnectSession Send Data Success\n";
+                });
+        });
 }

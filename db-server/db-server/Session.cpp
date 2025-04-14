@@ -79,7 +79,7 @@ void Session::AsyncReceiveSize()
 			}
 			else
 			{
-				if (ec == boost::asio::error::eof)
+				if (ec == boost::asio::error::eof || ec == boost::asio::error::connection_reset)
                 {
                     std::cout << "Session Closed : " << _socket->remote_endpoint().address() << "\n";
 					Stop();
@@ -131,7 +131,7 @@ void Session::AsyncReceiveData()
 		});
 }
 
-void Session::ReplyLoginReq(const n_data& req)
+void Session::ReplyLoginReq(const n_data& reply)
 {
 	{
 		std::unique_lock<std::mutex> lock(_sessionMutex);
@@ -141,20 +141,28 @@ void Session::ReplyLoginReq(const n_data& req)
 		}
 	}
 
-	switch (req.type())
-	{
-	case n_type::ACCESS:
-		// Send Logic Server Connection
-		std::cout << "Session " << _sessionId << " Login Success : " << _socket->remote_endpoint().address() << "\n";
-		break;
-
-	case n_type::REJECT:
-		std::cout << "Session " << _sessionId << " Login Failed : " << _socket->remote_endpoint().address() << "\n";
-		break;
-		
-	default:
-		break;
-	}
+	// Send To Client (Server)
+	std::string serializedData;
+	reply.SerializeToString(&serializedData);
+	uint32_t dataSize = static_cast<uint32_t>(serializedData.size());
+	uint32_t netDataSize = htonl(dataSize);
+	boost::asio::async_write(*_socket, boost::asio::buffer(&netDataSize, sizeof(netDataSize)),
+        [this, serializedData](const boost::system::error_code& ec, std::size_t)
+        {
+            if (!ec)
+            {
+                boost::asio::async_write(*_socket, boost::asio::buffer(serializedData),
+                    [](const boost::system::error_code& ec, std::size_t)
+                    {
+                        if (ec)
+                        {
+                            std::cout << "Error Sending Data: " << ec.message() << "\n";
+                        }
+                    });
+            }
+            else
+            {
+                std::cout << "Error Sending Size: " << ec.message() << "\n";
+            }
+        });
 }
-
-// Test Code Area

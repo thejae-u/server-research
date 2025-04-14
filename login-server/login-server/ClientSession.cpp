@@ -26,28 +26,26 @@ void ClientSession::Start()
     _dbConnectSessionPtr->Start();
     
     // Start Receiving Request
-    //boost::asio::post(_io, [this] { ReceiveSize(); });
+    boost::asio::post(_io, [this] { ReceiveSize(); });
 }
 
 void ClientSession::Stop()
 {
-    std::cout << "Not implemented\n";
+    // Remove from server
+    const auto self(shared_from_this());
+    //_serverPtr->RemoveSession(self);
+    
+    // stop session
+    if (_socketPtr->is_open())
+        _socketPtr->close();
 }
 
 void ClientSession::ReceiveSize()
 {
-    _socketPtr->async_read_some(boost::asio::buffer(&_netSize, sizeof(_netSize)),
+    boost::asio::async_read(*_socketPtr, boost::asio::buffer(&_netSize, sizeof(_netSize)),
         [this](const boost_ec& ec, std::size_t)
         {
-            if (!ec)
-            {
-                _dataSize = ntohl(_netSize);
-                if (_buffer.capacity() < _dataSize)
-                    _buffer.resize(_dataSize);
-                
-                ReceiveData();
-            }
-            else
+            if (ec)
             {
                 if (ec == boost::asio::error::eof)
                 {
@@ -57,7 +55,14 @@ void ClientSession::ReceiveSize()
                 }
                 
                 std::cout << "Error Receive Size: " << ec.message() << "\n";
+                return;
             }
+            
+             _dataSize = ntohl(_netSize);
+            if (_buffer.capacity() < _dataSize)
+                _buffer.resize(_dataSize);
+                            
+            ReceiveData();
         });
 }
 
@@ -66,24 +71,51 @@ void ClientSession::ReceiveData()
     // Receive Network Data
     auto self(shared_from_this());
 
-    _socketPtr->async_read_some(boost::asio::buffer(_buffer),
+    boost::asio::async_read(*_socketPtr, boost::asio::buffer(_buffer),
         [this, self](const boost_ec& ec, std::size_t)
         {
-            if (!ec)
+            if (ec)
             {
-                std::string receiveData = std::string(_buffer.begin(), _buffer.end());
-                n_data deserializedData;
-                deserializedData.ParseFromString(receiveData);
-
-                _dbConnectSessionPtr->ProcessRequest(deserializedData);
-
-                _netSize = 0;
-                _dataSize = 0;
+                std::cerr << "Error Receive Data: " << ec.message() << "\n";
+                return;
             }
+            
+            const auto receiveData = std::string(_buffer.begin(), _buffer.end());
+            n_data deserializedData;
+            
+            deserializedData.ParseFromString(receiveData);
+            _dbConnectSessionPtr->ProcessRequest(deserializedData);
+            
+            _netSize = 0;
+            _dataSize = 0;
         });
 }
 
-void ClientSession::ReplyReq(n_data& reply)
+void ClientSession::ReplyReq(const n_data& reply) const
 {
-    std::cout << "Not implemented\n";
+    // Reply to Client
+    std::string serializedData;
+    reply.SerializeToString(&serializedData);
+    const auto dataSize = static_cast<uint32_t>(serializedData.size());
+    uint32_t netDataSize = htonl(dataSize);
+
+    // non-blocking send
+    boost::asio::async_write(*_socketPtr, boost::asio::buffer(&netDataSize, sizeof(netDataSize)),
+        [this, serializedData](const boost_ec& sizeEc, std::size_t)
+        {
+            if (sizeEc)
+            {
+                std::cerr << "Error Sending Size: " << sizeEc.message() << "\n";
+                return;    
+            }
+            
+            boost::asio::async_write(*_socketPtr, boost::asio::buffer(serializedData),
+            [](const boost_ec& dataEc, std::size_t)
+            {
+                if (dataEc)
+                {
+                    std::cout << "Error Sending Data: " << dataEc.message() << "\n";
+                }
+            });
+        });
 }

@@ -41,7 +41,7 @@ public:
 
 	void Stop();
 	void AsyncReceiveSize();
-	void ReplyLoginReq(const n_data& req);
+	void ReplyLoginReq(const n_data& reply);
 
 	// Test Code
 

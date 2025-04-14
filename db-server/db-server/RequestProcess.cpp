@@ -67,7 +67,7 @@ ELastErrorCode RequestProcess::GetUserId(const std::shared_ptr<std::string>& use
 	}
 }
 
-ELastErrorCode RequestProcess::Login(const std::vector<std::string>& loginData) 
+ELastErrorCode RequestProcess::Login(const std::vector<std::string>& loginData, int& uuid) const
 {
 	assert(loginData.size() == 2);
 	
@@ -84,6 +84,8 @@ ELastErrorCode RequestProcess::Login(const std::vector<std::string>& loginData)
 		{
 			return ELastErrorCode::INCORRECT;
 		}
+
+		uuid = data.fetchOne()[0]; // get uuid
 	}
 	catch (const mysqlx::Error& err)
 	{

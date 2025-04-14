@@ -28,7 +28,7 @@ public:
 	~RequestProcess();
 
 	ELastErrorCode RetrieveUserId(const std::shared_ptr<std::vector<std::string>>& userName);
-	ELastErrorCode Login(const std::vector<std::string>& loginData); // Return Logic Server Connection
+	ELastErrorCode Login(const std::vector<std::string>& loginData, int& uuid) const; // Return Logic Server Connection
 	ELastErrorCode Register(const std::shared_ptr<std::vector<std::string>>& registerData);
 	ELastErrorCode SaveServerLog(const std::shared_ptr<std::string>& log);
 	ELastErrorCode SaveUserLog(const std::shared_ptr<std::string>& userName, const std::shared_ptr<std::string>& log);

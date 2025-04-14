@@ -23,8 +23,7 @@ public:
 
 	void ReceiveSize();
 	void ReceiveData();
-
-	void ReplyReq(n_data& reply);
+	void ReplyReq(const n_data& reply) const;
 
 	boost_socket& GetSocket() const { return *_socketPtr; }
 

@@ -89,11 +89,12 @@ void DBSession::ProcessReq()
 	case n_type::LOGIN:
 		{
 			auto userName = std::make_shared<std::string>((*splitData)[0]);
+			int uuid = -1;
 			
 			{
 				std::string userPassword = (*splitData)[1];
 				std::unique_lock<std::mutex> lock(_processMutex);
-				lastErrorCode = _reqProcessPtr->Login({ *userName, userPassword }); // Login transaction
+				lastErrorCode = _reqProcessPtr->Login({ *userName, userPassword }, uuid); // Login transaction
 			}
 
 			auto serverLog = std::make_shared<std::string>();
@@ -118,6 +119,8 @@ void DBSession::ProcessReq()
 				replyData.set_type(n_type::REJECT);
 			}
 
+			replyData.set_data(req->data());
+			replyData.set_uuid(uuid);
 			reqPtr->ReplyLoginReq(replyData);
 			
 			std::thread serverLogThread([this, serverLog]()
@@ -127,7 +130,6 @@ void DBSession::ProcessReq()
 			});
 
 			serverLogThread.detach();
-
 			break;
 		}
 		
