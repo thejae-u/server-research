@@ -61,7 +61,7 @@ void DBConnectSession::ProcessRequest(const n_data& req)
     // send to DB Server
     std::string serializedData;
     req.SerializeToString(&serializedData);
-    uint32_t dataSize = static_cast<uint32_t>(serializedData.size());
+    const uint32_t dataSize = static_cast<uint32_t>(serializedData.size());
     uint32_t netDataSize = htonl(dataSize);
     boost::asio::async_write(*_socketPtr, boost::asio::buffer(&netDataSize, sizeof(netDataSize)),
         [this, self, serializedData](const boost_ec& sizeEc, std::size_t)
@@ -82,6 +82,45 @@ void DBConnectSession::ProcessRequest(const n_data& req)
                     }
 
                     std::cout << "DBConnectSession Send Data Success\n";
+                });
+        });
+}
+
+void DBConnectSession::ReceiveFromDb(const n_data& reply)
+{
+    auto self(shared_from_this());
+
+    // receive from db server size first
+    boost::asio::async_read(*_socketPtr, boost::asio::buffer(&_netSizeFromDb, sizeof(_netSizeFromDb)),
+        [this, self](const boost_ec& sizeEc, std::size_t)
+        {
+            if (sizeEc)
+            {
+                std::cerr << "Error Receiving Size: " << sizeEc.message() << "\n";
+                return;
+            }
+
+            _netSizeFromDb = ntohl(_netSizeFromDb);
+            _bufferFromDb.resize(_netSizeFromDb);
+
+            // receive data
+            boost::asio::async_read(*_socketPtr, boost::asio::buffer(_bufferFromDb),
+                [this, self](const boost_ec& dataEc, std::size_t)
+                {
+                    if (dataEc)
+                    {
+                        std::cerr << "Error Receiving Data: " << dataEc.message() << "\n";
+                        return;
+                    }
+
+                    const auto receiveData = std::string(_bufferFromDb.begin(), _bufferFromDb.end());
+                    n_data deserializedData;
+
+                    deserializedData.ParseFromString(receiveData);
+                    _clientSessionPtr->ReplyReq(deserializedData);
+
+                    _netSizeFromDb = 0;
+                    _dataSizeFromDb = 0;
                 });
         });
 }

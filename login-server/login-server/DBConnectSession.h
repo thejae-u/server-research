@@ -24,6 +24,7 @@ public:
     void Start();
     void Stop();
     void ProcessRequest(const n_data& req);
+    void ReceiveFromDb(const n_data& reply);
 
     std::shared_ptr<boost_socket> GetSocketPtr() const { return _socketPtr; }
     bool IsConnected() const { return _socketPtr->is_open(); }
@@ -33,6 +34,10 @@ private:
     std::shared_ptr<boost_socket> _socketPtr;
     std::shared_ptr<ClientSession> _clientSessionPtr;
     std::shared_ptr<boost_ep> _dbEndPointPtr;
+
+    std::vector<char> _bufferFromDb;
+    std::uint32_t _netSizeFromDb;
+    std::uint32_t _dataSizeFromDb;
 
     bool _isConnectedToDb;
 };
