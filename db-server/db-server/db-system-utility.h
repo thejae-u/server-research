@@ -20,9 +20,10 @@ namespace System_Util
 		return ss.str();
 	}
 
-	static void StartTime(std::chrono::time_point<std::chrono::system_clock>& start)
+	std::chrono::system_clock::time_point static StartTime()
 	{
-		start = std::chrono::system_clock::now();
+		std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
+		return start;
 	}
 
 	std::chrono::milliseconds static EndTime(const std::chrono::time_point<std::chrono::system_clock>& start)

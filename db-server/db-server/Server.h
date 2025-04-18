@@ -4,9 +4,8 @@
 #include <mutex>
 #include <thread>
 #include <memory>
-#include <mysqlx/xdevapi.h>
 
-#include "NetworkData.h"
+#include "NetworkData.pb.h"
 
 class RequestProcess;
 class DBSession;
@@ -18,36 +17,51 @@ using boost_acceptor = boost::asio::ip::tcp::acceptor;
 using boost_ep = boost::asio::ip::tcp::endpoint;
 using boost_ec = boost::system::error_code;
 
+using n_data = NetworkData::NetworkData;
+using n_type = NetworkData::ENetworkType;
+using n_login_err = NetworkData::ELoginError;
+
 class Session;
 
 class Server : public std::enable_shared_from_this<Server>
 {
 public:
-	Server(io_context& io, boost_acceptor& acceptor, std::string id, std::string password);
+	Server(io_context& io, boost_acceptor& acceptor,const std::size_t& threadCount,
+		const std::string& dbIp, const std::string& id, const std::string& password);
 	~Server();
+
+	bool IsRunning() const { return _isRunning; }
 
 	void Start();
 	void Stop(); // Stop All Sessions
 
-	void AddReq(SNetworkData req);
-	void ProcessReq();
-
 	void AcceptClient();
 
+	std::string GetDbIp() const { return _dbIp; } // Need to be changed
+	std::string GetDbUser() const {return _dbUser;}
+	std::string GetDbPassword() const { return _dbPassword; }
+
+	void RemoveSession(const std::shared_ptr<Session>& session);
+
 private:
+	std::string _dbIp;
 	std::string _dbUser;
 	std::string _dbPassword;
-	std::shared_ptr<DBSession> _dbSessionPtr;
 
 	io_context& _io;
 	boost_acceptor& _acceptor;
 
 	std::set<std::shared_ptr<Session>> _sessions;
-	std::shared_ptr<std::vector<std::thread>> _processThreads;
+	std::mutex _sessionsMutex;
+	std::condition_variable _sessionsCondition;
 
-	std::queue<SNetworkData> _reqQueue;
-	std::mutex _reqMutex;
+	std::size_t _sessionAvailableThreadCount;
+	std::size_t _networkAvailableThreadCount;
 
 	bool _isRunning;
+
+	std::size_t _sessionIdCounter;
+
+	void FlushSessions();
 };
 
