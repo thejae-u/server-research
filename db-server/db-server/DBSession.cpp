@@ -83,6 +83,7 @@ void DBSession::ProcessReq()
 		std::make_shared<std::vector<std::string>>(Server_Util::SplitString(req->data())); // split data by ','
 
 	auto lastErrorCode = ELastErrorCode::UNKNOWN_ERROR;
+	n_data replyData;
 
 	switch (req->type())
 	{
@@ -100,8 +101,10 @@ void DBSession::ProcessReq()
 			auto serverLog = std::make_shared<std::string>();
 			auto userLog = std::make_shared<std::string>();
 
-			n_data replyData;
 
+			replyData.set_uuid(std::to_string(uuid));
+			replyData.set_data(req->data());
+			
 			if (lastErrorCode == ELastErrorCode::SUCCESS)
 			{
 				// Send Logic Server Connection
@@ -118,10 +121,6 @@ void DBSession::ProcessReq()
 
 				replyData.set_type(n_type::REJECT);
 			}
-
-			replyData.set_data(req->data());
-			replyData.set_uuid(uuid);
-			reqPtr->ReplyLoginReq(replyData);
 			
 			std::thread serverLogThread([this, serverLog]()
 			{
@@ -139,12 +138,8 @@ void DBSession::ProcessReq()
 		break;
 	}
 
+	reqPtr->ReplyToClient(replyData);
 	boost::asio::post(_io, [this]() { ProcessReq(); }); // Restart ProcessReq Async
-}
-
-void DBSession::ReplyReq(const std::shared_ptr<std::pair<Session, std::shared_ptr<n_data>>>& replyData)
-{
-	// Reply to Session
 }
 
 bool DBSession::IsConnected() const

@@ -103,18 +103,7 @@ void Session::AsyncReceiveData()
 				std::string receivedData(_buffer.begin(), _buffer.end());
 
 				n_data deserializedData;
-				
-				try
-				{
-					deserializedData.ParseFromString(receivedData);
-				}
-				catch (const std::exception& e)
-                {
-                    std::cerr << "Error Parsing Data: " << e.what() << "\n";
-					std::cout << "Session " << _sessionId << " Close : " << _socket->remote_endpoint().address() << "\n";
-					Stop();
-                    return;
-                }
+				deserializedData.ParseFromString(receivedData);
 
 				_dbSessionPtr->AddReq(std::make_pair(self, std::make_shared<n_data>(deserializedData)));
 
@@ -131,7 +120,7 @@ void Session::AsyncReceiveData()
 		});
 }
 
-void Session::ReplyLoginReq(const n_data& reply)
+void Session::ReplyToClient(const n_data& reply)
 {
 	{
 		std::unique_lock<std::mutex> lock(_sessionMutex);

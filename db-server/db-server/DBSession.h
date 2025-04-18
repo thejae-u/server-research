@@ -47,7 +47,5 @@ private:
 	std::condition_variable _processedCondVar;
 
 	bool _isRunning;
-	
-	void ReplyReq(const std::shared_ptr<std::pair<Session, std::shared_ptr<n_data>>>& replyData);
 };
 
