@@ -1,39 +1,75 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
+using System.Threading;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
+using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
+using NetworkData;
+using Random = UnityEngine.Random;
 
 public class AIManager : MonoBehaviour
 {
-    public bool IsMoving => _moveRoutine != null;
-    private IEnumerator _moveRoutine;
+    public bool IsMoving { get; private set; }
+    private RpcPacket _rpcPacket;
+    private NetworkManager _networkManager;
+    
+
+    private void Start()
+    {
+        _rpcPacket = new RpcPacket
+        {
+            Method = RpcMethod.None,
+            Data = ByteString.Empty
+        };
+        
+        _networkManager = NetworkManager.Instance;
+    }
 
     public void MoveCharacter(Vector3 targetPosition)
     {
-        if (_moveRoutine != null)
+        if (IsMoving || !_networkManager.IsOnline)
             return;
-
-        _moveRoutine = MoveToPosition(targetPosition);
-        StartCoroutine(_moveRoutine);
-    }
-
-    private IEnumerator MoveToPosition(Vector3 targetPosition)
-    {
-        float duration = Random.Range(0.5f, 10.0f);
-        float elapsedTime = 0.0f;
         
-        Debug.Log($"Moving to {targetPosition} over {duration} seconds");
+        IsMoving = true;
+        MoveCharacterAsync(targetPosition).Forget();
+    }
+    
+    private async UniTask MoveCharacterAsync(Vector3 targetPosition)
+    {
+        _rpcPacket.Method = RpcMethod.Move;
+        
+        // Serialize the target position to a byte array
+        var serializePositionData = new PositionData
+        {
+            X = targetPosition.x,
+            Y = targetPosition.y,
+            Z = targetPosition.z
+        };
+        
+        _rpcPacket.Data = serializePositionData.ToByteString();
+        _rpcPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
+
+        NetworkManager.Instance.SendAsync(_rpcPacket).Forget();
+        CancellationToken token = this.GetCancellationTokenOnDestroy();
+        
+        float duration = Random.Range(1.5f, 5.0f);
+        var elapsedTime = 0f;
+        Vector3 startPosition = transform.position;
 
         while (elapsedTime < duration)
         {
             float t = elapsedTime / duration;
-            Vector3 newPosition = Vector3.Lerp(transform.position, targetPosition, t);
-            transform.position = newPosition;
+            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(targetPosition - startPosition), t);
             
-            yield return null;
+            await UniTask.Yield(PlayerLoopTiming.Update, token);
             elapsedTime += Time.deltaTime;
         }
-        
-        _moveRoutine = null;
+
+        IsMoving = false;
     }
 }
         

@@ -2,44 +2,76 @@ syntax = "proto3";
 package NetworkData;
 import "google/protobuf/timestamp.proto";
 
-message NetworkData {
-  string ip = 1;
-  string uuid = 2;
-  ENetworkType type = 3;
-  uint64 bufSize = 4;
-  string data = 5;
-  google.protobuf.Timestamp timestamp = 6;
+message LoginData
+{
+  string username = 1;
+  string password = 2;
 }
 
-enum ENetworkType {
-  LOGIN = 0;
-  REGISTER = 1;
-  RETRIEVE = 2;
-  ACCESS = 3;
-  REJECT = 4;
-  LOGOUT = 5;
-  COUNT_FOR_USER_DATA = 6;
+message RegisterData
+{
+  string username = 1;
+  string password = 2;
+}
 
-  MOVE = 100;
-  ATTACK = 101;
-  DROP_ITEM = 102;
-  USE_ITEM = 103;
-  USE_SKILL = 104;
-  COUNT_FOR_LOGIC_DATA = 105;
+message PositionData
+{
+  float x = 1;
+  float y = 2;
+  float z = 3;
+}
 
-  SYSTEM_OPTION_1 = 200;
-  SYSTEM_OPTION_2 = 201;
-  SYSTEM_OPTION_3 = 202;
-  COUNT_FOR_SYSTEM_DATA = 203;
+message RpcPacket
+{
+  string ip = 1;
+  string uuid = 2;
+  RpcMethod method = 3;
+  bytes data = 4; // serialized parameter data (Login Data, Position Data, etc.)
+  google.protobuf.Timestamp timestamp = 5;
+}
 
+message ResponsePacket
+{
+  bytes data = 1; // serialized response data
+  google.protobuf.Timestamp timestamp = 2;
+}
+
+enum RpcMethod
+{
+  NONE = 0;
+  LOGIN = 1;
+  REGISTER = 2;
+  RETRIEVE = 3;
+  ACCESS = 4;
+  REJECT = 5;
+  LOGOUT = 6;
+  // Limit DB access to 99
+
+  IN_GAME_NONE = 100;
+  MOVE = 101;
+  ATTACK = 102;
+  DROP_ITEM = 103;
+  USE_ITEM = 104;
+  USE_SKILL = 105;
+  // No limits on in-game actions
+}
+
+enum AdminRpcMethod
+{
+  ADMIN_NONE = 0;
+  
+  ADMIN_LOGIN = 1;
+  ADMIN_LOGOUT = 2;
+  
+  ADMIN_NOTIFY = 100;
+  
   ADMIN_SERVER_OFF = 900;
   ADMIN_SERVER_ON = 901;
   ADMIN_SERVER_REBOOT = 902;
-  COUNT_FOR_ADMIN_DATA = 903;
 }
 
 enum ELoginError {
-    USER_NOT_FOUND = 0;
-    USER_ALREADY_EXIST = 1;
-    INCORRECT = 2;
+  USER_NOT_FOUND = 0;
+  USER_ALREADY_EXIST = 1;
+  INCORRECT = 2;
 }

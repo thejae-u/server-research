@@ -26,7 +26,94 @@ namespace _pbi = ::google::protobuf::internal;
 namespace _fl = ::google::protobuf::internal::field_layout;
 namespace NetworkData {
 
-inline constexpr NetworkData::Impl_::Impl_(
+inline constexpr RegisterData::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : username_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        password_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        _cached_size_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR RegisterData::RegisterData(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct RegisterDataDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR RegisterDataDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~RegisterDataDefaultTypeInternal() {}
+  union {
+    RegisterData _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RegisterDataDefaultTypeInternal _RegisterData_default_instance_;
+
+inline constexpr PositionData::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : x_{0},
+        y_{0},
+        z_{0},
+        _cached_size_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR PositionData::PositionData(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct PositionDataDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR PositionDataDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~PositionDataDefaultTypeInternal() {}
+  union {
+    PositionData _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PositionDataDefaultTypeInternal _PositionData_default_instance_;
+
+inline constexpr LoginData::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : username_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        password_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        _cached_size_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR LoginData::LoginData(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct LoginDataDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR LoginDataDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~LoginDataDefaultTypeInternal() {}
+  union {
+    LoginData _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 LoginDataDefaultTypeInternal _LoginData_default_instance_;
+
+inline constexpr RpcPacket::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : _cached_size_{0},
         ip_(
@@ -39,11 +126,10 @@ inline constexpr NetworkData::Impl_::Impl_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
         timestamp_{nullptr},
-        bufsize_{::uint64_t{0u}},
-        type_{static_cast< ::NetworkData::ENetworkType >(0)} {}
+        method_{static_cast< ::NetworkData::RpcMethod >(0)} {}
 
 template <typename>
-PROTOBUF_CONSTEXPR NetworkData::NetworkData(::_pbi::ConstantInitialized)
+PROTOBUF_CONSTEXPR RpcPacket::RpcPacket(::_pbi::ConstantInitialized)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
     : ::google::protobuf::Message(_class_data_.base()),
 #else   // PROTOBUF_CUSTOM_VTABLE
@@ -51,72 +137,153 @@ PROTOBUF_CONSTEXPR NetworkData::NetworkData(::_pbi::ConstantInitialized)
 #endif  // PROTOBUF_CUSTOM_VTABLE
       _impl_(::_pbi::ConstantInitialized()) {
 }
-struct NetworkDataDefaultTypeInternal {
-  PROTOBUF_CONSTEXPR NetworkDataDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
-  ~NetworkDataDefaultTypeInternal() {}
+struct RpcPacketDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR RpcPacketDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~RpcPacketDefaultTypeInternal() {}
   union {
-    NetworkData _instance;
+    RpcPacket _instance;
   };
 };
 
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
-    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 NetworkDataDefaultTypeInternal _NetworkData_default_instance_;
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RpcPacketDefaultTypeInternal _RpcPacket_default_instance_;
+
+inline constexpr ResponsePacket::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : _cached_size_{0},
+        data_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        timestamp_{nullptr} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR ResponsePacket::ResponsePacket(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct ResponsePacketDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR ResponsePacketDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~ResponsePacketDefaultTypeInternal() {}
+  union {
+    ResponsePacket _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 ResponsePacketDefaultTypeInternal _ResponsePacket_default_instance_;
 }  // namespace NetworkData
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_NetworkData_2eproto[2];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_NetworkData_2eproto[3];
 static constexpr const ::_pb::ServiceDescriptor**
     file_level_service_descriptors_NetworkData_2eproto = nullptr;
 const ::uint32_t
     TableStruct_NetworkData_2eproto::offsets[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
         protodesc_cold) = {
-        PROTOBUF_FIELD_OFFSET(::NetworkData::NetworkData, _impl_._has_bits_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::NetworkData, _internal_metadata_),
+        ~0u,  // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::NetworkData::LoginData, _internal_metadata_),
         ~0u,  // no _extensions_
         ~0u,  // no _oneof_case_
         ~0u,  // no _weak_field_map_
         ~0u,  // no _inlined_string_donated_
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
-        PROTOBUF_FIELD_OFFSET(::NetworkData::NetworkData, _impl_.ip_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::NetworkData, _impl_.uuid_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::NetworkData, _impl_.type_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::NetworkData, _impl_.bufsize_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::NetworkData, _impl_.data_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::NetworkData, _impl_.timestamp_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::LoginData, _impl_.username_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::LoginData, _impl_.password_),
+        ~0u,  // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RegisterData, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RegisterData, _impl_.username_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RegisterData, _impl_.password_),
+        ~0u,  // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.x_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.y_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.z_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_._has_bits_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.ip_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.uuid_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.method_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.data_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.timestamp_),
         ~0u,
         ~0u,
         ~0u,
         ~0u,
+        0,
+        PROTOBUF_FIELD_OFFSET(::NetworkData::ResponsePacket, _impl_._has_bits_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::ResponsePacket, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::NetworkData::ResponsePacket, _impl_.data_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::ResponsePacket, _impl_.timestamp_),
         ~0u,
         0,
 };
 
 static const ::_pbi::MigrationSchema
     schemas[] ABSL_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-        {0, 14, -1, sizeof(::NetworkData::NetworkData)},
+        {0, -1, -1, sizeof(::NetworkData::LoginData)},
+        {10, -1, -1, sizeof(::NetworkData::RegisterData)},
+        {20, -1, -1, sizeof(::NetworkData::PositionData)},
+        {31, 44, -1, sizeof(::NetworkData::RpcPacket)},
+        {49, 59, -1, sizeof(::NetworkData::ResponsePacket)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
-    &::NetworkData::_NetworkData_default_instance_._instance,
+    &::NetworkData::_LoginData_default_instance_._instance,
+    &::NetworkData::_RegisterData_default_instance_._instance,
+    &::NetworkData::_PositionData_default_instance_._instance,
+    &::NetworkData::_RpcPacket_default_instance_._instance,
+    &::NetworkData::_ResponsePacket_default_instance_._instance,
 };
 const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
     protodesc_cold) = {
     "\n\021NetworkData.proto\022\013NetworkData\032\037google"
-    "/protobuf/timestamp.proto\"\236\001\n\013NetworkDat"
-    "a\022\n\n\002ip\030\001 \001(\t\022\014\n\004uuid\030\002 \001(\t\022\'\n\004type\030\003 \001("
-    "\0162\031.NetworkData.ENetworkType\022\017\n\007bufSize\030"
-    "\004 \001(\004\022\014\n\004data\030\005 \001(\t\022-\n\ttimestamp\030\006 \001(\0132\032"
-    ".google.protobuf.Timestamp*\216\003\n\014ENetworkT"
-    "ype\022\t\n\005LOGIN\020\000\022\014\n\010REGISTER\020\001\022\014\n\010RETRIEVE"
-    "\020\002\022\n\n\006ACCESS\020\003\022\n\n\006REJECT\020\004\022\n\n\006LOGOUT\020\005\022\027"
-    "\n\023COUNT_FOR_USER_DATA\020\006\022\010\n\004MOVE\020d\022\n\n\006ATT"
-    "ACK\020e\022\r\n\tDROP_ITEM\020f\022\014\n\010USE_ITEM\020g\022\r\n\tUS"
-    "E_SKILL\020h\022\030\n\024COUNT_FOR_LOGIC_DATA\020i\022\024\n\017S"
-    "YSTEM_OPTION_1\020\310\001\022\024\n\017SYSTEM_OPTION_2\020\311\001\022"
-    "\024\n\017SYSTEM_OPTION_3\020\312\001\022\032\n\025COUNT_FOR_SYSTE"
-    "M_DATA\020\313\001\022\025\n\020ADMIN_SERVER_OFF\020\204\007\022\024\n\017ADMI"
-    "N_SERVER_ON\020\205\007\022\030\n\023ADMIN_SERVER_REBOOT\020\206\007"
-    "\022\031\n\024COUNT_FOR_ADMIN_DATA\020\207\007*H\n\013ELoginErr"
-    "or\022\022\n\016USER_NOT_FOUND\020\000\022\026\n\022USER_ALREADY_E"
-    "XIST\020\001\022\r\n\tINCORRECT\020\002b\006proto3"
+    "/protobuf/timestamp.proto\"/\n\tLoginData\022\020"
+    "\n\010username\030\001 \001(\t\022\020\n\010password\030\002 \001(\t\"2\n\014Re"
+    "gisterData\022\020\n\010username\030\001 \001(\t\022\020\n\010password"
+    "\030\002 \001(\t\"/\n\014PositionData\022\t\n\001x\030\001 \001(\002\022\t\n\001y\030\002"
+    " \001(\002\022\t\n\001z\030\003 \001(\002\"\212\001\n\tRpcPacket\022\n\n\002ip\030\001 \001("
+    "\t\022\014\n\004uuid\030\002 \001(\t\022&\n\006method\030\003 \001(\0162\026.Networ"
+    "kData.RpcMethod\022\014\n\004data\030\004 \001(\014\022-\n\ttimesta"
+    "mp\030\005 \001(\0132\032.google.protobuf.Timestamp\"M\n\016"
+    "ResponsePacket\022\014\n\004data\030\001 \001(\014\022-\n\ttimestam"
+    "p\030\002 \001(\0132\032.google.protobuf.Timestamp*\264\001\n\t"
+    "RpcMethod\022\010\n\004NONE\020\000\022\t\n\005LOGIN\020\001\022\014\n\010REGIST"
+    "ER\020\002\022\014\n\010RETRIEVE\020\003\022\n\n\006ACCESS\020\004\022\n\n\006REJECT"
+    "\020\005\022\n\n\006LOGOUT\020\006\022\020\n\014IN_GAME_NONE\020d\022\010\n\004MOVE"
+    "\020e\022\n\n\006ATTACK\020f\022\r\n\tDROP_ITEM\020g\022\014\n\010USE_ITE"
+    "M\020h\022\r\n\tUSE_SKILL\020i*\234\001\n\016AdminRpcMethod\022\016\n"
+    "\nADMIN_NONE\020\000\022\017\n\013ADMIN_LOGIN\020\001\022\020\n\014ADMIN_"
+    "LOGOUT\020\002\022\020\n\014ADMIN_NOTIFY\020d\022\025\n\020ADMIN_SERV"
+    "ER_OFF\020\204\007\022\024\n\017ADMIN_SERVER_ON\020\205\007\022\030\n\023ADMIN"
+    "_SERVER_REBOOT\020\206\007*H\n\013ELoginError\022\022\n\016USER"
+    "_NOT_FOUND\020\000\022\026\n\022USER_ALREADY_EXIST\020\001\022\r\n\t"
+    "INCORRECT\020\002b\006proto3"
 };
 static const ::_pbi::DescriptorTable* const descriptor_table_NetworkData_2eproto_deps[1] =
     {
@@ -126,13 +293,13 @@ static ::absl::once_flag descriptor_table_NetworkData_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2eproto = {
     false,
     false,
-    709,
+    859,
     descriptor_table_protodef_NetworkData_2eproto,
     "NetworkData.proto",
     &descriptor_table_NetworkData_2eproto_once,
     descriptor_table_NetworkData_2eproto_deps,
     1,
-    1,
+    5,
     schemas,
     file_default_instances,
     TableStruct_NetworkData_2eproto::offsets,
@@ -140,18 +307,27 @@ PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2e
     file_level_service_descriptors_NetworkData_2eproto,
 };
 namespace NetworkData {
-const ::google::protobuf::EnumDescriptor* ENetworkType_descriptor() {
+const ::google::protobuf::EnumDescriptor* RpcMethod_descriptor() {
   ::google::protobuf::internal::AssignDescriptors(&descriptor_table_NetworkData_2eproto);
   return file_level_enum_descriptors_NetworkData_2eproto[0];
 }
-PROTOBUF_CONSTINIT const uint32_t ENetworkType_internal_data_[] = {
-    458752u, 262368u, 0u, 0u, 3758096384u, 7u, 0u, 0u, 30u, 902u, 901u, 903u, 900u, };
-bool ENetworkType_IsValid(int value) {
-  return ::_pbi::ValidateEnum(value, ENetworkType_internal_data_);
+PROTOBUF_CONSTINIT const uint32_t RpcMethod_internal_data_[] = {
+    458752u, 128u, 0u, 0u, 3758096384u, 7u, };
+bool RpcMethod_IsValid(int value) {
+  return ::_pbi::ValidateEnum(value, RpcMethod_internal_data_);
+}
+const ::google::protobuf::EnumDescriptor* AdminRpcMethod_descriptor() {
+  ::google::protobuf::internal::AssignDescriptors(&descriptor_table_NetworkData_2eproto);
+  return file_level_enum_descriptors_NetworkData_2eproto[1];
+}
+PROTOBUF_CONSTINIT const uint32_t AdminRpcMethod_internal_data_[] = {
+    196608u, 262144u, 901u, 900u, 902u, 100u, };
+bool AdminRpcMethod_IsValid(int value) {
+  return ::_pbi::ValidateEnum(value, AdminRpcMethod_internal_data_);
 }
 const ::google::protobuf::EnumDescriptor* ELoginError_descriptor() {
   ::google::protobuf::internal::AssignDescriptors(&descriptor_table_NetworkData_2eproto);
-  return file_level_enum_descriptors_NetworkData_2eproto[1];
+  return file_level_enum_descriptors_NetworkData_2eproto[2];
 }
 PROTOBUF_CONSTINIT const uint32_t ELoginError_internal_data_[] = {
     196608u, 0u, };
@@ -160,46 +336,826 @@ bool ELoginError_IsValid(int value) {
 }
 // ===================================================================
 
-class NetworkData::_Internal {
+class LoginData::_Internal {
  public:
-  using HasBits =
-      decltype(std::declval<NetworkData>()._impl_._has_bits_);
-  static constexpr ::int32_t kHasBitsOffset =
-      8 * PROTOBUF_FIELD_OFFSET(NetworkData, _impl_._has_bits_);
 };
 
-void NetworkData::clear_timestamp() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.timestamp_ != nullptr) _impl_.timestamp_->Clear();
-  _impl_._has_bits_[0] &= ~0x00000001u;
-}
-NetworkData::NetworkData(::google::protobuf::Arena* arena)
+LoginData::LoginData(::google::protobuf::Arena* arena)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
     : ::google::protobuf::Message(arena, _class_data_.base()) {
 #else   // PROTOBUF_CUSTOM_VTABLE
     : ::google::protobuf::Message(arena) {
 #endif  // PROTOBUF_CUSTOM_VTABLE
   SharedCtor(arena);
-  // @@protoc_insertion_point(arena_constructor:NetworkData.NetworkData)
+  // @@protoc_insertion_point(arena_constructor:NetworkData.LoginData)
 }
-inline PROTOBUF_NDEBUG_INLINE NetworkData::Impl_::Impl_(
+inline PROTOBUF_NDEBUG_INLINE LoginData::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
-    const Impl_& from, const ::NetworkData::NetworkData& from_msg)
+    const Impl_& from, const ::NetworkData::LoginData& from_msg)
+      : username_(arena, from.username_),
+        password_(arena, from.password_),
+        _cached_size_{0} {}
+
+LoginData::LoginData(
+    ::google::protobuf::Arena* arena,
+    const LoginData& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  LoginData* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+
+  // @@protoc_insertion_point(copy_constructor:NetworkData.LoginData)
+}
+inline PROTOBUF_NDEBUG_INLINE LoginData::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : username_(arena),
+        password_(arena),
+        _cached_size_{0} {}
+
+inline void LoginData::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+}
+LoginData::~LoginData() {
+  // @@protoc_insertion_point(destructor:NetworkData.LoginData)
+  SharedDtor(*this);
+}
+inline void LoginData::SharedDtor(MessageLite& self) {
+  LoginData& this_ = static_cast<LoginData&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.username_.Destroy();
+  this_._impl_.password_.Destroy();
+  this_._impl_.~Impl_();
+}
+
+inline void* LoginData::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) LoginData(arena);
+}
+constexpr auto LoginData::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(LoginData),
+                                            alignof(LoginData));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull LoginData::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_LoginData_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &LoginData::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<LoginData>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &LoginData::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<LoginData>(), &LoginData::ByteSizeLong,
+            &LoginData::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(LoginData, _impl_._cached_size_),
+        false,
+    },
+    &LoginData::kDescriptorMethods,
+    &descriptor_table_NetworkData_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* LoginData::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<1, 2, 0, 46, 2> LoginData::_table_ = {
+  {
+    0,  // no _has_bits_
+    0, // no _extensions_
+    2, 8,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967292,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    2,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::NetworkData::LoginData>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // string password = 2;
+    {::_pbi::TcParser::FastUS1,
+     {18, 63, 0, PROTOBUF_FIELD_OFFSET(LoginData, _impl_.password_)}},
+    // string username = 1;
+    {::_pbi::TcParser::FastUS1,
+     {10, 63, 0, PROTOBUF_FIELD_OFFSET(LoginData, _impl_.username_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // string username = 1;
+    {PROTOBUF_FIELD_OFFSET(LoginData, _impl_.username_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string password = 2;
+    {PROTOBUF_FIELD_OFFSET(LoginData, _impl_.password_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
+  }},
+  // no aux_entries
+  {{
+    "\25\10\10\0\0\0\0\0"
+    "NetworkData.LoginData"
+    "username"
+    "password"
+  }},
+};
+
+PROTOBUF_NOINLINE void LoginData::Clear() {
+// @@protoc_insertion_point(message_clear_start:NetworkData.LoginData)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.username_.ClearToEmpty();
+  _impl_.password_.ClearToEmpty();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* LoginData::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const LoginData& this_ = static_cast<const LoginData&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* LoginData::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const LoginData& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.LoginData)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // string username = 1;
+          if (!this_._internal_username().empty()) {
+            const std::string& _s = this_._internal_username();
+            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.LoginData.username");
+            target = stream->WriteStringMaybeAliased(1, _s, target);
+          }
+
+          // string password = 2;
+          if (!this_._internal_password().empty()) {
+            const std::string& _s = this_._internal_password();
+            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.LoginData.password");
+            target = stream->WriteStringMaybeAliased(2, _s, target);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.LoginData)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t LoginData::ByteSizeLong(const MessageLite& base) {
+          const LoginData& this_ = static_cast<const LoginData&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t LoginData::ByteSizeLong() const {
+          const LoginData& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:NetworkData.LoginData)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+           {
+            // string username = 1;
+            if (!this_._internal_username().empty()) {
+              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                              this_._internal_username());
+            }
+            // string password = 2;
+            if (!this_._internal_password().empty()) {
+              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                              this_._internal_password());
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void LoginData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<LoginData*>(&to_msg);
+  auto& from = static_cast<const LoginData&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.LoginData)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (!from._internal_username().empty()) {
+    _this->_internal_set_username(from._internal_username());
+  }
+  if (!from._internal_password().empty()) {
+    _this->_internal_set_password(from._internal_password());
+  }
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void LoginData::CopyFrom(const LoginData& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.LoginData)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void LoginData::InternalSwap(LoginData* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.username_, &other->_impl_.username_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.password_, &other->_impl_.password_, arena);
+}
+
+::google::protobuf::Metadata LoginData::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class RegisterData::_Internal {
+ public:
+};
+
+RegisterData::RegisterData(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:NetworkData.RegisterData)
+}
+inline PROTOBUF_NDEBUG_INLINE RegisterData::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
+    const Impl_& from, const ::NetworkData::RegisterData& from_msg)
+      : username_(arena, from.username_),
+        password_(arena, from.password_),
+        _cached_size_{0} {}
+
+RegisterData::RegisterData(
+    ::google::protobuf::Arena* arena,
+    const RegisterData& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  RegisterData* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+
+  // @@protoc_insertion_point(copy_constructor:NetworkData.RegisterData)
+}
+inline PROTOBUF_NDEBUG_INLINE RegisterData::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : username_(arena),
+        password_(arena),
+        _cached_size_{0} {}
+
+inline void RegisterData::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+}
+RegisterData::~RegisterData() {
+  // @@protoc_insertion_point(destructor:NetworkData.RegisterData)
+  SharedDtor(*this);
+}
+inline void RegisterData::SharedDtor(MessageLite& self) {
+  RegisterData& this_ = static_cast<RegisterData&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.username_.Destroy();
+  this_._impl_.password_.Destroy();
+  this_._impl_.~Impl_();
+}
+
+inline void* RegisterData::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) RegisterData(arena);
+}
+constexpr auto RegisterData::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(RegisterData),
+                                            alignof(RegisterData));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull RegisterData::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_RegisterData_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &RegisterData::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<RegisterData>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &RegisterData::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<RegisterData>(), &RegisterData::ByteSizeLong,
+            &RegisterData::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(RegisterData, _impl_._cached_size_),
+        false,
+    },
+    &RegisterData::kDescriptorMethods,
+    &descriptor_table_NetworkData_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* RegisterData::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<1, 2, 0, 49, 2> RegisterData::_table_ = {
+  {
+    0,  // no _has_bits_
+    0, // no _extensions_
+    2, 8,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967292,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    2,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::NetworkData::RegisterData>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // string password = 2;
+    {::_pbi::TcParser::FastUS1,
+     {18, 63, 0, PROTOBUF_FIELD_OFFSET(RegisterData, _impl_.password_)}},
+    // string username = 1;
+    {::_pbi::TcParser::FastUS1,
+     {10, 63, 0, PROTOBUF_FIELD_OFFSET(RegisterData, _impl_.username_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // string username = 1;
+    {PROTOBUF_FIELD_OFFSET(RegisterData, _impl_.username_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // string password = 2;
+    {PROTOBUF_FIELD_OFFSET(RegisterData, _impl_.password_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
+  }},
+  // no aux_entries
+  {{
+    "\30\10\10\0\0\0\0\0"
+    "NetworkData.RegisterData"
+    "username"
+    "password"
+  }},
+};
+
+PROTOBUF_NOINLINE void RegisterData::Clear() {
+// @@protoc_insertion_point(message_clear_start:NetworkData.RegisterData)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.username_.ClearToEmpty();
+  _impl_.password_.ClearToEmpty();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* RegisterData::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const RegisterData& this_ = static_cast<const RegisterData&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* RegisterData::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const RegisterData& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.RegisterData)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // string username = 1;
+          if (!this_._internal_username().empty()) {
+            const std::string& _s = this_._internal_username();
+            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.RegisterData.username");
+            target = stream->WriteStringMaybeAliased(1, _s, target);
+          }
+
+          // string password = 2;
+          if (!this_._internal_password().empty()) {
+            const std::string& _s = this_._internal_password();
+            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.RegisterData.password");
+            target = stream->WriteStringMaybeAliased(2, _s, target);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.RegisterData)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t RegisterData::ByteSizeLong(const MessageLite& base) {
+          const RegisterData& this_ = static_cast<const RegisterData&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t RegisterData::ByteSizeLong() const {
+          const RegisterData& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:NetworkData.RegisterData)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+           {
+            // string username = 1;
+            if (!this_._internal_username().empty()) {
+              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                              this_._internal_username());
+            }
+            // string password = 2;
+            if (!this_._internal_password().empty()) {
+              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                              this_._internal_password());
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void RegisterData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<RegisterData*>(&to_msg);
+  auto& from = static_cast<const RegisterData&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.RegisterData)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (!from._internal_username().empty()) {
+    _this->_internal_set_username(from._internal_username());
+  }
+  if (!from._internal_password().empty()) {
+    _this->_internal_set_password(from._internal_password());
+  }
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void RegisterData::CopyFrom(const RegisterData& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.RegisterData)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void RegisterData::InternalSwap(RegisterData* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.username_, &other->_impl_.username_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.password_, &other->_impl_.password_, arena);
+}
+
+::google::protobuf::Metadata RegisterData::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class PositionData::_Internal {
+ public:
+};
+
+PositionData::PositionData(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:NetworkData.PositionData)
+}
+PositionData::PositionData(
+    ::google::protobuf::Arena* arena, const PositionData& from)
+    : PositionData(arena) {
+  MergeFrom(from);
+}
+inline PROTOBUF_NDEBUG_INLINE PositionData::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : _cached_size_{0} {}
+
+inline void PositionData::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  ::memset(reinterpret_cast<char *>(&_impl_) +
+               offsetof(Impl_, x_),
+           0,
+           offsetof(Impl_, z_) -
+               offsetof(Impl_, x_) +
+               sizeof(Impl_::z_));
+}
+PositionData::~PositionData() {
+  // @@protoc_insertion_point(destructor:NetworkData.PositionData)
+  SharedDtor(*this);
+}
+inline void PositionData::SharedDtor(MessageLite& self) {
+  PositionData& this_ = static_cast<PositionData&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.~Impl_();
+}
+
+inline void* PositionData::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) PositionData(arena);
+}
+constexpr auto PositionData::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(PositionData),
+                                            alignof(PositionData));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull PositionData::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_PositionData_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &PositionData::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<PositionData>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &PositionData::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<PositionData>(), &PositionData::ByteSizeLong,
+            &PositionData::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(PositionData, _impl_._cached_size_),
+        false,
+    },
+    &PositionData::kDescriptorMethods,
+    &descriptor_table_NetworkData_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* PositionData::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<2, 3, 0, 0, 2> PositionData::_table_ = {
+  {
+    0,  // no _has_bits_
+    0, // no _extensions_
+    3, 24,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967288,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    3,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::NetworkData::PositionData>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    {::_pbi::TcParser::MiniParse, {}},
+    // float x = 1;
+    {::_pbi::TcParser::FastF32S1,
+     {13, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x_)}},
+    // float y = 2;
+    {::_pbi::TcParser::FastF32S1,
+     {21, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y_)}},
+    // float z = 3;
+    {::_pbi::TcParser::FastF32S1,
+     {29, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // float x = 1;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+    // float y = 2;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+    // float z = 3;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+  }},
+  // no aux_entries
+  {{
+  }},
+};
+
+PROTOBUF_NOINLINE void PositionData::Clear() {
+// @@protoc_insertion_point(message_clear_start:NetworkData.PositionData)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&_impl_.x_, 0, static_cast<::size_t>(
+      reinterpret_cast<char*>(&_impl_.z_) -
+      reinterpret_cast<char*>(&_impl_.x_)) + sizeof(_impl_.z_));
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* PositionData::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const PositionData& this_ = static_cast<const PositionData&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* PositionData::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const PositionData& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.PositionData)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // float x = 1;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_x()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                1, this_._internal_x(), target);
+          }
+
+          // float y = 2;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_y()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                2, this_._internal_y(), target);
+          }
+
+          // float z = 3;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_z()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                3, this_._internal_z(), target);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.PositionData)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t PositionData::ByteSizeLong(const MessageLite& base) {
+          const PositionData& this_ = static_cast<const PositionData&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t PositionData::ByteSizeLong() const {
+          const PositionData& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:NetworkData.PositionData)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+           {
+            // float x = 1;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_x()) != 0) {
+              total_size += 5;
+            }
+            // float y = 2;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_y()) != 0) {
+              total_size += 5;
+            }
+            // float z = 3;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_z()) != 0) {
+              total_size += 5;
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void PositionData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<PositionData*>(&to_msg);
+  auto& from = static_cast<const PositionData&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.PositionData)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (::absl::bit_cast<::uint32_t>(from._internal_x()) != 0) {
+    _this->_impl_.x_ = from._impl_.x_;
+  }
+  if (::absl::bit_cast<::uint32_t>(from._internal_y()) != 0) {
+    _this->_impl_.y_ = from._impl_.y_;
+  }
+  if (::absl::bit_cast<::uint32_t>(from._internal_z()) != 0) {
+    _this->_impl_.z_ = from._impl_.z_;
+  }
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void PositionData::CopyFrom(const PositionData& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.PositionData)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void PositionData::InternalSwap(PositionData* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::google::protobuf::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z_)
+      + sizeof(PositionData::_impl_.z_)
+      - PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x_)>(
+          reinterpret_cast<char*>(&_impl_.x_),
+          reinterpret_cast<char*>(&other->_impl_.x_));
+}
+
+::google::protobuf::Metadata PositionData::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class RpcPacket::_Internal {
+ public:
+  using HasBits =
+      decltype(std::declval<RpcPacket>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_._has_bits_);
+};
+
+void RpcPacket::clear_timestamp() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.timestamp_ != nullptr) _impl_.timestamp_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+RpcPacket::RpcPacket(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:NetworkData.RpcPacket)
+}
+inline PROTOBUF_NDEBUG_INLINE RpcPacket::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
+    const Impl_& from, const ::NetworkData::RpcPacket& from_msg)
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
         ip_(arena, from.ip_),
         uuid_(arena, from.uuid_),
         data_(arena, from.data_) {}
 
-NetworkData::NetworkData(
+RpcPacket::RpcPacket(
     ::google::protobuf::Arena* arena,
-    const NetworkData& from)
+    const RpcPacket& from)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
     : ::google::protobuf::Message(arena, _class_data_.base()) {
 #else   // PROTOBUF_CUSTOM_VTABLE
     : ::google::protobuf::Message(arena) {
 #endif  // PROTOBUF_CUSTOM_VTABLE
-  NetworkData* const _this = this;
+  RpcPacket* const _this = this;
   (void)_this;
   _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
       from._internal_metadata_);
@@ -208,17 +1164,11 @@ NetworkData::NetworkData(
   _impl_.timestamp_ = (cached_has_bits & 0x00000001u) ? ::google::protobuf::Message::CopyConstruct<::google::protobuf::Timestamp>(
                               arena, *from._impl_.timestamp_)
                         : nullptr;
-  ::memcpy(reinterpret_cast<char *>(&_impl_) +
-               offsetof(Impl_, bufsize_),
-           reinterpret_cast<const char *>(&from._impl_) +
-               offsetof(Impl_, bufsize_),
-           offsetof(Impl_, type_) -
-               offsetof(Impl_, bufsize_) +
-               sizeof(Impl_::type_));
+  _impl_.method_ = from._impl_.method_;
 
-  // @@protoc_insertion_point(copy_constructor:NetworkData.NetworkData)
+  // @@protoc_insertion_point(copy_constructor:NetworkData.RpcPacket)
 }
-inline PROTOBUF_NDEBUG_INLINE NetworkData::Impl_::Impl_(
+inline PROTOBUF_NDEBUG_INLINE RpcPacket::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility,
     ::google::protobuf::Arena* arena)
       : _cached_size_{0},
@@ -226,21 +1176,21 @@ inline PROTOBUF_NDEBUG_INLINE NetworkData::Impl_::Impl_(
         uuid_(arena),
         data_(arena) {}
 
-inline void NetworkData::SharedCtor(::_pb::Arena* arena) {
+inline void RpcPacket::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
   ::memset(reinterpret_cast<char *>(&_impl_) +
                offsetof(Impl_, timestamp_),
            0,
-           offsetof(Impl_, type_) -
+           offsetof(Impl_, method_) -
                offsetof(Impl_, timestamp_) +
-               sizeof(Impl_::type_));
+               sizeof(Impl_::method_));
 }
-NetworkData::~NetworkData() {
-  // @@protoc_insertion_point(destructor:NetworkData.NetworkData)
+RpcPacket::~RpcPacket() {
+  // @@protoc_insertion_point(destructor:NetworkData.RpcPacket)
   SharedDtor(*this);
 }
-inline void NetworkData::SharedDtor(MessageLite& self) {
-  NetworkData& this_ = static_cast<NetworkData&>(self);
+inline void RpcPacket::SharedDtor(MessageLite& self) {
+  RpcPacket& this_ = static_cast<RpcPacket&>(self);
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.ip_.Destroy();
@@ -250,114 +1200,108 @@ inline void NetworkData::SharedDtor(MessageLite& self) {
   this_._impl_.~Impl_();
 }
 
-inline void* NetworkData::PlacementNew_(const void*, void* mem,
+inline void* RpcPacket::PlacementNew_(const void*, void* mem,
                                         ::google::protobuf::Arena* arena) {
-  return ::new (mem) NetworkData(arena);
+  return ::new (mem) RpcPacket(arena);
 }
-constexpr auto NetworkData::InternalNewImpl_() {
-  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(NetworkData),
-                                            alignof(NetworkData));
+constexpr auto RpcPacket::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(RpcPacket),
+                                            alignof(RpcPacket));
 }
 PROTOBUF_CONSTINIT
 PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::google::protobuf::internal::ClassDataFull NetworkData::_class_data_ = {
+const ::google::protobuf::internal::ClassDataFull RpcPacket::_class_data_ = {
     ::google::protobuf::internal::ClassData{
-        &_NetworkData_default_instance_._instance,
+        &_RpcPacket_default_instance_._instance,
         &_table_.header,
         nullptr,  // OnDemandRegisterArenaDtor
         nullptr,  // IsInitialized
-        &NetworkData::MergeImpl,
-        ::google::protobuf::Message::GetNewImpl<NetworkData>(),
+        &RpcPacket::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<RpcPacket>(),
 #if defined(PROTOBUF_CUSTOM_VTABLE)
-        &NetworkData::SharedDtor,
-        ::google::protobuf::Message::GetClearImpl<NetworkData>(), &NetworkData::ByteSizeLong,
-            &NetworkData::_InternalSerialize,
+        &RpcPacket::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<RpcPacket>(), &RpcPacket::ByteSizeLong,
+            &RpcPacket::_InternalSerialize,
 #endif  // PROTOBUF_CUSTOM_VTABLE
-        PROTOBUF_FIELD_OFFSET(NetworkData, _impl_._cached_size_),
+        PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_._cached_size_),
         false,
     },
-    &NetworkData::kDescriptorMethods,
+    &RpcPacket::kDescriptorMethods,
     &descriptor_table_NetworkData_2eproto,
     nullptr,  // tracker
 };
-const ::google::protobuf::internal::ClassData* NetworkData::GetClassData() const {
+const ::google::protobuf::internal::ClassData* RpcPacket::GetClassData() const {
   ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
   ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 6, 1, 42, 2> NetworkData::_table_ = {
+const ::_pbi::TcParseTable<3, 5, 1, 36, 2> RpcPacket::_table_ = {
   {
-    PROTOBUF_FIELD_OFFSET(NetworkData, _impl_._has_bits_),
+    PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_._has_bits_),
     0, // no _extensions_
-    6, 56,  // max_field_number, fast_idx_mask
+    5, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967232,  // skipmap
+    4294967264,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    6,  // num_field_entries
+    5,  // num_field_entries
     1,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     _class_data_.base(),
     nullptr,  // post_loop_handler
     ::_pbi::TcParser::GenericFallback,  // fallback
     #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
-    ::_pbi::TcParser::GetTable<::NetworkData::NetworkData>(),  // to_prefetch
+    ::_pbi::TcParser::GetTable<::NetworkData::RpcPacket>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
     {::_pbi::TcParser::MiniParse, {}},
     // string ip = 1;
     {::_pbi::TcParser::FastUS1,
-     {10, 63, 0, PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.ip_)}},
+     {10, 63, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.ip_)}},
     // string uuid = 2;
     {::_pbi::TcParser::FastUS1,
-     {18, 63, 0, PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.uuid_)}},
-    // .NetworkData.ENetworkType type = 3;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(NetworkData, _impl_.type_), 63>(),
-     {24, 63, 0, PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.type_)}},
-    // uint64 bufSize = 4;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(NetworkData, _impl_.bufsize_), 63>(),
-     {32, 63, 0, PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.bufsize_)}},
-    // string data = 5;
-    {::_pbi::TcParser::FastUS1,
-     {42, 63, 0, PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.data_)}},
-    // .google.protobuf.Timestamp timestamp = 6;
+     {18, 63, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.uuid_)}},
+    // .NetworkData.RpcMethod method = 3;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(RpcPacket, _impl_.method_), 63>(),
+     {24, 63, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.method_)}},
+    // bytes data = 4;
+    {::_pbi::TcParser::FastBS1,
+     {34, 63, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.data_)}},
+    // .google.protobuf.Timestamp timestamp = 5;
     {::_pbi::TcParser::FastMtS1,
-     {50, 0, 0, PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.timestamp_)}},
+     {42, 0, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.timestamp_)}},
+    {::_pbi::TcParser::MiniParse, {}},
     {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
     // string ip = 1;
-    {PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.ip_), -1, 0,
+    {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.ip_), -1, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // string uuid = 2;
-    {PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.uuid_), -1, 0,
+    {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.uuid_), -1, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
-    // .NetworkData.ENetworkType type = 3;
-    {PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.type_), -1, 0,
+    // .NetworkData.RpcMethod method = 3;
+    {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.method_), -1, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kOpenEnum)},
-    // uint64 bufSize = 4;
-    {PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.bufsize_), -1, 0,
-    (0 | ::_fl::kFcSingular | ::_fl::kUInt64)},
-    // string data = 5;
-    {PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.data_), -1, 0,
-    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
-    // .google.protobuf.Timestamp timestamp = 6;
-    {PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.timestamp_), _Internal::kHasBitsOffset + 0, 0,
+    // bytes data = 4;
+    {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.data_), -1, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kBytes | ::_fl::kRepAString)},
+    // .google.protobuf.Timestamp timestamp = 5;
+    {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.timestamp_), _Internal::kHasBitsOffset + 0, 0,
     (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
   }}, {{
     {::_pbi::TcParser::GetTable<::google::protobuf::Timestamp>()},
   }}, {{
-    "\27\2\4\0\0\4\0\0"
-    "NetworkData.NetworkData"
+    "\25\2\4\0\0\0\0\0"
+    "NetworkData.RpcPacket"
     "ip"
     "uuid"
-    "data"
   }},
 };
 
-PROTOBUF_NOINLINE void NetworkData::Clear() {
-// @@protoc_insertion_point(message_clear_start:NetworkData.NetworkData)
+PROTOBUF_NOINLINE void RpcPacket::Clear() {
+// @@protoc_insertion_point(message_clear_start:NetworkData.RpcPacket)
   ::google::protobuf::internal::TSanWrite(&_impl_);
   ::uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
@@ -371,25 +1315,23 @@ PROTOBUF_NOINLINE void NetworkData::Clear() {
     ABSL_DCHECK(_impl_.timestamp_ != nullptr);
     _impl_.timestamp_->Clear();
   }
-  ::memset(&_impl_.bufsize_, 0, static_cast<::size_t>(
-      reinterpret_cast<char*>(&_impl_.type_) -
-      reinterpret_cast<char*>(&_impl_.bufsize_)) + sizeof(_impl_.type_));
+  _impl_.method_ = 0;
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
 
 #if defined(PROTOBUF_CUSTOM_VTABLE)
-        ::uint8_t* NetworkData::_InternalSerialize(
+        ::uint8_t* RpcPacket::_InternalSerialize(
             const MessageLite& base, ::uint8_t* target,
             ::google::protobuf::io::EpsCopyOutputStream* stream) {
-          const NetworkData& this_ = static_cast<const NetworkData&>(base);
+          const RpcPacket& this_ = static_cast<const RpcPacket&>(base);
 #else   // PROTOBUF_CUSTOM_VTABLE
-        ::uint8_t* NetworkData::_InternalSerialize(
+        ::uint8_t* RpcPacket::_InternalSerialize(
             ::uint8_t* target,
             ::google::protobuf::io::EpsCopyOutputStream* stream) const {
-          const NetworkData& this_ = *this;
+          const RpcPacket& this_ = *this;
 #endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.NetworkData)
+          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.RpcPacket)
           ::uint32_t cached_has_bits = 0;
           (void)cached_has_bits;
 
@@ -397,7 +1339,7 @@ PROTOBUF_NOINLINE void NetworkData::Clear() {
           if (!this_._internal_ip().empty()) {
             const std::string& _s = this_._internal_ip();
             ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.NetworkData.ip");
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.RpcPacket.ip");
             target = stream->WriteStringMaybeAliased(1, _s, target);
           }
 
@@ -405,37 +1347,28 @@ PROTOBUF_NOINLINE void NetworkData::Clear() {
           if (!this_._internal_uuid().empty()) {
             const std::string& _s = this_._internal_uuid();
             ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.NetworkData.uuid");
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.RpcPacket.uuid");
             target = stream->WriteStringMaybeAliased(2, _s, target);
           }
 
-          // .NetworkData.ENetworkType type = 3;
-          if (this_._internal_type() != 0) {
+          // .NetworkData.RpcMethod method = 3;
+          if (this_._internal_method() != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteEnumToArray(
-                3, this_._internal_type(), target);
+                3, this_._internal_method(), target);
           }
 
-          // uint64 bufSize = 4;
-          if (this_._internal_bufsize() != 0) {
-            target = stream->EnsureSpace(target);
-            target = ::_pbi::WireFormatLite::WriteUInt64ToArray(
-                4, this_._internal_bufsize(), target);
-          }
-
-          // string data = 5;
+          // bytes data = 4;
           if (!this_._internal_data().empty()) {
             const std::string& _s = this_._internal_data();
-            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.NetworkData.data");
-            target = stream->WriteStringMaybeAliased(5, _s, target);
+            target = stream->WriteBytesMaybeAliased(4, _s, target);
           }
 
           cached_has_bits = this_._impl_._has_bits_[0];
-          // .google.protobuf.Timestamp timestamp = 6;
+          // .google.protobuf.Timestamp timestamp = 5;
           if (cached_has_bits & 0x00000001u) {
             target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
-                6, *this_._impl_.timestamp_, this_._impl_.timestamp_->GetCachedSize(), target,
+                5, *this_._impl_.timestamp_, this_._impl_.timestamp_->GetCachedSize(), target,
                 stream);
           }
 
@@ -444,18 +1377,18 @@ PROTOBUF_NOINLINE void NetworkData::Clear() {
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
                     this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
           }
-          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.NetworkData)
+          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.RpcPacket)
           return target;
         }
 
 #if defined(PROTOBUF_CUSTOM_VTABLE)
-        ::size_t NetworkData::ByteSizeLong(const MessageLite& base) {
-          const NetworkData& this_ = static_cast<const NetworkData&>(base);
+        ::size_t RpcPacket::ByteSizeLong(const MessageLite& base) {
+          const RpcPacket& this_ = static_cast<const RpcPacket&>(base);
 #else   // PROTOBUF_CUSTOM_VTABLE
-        ::size_t NetworkData::ByteSizeLong() const {
-          const NetworkData& this_ = *this;
+        ::size_t RpcPacket::ByteSizeLong() const {
+          const RpcPacket& this_ = *this;
 #endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(message_byte_size_start:NetworkData.NetworkData)
+          // @@protoc_insertion_point(message_byte_size_start:NetworkData.RpcPacket)
           ::size_t total_size = 0;
 
           ::uint32_t cached_has_bits = 0;
@@ -474,14 +1407,14 @@ PROTOBUF_NOINLINE void NetworkData::Clear() {
               total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
                                               this_._internal_uuid());
             }
-            // string data = 5;
+            // bytes data = 4;
             if (!this_._internal_data().empty()) {
-              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+              total_size += 1 + ::google::protobuf::internal::WireFormatLite::BytesSize(
                                               this_._internal_data());
             }
           }
            {
-            // .google.protobuf.Timestamp timestamp = 6;
+            // .google.protobuf.Timestamp timestamp = 5;
             cached_has_bits = this_._impl_._has_bits_[0];
             if (cached_has_bits & 0x00000001u) {
               total_size += 1 +
@@ -489,26 +1422,21 @@ PROTOBUF_NOINLINE void NetworkData::Clear() {
             }
           }
            {
-            // uint64 bufSize = 4;
-            if (this_._internal_bufsize() != 0) {
-              total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(
-                  this_._internal_bufsize());
-            }
-            // .NetworkData.ENetworkType type = 3;
-            if (this_._internal_type() != 0) {
+            // .NetworkData.RpcMethod method = 3;
+            if (this_._internal_method() != 0) {
               total_size += 1 +
-                            ::_pbi::WireFormatLite::EnumSize(this_._internal_type());
+                            ::_pbi::WireFormatLite::EnumSize(this_._internal_method());
             }
           }
           return this_.MaybeComputeUnknownFieldsSize(total_size,
                                                      &this_._impl_._cached_size_);
         }
 
-void NetworkData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
-  auto* const _this = static_cast<NetworkData*>(&to_msg);
-  auto& from = static_cast<const NetworkData&>(from_msg);
+void RpcPacket::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<RpcPacket*>(&to_msg);
+  auto& from = static_cast<const RpcPacket&>(from_msg);
   ::google::protobuf::Arena* arena = _this->GetArena();
-  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.NetworkData)
+  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.RpcPacket)
   ABSL_DCHECK_NE(&from, _this);
   ::uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
@@ -532,25 +1460,22 @@ void NetworkData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::goo
       _this->_impl_.timestamp_->MergeFrom(*from._impl_.timestamp_);
     }
   }
-  if (from._internal_bufsize() != 0) {
-    _this->_impl_.bufsize_ = from._impl_.bufsize_;
-  }
-  if (from._internal_type() != 0) {
-    _this->_impl_.type_ = from._impl_.type_;
+  if (from._internal_method() != 0) {
+    _this->_impl_.method_ = from._impl_.method_;
   }
   _this->_impl_._has_bits_[0] |= cached_has_bits;
   _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
 }
 
-void NetworkData::CopyFrom(const NetworkData& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.NetworkData)
+void RpcPacket::CopyFrom(const RpcPacket& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.RpcPacket)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 
-void NetworkData::InternalSwap(NetworkData* PROTOBUF_RESTRICT other) {
+void RpcPacket::InternalSwap(RpcPacket* PROTOBUF_RESTRICT other) {
   using std::swap;
   auto* arena = GetArena();
   ABSL_DCHECK_EQ(arena, other->GetArena());
@@ -560,14 +1485,299 @@ void NetworkData::InternalSwap(NetworkData* PROTOBUF_RESTRICT other) {
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.uuid_, &other->_impl_.uuid_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.data_, &other->_impl_.data_, arena);
   ::google::protobuf::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.type_)
-      + sizeof(NetworkData::_impl_.type_)
-      - PROTOBUF_FIELD_OFFSET(NetworkData, _impl_.timestamp_)>(
+      PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.method_)
+      + sizeof(RpcPacket::_impl_.method_)
+      - PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.timestamp_)>(
           reinterpret_cast<char*>(&_impl_.timestamp_),
           reinterpret_cast<char*>(&other->_impl_.timestamp_));
 }
 
-::google::protobuf::Metadata NetworkData::GetMetadata() const {
+::google::protobuf::Metadata RpcPacket::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class ResponsePacket::_Internal {
+ public:
+  using HasBits =
+      decltype(std::declval<ResponsePacket>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(ResponsePacket, _impl_._has_bits_);
+};
+
+void ResponsePacket::clear_timestamp() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (_impl_.timestamp_ != nullptr) _impl_.timestamp_->Clear();
+  _impl_._has_bits_[0] &= ~0x00000001u;
+}
+ResponsePacket::ResponsePacket(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:NetworkData.ResponsePacket)
+}
+inline PROTOBUF_NDEBUG_INLINE ResponsePacket::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
+    const Impl_& from, const ::NetworkData::ResponsePacket& from_msg)
+      : _has_bits_{from._has_bits_},
+        _cached_size_{0},
+        data_(arena, from.data_) {}
+
+ResponsePacket::ResponsePacket(
+    ::google::protobuf::Arena* arena,
+    const ResponsePacket& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  ResponsePacket* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+  ::uint32_t cached_has_bits = _impl_._has_bits_[0];
+  _impl_.timestamp_ = (cached_has_bits & 0x00000001u) ? ::google::protobuf::Message::CopyConstruct<::google::protobuf::Timestamp>(
+                              arena, *from._impl_.timestamp_)
+                        : nullptr;
+
+  // @@protoc_insertion_point(copy_constructor:NetworkData.ResponsePacket)
+}
+inline PROTOBUF_NDEBUG_INLINE ResponsePacket::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : _cached_size_{0},
+        data_(arena) {}
+
+inline void ResponsePacket::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  _impl_.timestamp_ = {};
+}
+ResponsePacket::~ResponsePacket() {
+  // @@protoc_insertion_point(destructor:NetworkData.ResponsePacket)
+  SharedDtor(*this);
+}
+inline void ResponsePacket::SharedDtor(MessageLite& self) {
+  ResponsePacket& this_ = static_cast<ResponsePacket&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.data_.Destroy();
+  delete this_._impl_.timestamp_;
+  this_._impl_.~Impl_();
+}
+
+inline void* ResponsePacket::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) ResponsePacket(arena);
+}
+constexpr auto ResponsePacket::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(ResponsePacket),
+                                            alignof(ResponsePacket));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull ResponsePacket::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_ResponsePacket_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &ResponsePacket::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<ResponsePacket>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &ResponsePacket::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<ResponsePacket>(), &ResponsePacket::ByteSizeLong,
+            &ResponsePacket::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(ResponsePacket, _impl_._cached_size_),
+        false,
+    },
+    &ResponsePacket::kDescriptorMethods,
+    &descriptor_table_NetworkData_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* ResponsePacket::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<1, 2, 1, 0, 2> ResponsePacket::_table_ = {
+  {
+    PROTOBUF_FIELD_OFFSET(ResponsePacket, _impl_._has_bits_),
+    0, // no _extensions_
+    2, 8,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967292,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    2,  // num_field_entries
+    1,  // num_aux_entries
+    offsetof(decltype(_table_), aux_entries),
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::NetworkData::ResponsePacket>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // .google.protobuf.Timestamp timestamp = 2;
+    {::_pbi::TcParser::FastMtS1,
+     {18, 0, 0, PROTOBUF_FIELD_OFFSET(ResponsePacket, _impl_.timestamp_)}},
+    // bytes data = 1;
+    {::_pbi::TcParser::FastBS1,
+     {10, 63, 0, PROTOBUF_FIELD_OFFSET(ResponsePacket, _impl_.data_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // bytes data = 1;
+    {PROTOBUF_FIELD_OFFSET(ResponsePacket, _impl_.data_), -1, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kBytes | ::_fl::kRepAString)},
+    // .google.protobuf.Timestamp timestamp = 2;
+    {PROTOBUF_FIELD_OFFSET(ResponsePacket, _impl_.timestamp_), _Internal::kHasBitsOffset + 0, 0,
+    (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+  }}, {{
+    {::_pbi::TcParser::GetTable<::google::protobuf::Timestamp>()},
+  }}, {{
+  }},
+};
+
+PROTOBUF_NOINLINE void ResponsePacket::Clear() {
+// @@protoc_insertion_point(message_clear_start:NetworkData.ResponsePacket)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.data_.ClearToEmpty();
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
+    ABSL_DCHECK(_impl_.timestamp_ != nullptr);
+    _impl_.timestamp_->Clear();
+  }
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* ResponsePacket::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const ResponsePacket& this_ = static_cast<const ResponsePacket&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* ResponsePacket::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const ResponsePacket& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.ResponsePacket)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // bytes data = 1;
+          if (!this_._internal_data().empty()) {
+            const std::string& _s = this_._internal_data();
+            target = stream->WriteBytesMaybeAliased(1, _s, target);
+          }
+
+          cached_has_bits = this_._impl_._has_bits_[0];
+          // .google.protobuf.Timestamp timestamp = 2;
+          if (cached_has_bits & 0x00000001u) {
+            target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+                2, *this_._impl_.timestamp_, this_._impl_.timestamp_->GetCachedSize(), target,
+                stream);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.ResponsePacket)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t ResponsePacket::ByteSizeLong(const MessageLite& base) {
+          const ResponsePacket& this_ = static_cast<const ResponsePacket&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t ResponsePacket::ByteSizeLong() const {
+          const ResponsePacket& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:NetworkData.ResponsePacket)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+           {
+            // bytes data = 1;
+            if (!this_._internal_data().empty()) {
+              total_size += 1 + ::google::protobuf::internal::WireFormatLite::BytesSize(
+                                              this_._internal_data());
+            }
+          }
+           {
+            // .google.protobuf.Timestamp timestamp = 2;
+            cached_has_bits = this_._impl_._has_bits_[0];
+            if (cached_has_bits & 0x00000001u) {
+              total_size += 1 +
+                            ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.timestamp_);
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void ResponsePacket::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<ResponsePacket*>(&to_msg);
+  auto& from = static_cast<const ResponsePacket&>(from_msg);
+  ::google::protobuf::Arena* arena = _this->GetArena();
+  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.ResponsePacket)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (!from._internal_data().empty()) {
+    _this->_internal_set_data(from._internal_data());
+  }
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
+    ABSL_DCHECK(from._impl_.timestamp_ != nullptr);
+    if (_this->_impl_.timestamp_ == nullptr) {
+      _this->_impl_.timestamp_ =
+          ::google::protobuf::Message::CopyConstruct<::google::protobuf::Timestamp>(arena, *from._impl_.timestamp_);
+    } else {
+      _this->_impl_.timestamp_->MergeFrom(*from._impl_.timestamp_);
+    }
+  }
+  _this->_impl_._has_bits_[0] |= cached_has_bits;
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void ResponsePacket::CopyFrom(const ResponsePacket& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.ResponsePacket)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void ResponsePacket::InternalSwap(ResponsePacket* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.data_, &other->_impl_.data_, arena);
+  swap(_impl_.timestamp_, other->_impl_.timestamp_);
+}
+
+::google::protobuf::Metadata ResponsePacket::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // @@protoc_insertion_point(namespace_scope)

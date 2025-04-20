@@ -21,6 +21,7 @@ public partial class RandomMoveAction : Action
 
     protected override Status OnUpdate()
     {
+        base.OnUpdate();
         Vector3 newPosition = new Vector3(Random.Range(-10f, 10f), aiTransform.Value.position.y, Random.Range(-10f, 10f));
         
         if (aiManager.Value.IsMoving)
