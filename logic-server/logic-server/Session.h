@@ -31,5 +31,5 @@ private:
 
 	void AsyncReadSize();
 	void AsyncReadData();
-	void ProcessRequest(const RpcPacket& reqPacket);
+	void ProcessRequestAsync(const RpcPacket& reqPacket);
 };

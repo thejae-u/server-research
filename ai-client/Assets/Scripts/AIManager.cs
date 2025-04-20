@@ -26,6 +26,7 @@ public class AIManager : MonoBehaviour
         };
         
         _networkManager = NetworkManager.Instance;
+        _rpcPacket.Uuid = NetworkManager.Instance.GetInstanceID().ToString();
     }
 
     public void MoveCharacter(Vector3 targetPosition)

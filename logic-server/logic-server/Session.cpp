@@ -79,13 +79,16 @@ void Session::AsyncReadData()
 			}
 
 			// Process the request asynchronously
-			boost::asio::post(_io, [this, deserializeRpcPacket]() { ProcessRequest(deserializeRpcPacket); });
-			
+			boost::asio::post(_io, [this, deserializeRpcPacket]() { ProcessRequestAsync(deserializeRpcPacket); });
+
+			_buffer.clear();
+			_netSize = 0;
+			_dataSize = 0;
 			AsyncReadSize();
 		});
 }
 
-void Session::ProcessRequest(const RpcPacket& reqPacket)
+void Session::ProcessRequestAsync(const RpcPacket& reqPacket)
 {
 	switch (reqPacket.method())
 	{
@@ -97,8 +100,8 @@ void Session::ProcessRequest(const RpcPacket& reqPacket)
 				std::cerr << "In PR Error Parsing Position Data\n";
 				return;
 			}
-        
-			std::cout << "Move Request: " << Utility::PositionDataToString(positionData) << "\n";	
+
+			std::cout << reqPacket.uuid() << " Move Request: " << Utility::PositionDataToString(positionData) << "\n";
 			break;
 		}
 	// Not Implemented

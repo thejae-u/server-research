@@ -45,7 +45,10 @@ public class NetworkManager : Singleton<NetworkManager>
         {
             if (_maxRetries-- > 0)
             {
-                Debug.Log($"Retrying connection to server... {_maxRetries} attempts left");
+                Debug.Log(_maxRetries > 0 
+                    ? $"Retrying connection to server... {_maxRetries} tries left" 
+                    : $"Last retrying connection to server...");
+                
                 ConnectToServer().Forget();
                 return;
             }
