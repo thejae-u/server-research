@@ -69,6 +69,9 @@ extern PositionDataDefaultTypeInternal _PositionData_default_instance_;
 class RegisterData;
 struct RegisterDataDefaultTypeInternal;
 extern RegisterDataDefaultTypeInternal _RegisterData_default_instance_;
+class RemoteCallData;
+struct RemoteCallDataDefaultTypeInternal;
+extern RemoteCallDataDefaultTypeInternal _RemoteCallData_default_instance_;
 class ResponsePacket;
 struct ResponsePacketDefaultTypeInternal;
 extern ResponsePacketDefaultTypeInternal _ResponsePacket_default_instance_;
@@ -96,6 +99,8 @@ enum RpcMethod : int {
   DROP_ITEM = 103,
   USE_ITEM = 104,
   USE_SKILL = 105,
+  REMOTE_MOVE_CALL = 500,
+  REMOTE_ATTACK_CALL = 501,
   RpcMethod_INT_MIN_SENTINEL_DO_NOT_USE_ =
       std::numeric_limits<::int32_t>::min(),
   RpcMethod_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -105,8 +110,8 @@ enum RpcMethod : int {
 bool RpcMethod_IsValid(int value);
 extern const uint32_t RpcMethod_internal_data_[];
 constexpr RpcMethod RpcMethod_MIN = static_cast<RpcMethod>(0);
-constexpr RpcMethod RpcMethod_MAX = static_cast<RpcMethod>(105);
-constexpr int RpcMethod_ARRAYSIZE = 105 + 1;
+constexpr RpcMethod RpcMethod_MAX = static_cast<RpcMethod>(501);
+constexpr int RpcMethod_ARRAYSIZE = 501 + 1;
 const ::google::protobuf::EnumDescriptor*
 RpcMethod_descriptor();
 template <typename T>
@@ -119,6 +124,46 @@ const std::string& RpcMethod_Name(T value) {
 inline bool RpcMethod_Parse(absl::string_view name, RpcMethod* value) {
   return ::google::protobuf::internal::ParseNamedEnum<RpcMethod>(
       RpcMethod_descriptor(), name, value);
+}
+enum RpcResponseMethod : int {
+  RES_NONE = 0,
+  RES_LOGIN = 1,
+  RES_REGISTER = 2,
+  RES_RETRIEVE = 3,
+  RES_ACCESS = 4,
+  RES_REJECT = 5,
+  RES_LOGOUT = 6,
+  RES_IN_GAME_NONE = 100,
+  RES_MOVE = 101,
+  RES_ATTACK = 102,
+  RES_DROP_ITEM = 103,
+  RES_USE_ITEM = 104,
+  RES_USE_SKILL = 105,
+  RES_REMOTE_MOVE_CALL = 500,
+  RES_REMOTE_ATTACK_CALL = 501,
+  RpcResponseMethod_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::min(),
+  RpcResponseMethod_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::max(),
+};
+
+bool RpcResponseMethod_IsValid(int value);
+extern const uint32_t RpcResponseMethod_internal_data_[];
+constexpr RpcResponseMethod RpcResponseMethod_MIN = static_cast<RpcResponseMethod>(0);
+constexpr RpcResponseMethod RpcResponseMethod_MAX = static_cast<RpcResponseMethod>(501);
+constexpr int RpcResponseMethod_ARRAYSIZE = 501 + 1;
+const ::google::protobuf::EnumDescriptor*
+RpcResponseMethod_descriptor();
+template <typename T>
+const std::string& RpcResponseMethod_Name(T value) {
+  static_assert(std::is_same<T, RpcResponseMethod>::value ||
+                    std::is_integral<T>::value,
+                "Incorrect type passed to RpcResponseMethod_Name().");
+  return ::google::protobuf::internal::NameOfEnum(RpcResponseMethod_descriptor(), value);
+}
+inline bool RpcResponseMethod_Parse(absl::string_view name, RpcResponseMethod* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<RpcResponseMethod>(
+      RpcResponseMethod_descriptor(), name, value);
 }
 enum AdminRpcMethod : int {
   ADMIN_NONE = 0,
@@ -190,6 +235,232 @@ inline bool ELoginError_Parse(absl::string_view name, ELoginError* value) {
 // ===================================================================
 
 
+// -------------------------------------------------------------------
+
+class RemoteCallData final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:NetworkData.RemoteCallData) */ {
+ public:
+  inline RemoteCallData() : RemoteCallData(nullptr) {}
+  ~RemoteCallData() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(RemoteCallData* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(RemoteCallData));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR RemoteCallData(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline RemoteCallData(const RemoteCallData& from) : RemoteCallData(nullptr, from) {}
+  inline RemoteCallData(RemoteCallData&& from) noexcept
+      : RemoteCallData(nullptr, std::move(from)) {}
+  inline RemoteCallData& operator=(const RemoteCallData& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline RemoteCallData& operator=(RemoteCallData&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const RemoteCallData& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const RemoteCallData* internal_default_instance() {
+    return reinterpret_cast<const RemoteCallData*>(
+        &_RemoteCallData_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 3;
+  friend void swap(RemoteCallData& a, RemoteCallData& b) { a.Swap(&b); }
+  inline void Swap(RemoteCallData* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(RemoteCallData* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  RemoteCallData* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<RemoteCallData>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const RemoteCallData& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const RemoteCallData& from) { RemoteCallData::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(RemoteCallData* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "NetworkData.RemoteCallData"; }
+
+ protected:
+  explicit RemoteCallData(::google::protobuf::Arena* arena);
+  RemoteCallData(::google::protobuf::Arena* arena, const RemoteCallData& from);
+  RemoteCallData(::google::protobuf::Arena* arena, RemoteCallData&& from) noexcept
+      : RemoteCallData(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kIdFieldNumber = 1,
+    kDataFieldNumber = 3,
+    kMethodFieldNumber = 2,
+  };
+  // string id = 1;
+  void clear_id() ;
+  const std::string& id() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_id(Arg_&& arg, Args_... args);
+  std::string* mutable_id();
+  PROTOBUF_NODISCARD std::string* release_id();
+  void set_allocated_id(std::string* value);
+
+  private:
+  const std::string& _internal_id() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_id(
+      const std::string& value);
+  std::string* _internal_mutable_id();
+
+  public:
+  // bytes data = 3;
+  void clear_data() ;
+  const std::string& data() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_data(Arg_&& arg, Args_... args);
+  std::string* mutable_data();
+  PROTOBUF_NODISCARD std::string* release_data();
+  void set_allocated_data(std::string* value);
+
+  private:
+  const std::string& _internal_data() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_data(
+      const std::string& value);
+  std::string* _internal_mutable_data();
+
+  public:
+  // .NetworkData.RpcMethod method = 2;
+  void clear_method() ;
+  ::NetworkData::RpcMethod method() const;
+  void set_method(::NetworkData::RpcMethod value);
+
+  private:
+  ::NetworkData::RpcMethod _internal_method() const;
+  void _internal_set_method(::NetworkData::RpcMethod value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:NetworkData.RemoteCallData)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      2, 3, 0,
+      37, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const RemoteCallData& from_msg);
+    ::google::protobuf::internal::ArenaStringPtr id_;
+    ::google::protobuf::internal::ArenaStringPtr data_;
+    int method_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_NetworkData_2eproto;
+};
 // -------------------------------------------------------------------
 
 class RegisterData final : public ::google::protobuf::Message
@@ -552,12 +823,12 @@ class PositionData final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
-    kXFieldNumber = 1,
-    kYFieldNumber = 2,
-    kZFieldNumber = 3,
-    kDurationFieldNumber = 4,
+    kXFieldNumber = 2,
+    kYFieldNumber = 3,
+    kZFieldNumber = 4,
+    kDurationFieldNumber = 5,
   };
-  // float x = 1;
+  // float x = 2;
   void clear_x() ;
   float x() const;
   void set_x(float value);
@@ -567,7 +838,7 @@ class PositionData final : public ::google::protobuf::Message
   void _internal_set_x(float value);
 
   public:
-  // float y = 2;
+  // float y = 3;
   void clear_y() ;
   float y() const;
   void set_y(float value);
@@ -577,7 +848,7 @@ class PositionData final : public ::google::protobuf::Message
   void _internal_set_y(float value);
 
   public:
-  // float z = 3;
+  // float z = 4;
   void clear_z() ;
   float z() const;
   void set_z(float value);
@@ -587,7 +858,7 @@ class PositionData final : public ::google::protobuf::Message
   void _internal_set_z(float value);
 
   public:
-  // float duration = 4;
+  // float duration = 5;
   void clear_duration() ;
   float duration() const;
   void set_duration(float value);
@@ -905,7 +1176,7 @@ class ItemData final : public ::google::protobuf::Message
     return reinterpret_cast<const ItemData*>(
         &_ItemData_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 4;
+  static constexpr int kIndexInFileMessages = 5;
   friend void swap(ItemData& a, ItemData& b) { a.Swap(&b); }
   inline void Swap(ItemData* other) {
     if (other == this) return;
@@ -1101,7 +1372,7 @@ class AttackData final : public ::google::protobuf::Message
     return reinterpret_cast<const AttackData*>(
         &_AttackData_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 3;
+  static constexpr int kIndexInFileMessages = 4;
   friend void swap(AttackData& a, AttackData& b) { a.Swap(&b); }
   inline void Swap(AttackData* other) {
     if (other == this) return;
@@ -1309,7 +1580,7 @@ class RpcPacket final : public ::google::protobuf::Message
     return reinterpret_cast<const RpcPacket*>(
         &_RpcPacket_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 5;
+  static constexpr int kIndexInFileMessages = 6;
   friend void swap(RpcPacket& a, RpcPacket& b) { a.Swap(&b); }
   inline void Swap(RpcPacket* other) {
     if (other == this) return;
@@ -1571,7 +1842,7 @@ class ResponsePacket final : public ::google::protobuf::Message
     return reinterpret_cast<const ResponsePacket*>(
         &_ResponsePacket_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 6;
+  static constexpr int kIndexInFileMessages = 7;
   friend void swap(ResponsePacket& a, ResponsePacket& b) { a.Swap(&b); }
   inline void Swap(ResponsePacket* other) {
     if (other == this) return;
@@ -1941,7 +2212,7 @@ inline void RegisterData::set_allocated_password(std::string* value) {
 
 // PositionData
 
-// float x = 1;
+// float x = 2;
 inline void PositionData::clear_x() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.x_ = 0;
@@ -1963,7 +2234,7 @@ inline void PositionData::_internal_set_x(float value) {
   _impl_.x_ = value;
 }
 
-// float y = 2;
+// float y = 3;
 inline void PositionData::clear_y() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.y_ = 0;
@@ -1985,7 +2256,7 @@ inline void PositionData::_internal_set_y(float value) {
   _impl_.y_ = value;
 }
 
-// float z = 3;
+// float z = 4;
 inline void PositionData::clear_z() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.z_ = 0;
@@ -2007,7 +2278,7 @@ inline void PositionData::_internal_set_z(float value) {
   _impl_.z_ = value;
 }
 
-// float duration = 4;
+// float duration = 5;
 inline void PositionData::clear_duration() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.duration_ = 0;
@@ -2027,6 +2298,128 @@ inline float PositionData::_internal_duration() const {
 inline void PositionData::_internal_set_duration(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.duration_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// RemoteCallData
+
+// string id = 1;
+inline void RemoteCallData::clear_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_.ClearToEmpty();
+}
+inline const std::string& RemoteCallData::id() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:NetworkData.RemoteCallData.id)
+  return _internal_id();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void RemoteCallData::set_id(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:NetworkData.RemoteCallData.id)
+}
+inline std::string* RemoteCallData::mutable_id() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_id();
+  // @@protoc_insertion_point(field_mutable:NetworkData.RemoteCallData.id)
+  return _s;
+}
+inline const std::string& RemoteCallData::_internal_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.id_.Get();
+}
+inline void RemoteCallData::_internal_set_id(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_.Set(value, GetArena());
+}
+inline std::string* RemoteCallData::_internal_mutable_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.id_.Mutable( GetArena());
+}
+inline std::string* RemoteCallData::release_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:NetworkData.RemoteCallData.id)
+  return _impl_.id_.Release();
+}
+inline void RemoteCallData::set_allocated_id(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.id_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.id_.IsDefault()) {
+    _impl_.id_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:NetworkData.RemoteCallData.id)
+}
+
+// .NetworkData.RpcMethod method = 2;
+inline void RemoteCallData::clear_method() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.method_ = 0;
+}
+inline ::NetworkData::RpcMethod RemoteCallData::method() const {
+  // @@protoc_insertion_point(field_get:NetworkData.RemoteCallData.method)
+  return _internal_method();
+}
+inline void RemoteCallData::set_method(::NetworkData::RpcMethod value) {
+  _internal_set_method(value);
+  // @@protoc_insertion_point(field_set:NetworkData.RemoteCallData.method)
+}
+inline ::NetworkData::RpcMethod RemoteCallData::_internal_method() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::NetworkData::RpcMethod>(_impl_.method_);
+}
+inline void RemoteCallData::_internal_set_method(::NetworkData::RpcMethod value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.method_ = value;
+}
+
+// bytes data = 3;
+inline void RemoteCallData::clear_data() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.data_.ClearToEmpty();
+}
+inline const std::string& RemoteCallData::data() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:NetworkData.RemoteCallData.data)
+  return _internal_data();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void RemoteCallData::set_data(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.data_.SetBytes(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:NetworkData.RemoteCallData.data)
+}
+inline std::string* RemoteCallData::mutable_data() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_data();
+  // @@protoc_insertion_point(field_mutable:NetworkData.RemoteCallData.data)
+  return _s;
+}
+inline const std::string& RemoteCallData::_internal_data() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.data_.Get();
+}
+inline void RemoteCallData::_internal_set_data(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.data_.Set(value, GetArena());
+}
+inline std::string* RemoteCallData::_internal_mutable_data() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.data_.Mutable( GetArena());
+}
+inline std::string* RemoteCallData::release_data() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:NetworkData.RemoteCallData.data)
+  return _impl_.data_.Release();
+}
+inline void RemoteCallData::set_allocated_data(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.data_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.data_.IsDefault()) {
+    _impl_.data_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:NetworkData.RemoteCallData.data)
 }
 
 // -------------------------------------------------------------------
@@ -2575,6 +2968,12 @@ struct is_proto_enum<::NetworkData::RpcMethod> : std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor<::NetworkData::RpcMethod>() {
   return ::NetworkData::RpcMethod_descriptor();
+}
+template <>
+struct is_proto_enum<::NetworkData::RpcResponseMethod> : std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor<::NetworkData::RpcResponseMethod>() {
+  return ::NetworkData::RpcResponseMethod_descriptor();
 }
 template <>
 struct is_proto_enum<::NetworkData::AdminRpcMethod> : std::true_type {};
