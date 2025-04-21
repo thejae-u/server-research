@@ -19,6 +19,11 @@ void Session::Start()
 	boost::asio::post(_io, [this]() { AsyncReadSize(); });
 }
 
+void Session::RpcProcess(const std::shared_ptr<RpcPacket>& packetPtr)
+{
+	
+}
+
 void Session::AsyncReadSize()
 {
 	auto self(shared_from_this());

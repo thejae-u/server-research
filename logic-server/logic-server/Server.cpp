@@ -34,3 +34,19 @@ void Server::StartServer()
 		StartServer(); // Accept next client
 	});
 }
+
+void Server::BroadcastAll(const std::shared_ptr<Session>& caller, const std::shared_ptr<RpcPacket>& packetPtr)
+{
+	std::unique_lock<std::mutex> lock(_sessionsMutex);
+	for (const auto& session : _sessions)
+	{
+		if (session == caller)
+			continue;
+		
+		boost::asio::post(_io,
+			[this, session, packetPtr]
+			{
+				session->RpcProcess(packetPtr);
+			});
+	}
+}

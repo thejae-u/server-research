@@ -17,6 +17,9 @@ public:
 	~Session();
 
 	void Start();
+	void Stop();
+
+	void RpcProcess(const std::shared_ptr<RpcPacket>& packetPtr);
 
 	tcp::socket& GetSocket() const { return *_socketPtr; }
 	
