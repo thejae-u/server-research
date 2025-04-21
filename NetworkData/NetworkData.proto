@@ -19,6 +19,18 @@ message PositionData
   float x = 1;
   float y = 2;
   float z = 3;
+  float duration = 4;
+}
+
+message AttackData
+{
+  string target = 1;
+  int32 damage = 2;
+}
+
+message ItemData
+{
+  string item_id = 1;
 }
 
 message RpcPacket
@@ -70,7 +82,8 @@ enum AdminRpcMethod
   ADMIN_SERVER_REBOOT = 902;
 }
 
-enum ELoginError {
+enum ELoginError 
+{
   USER_NOT_FOUND = 0;
   USER_ALREADY_EXIST = 1;
   INCORRECT = 2;
