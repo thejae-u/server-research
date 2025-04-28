@@ -40,14 +40,24 @@ public class AIManager : MonoBehaviour
     
     private async UniTask MoveCharacterAsync(Vector3 targetPosition)
     {
+        float duration = Random.Range(1.5f, 5.0f);
+        
         _rpcPacket.Method = RpcMethod.Move;
         
         // Serialize the target position to a byte array
         var serializePositionData = new PositionData
         {
-            X = targetPosition.x,
-            Y = targetPosition.y,
-            Z = targetPosition.z
+            // Start position
+            X1 = transform.position.x,
+            Y1 = transform.position.y,
+            Z1 = transform.position.z,
+            
+            // Target position
+            X2 = targetPosition.x,
+            Y2 = targetPosition.y,
+            Z2 = targetPosition.z,
+            
+            Duration = duration // can deprecate this
         };
         
         _rpcPacket.Data = serializePositionData.ToByteString();
@@ -56,7 +66,6 @@ public class AIManager : MonoBehaviour
         NetworkManager.Instance.SendAsync(_rpcPacket).Forget();
         CancellationToken token = this.GetCancellationTokenOnDestroy();
         
-        float duration = Random.Range(1.5f, 5.0f);
         var elapsedTime = 0f;
         Vector3 startPosition = transform.position;
 
@@ -69,7 +78,8 @@ public class AIManager : MonoBehaviour
             await UniTask.Yield(PlayerLoopTiming.Update, token);
             elapsedTime += Time.deltaTime;
         }
-
+        
+        transform.position = targetPosition;
         IsMoving = false;
     }
 }

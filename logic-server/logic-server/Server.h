@@ -1,5 +1,5 @@
 #pragma once
-#include <set>
+#include <vector>
 #include <boost/asio.hpp>
 #include <mutex>
 #include <memory>
@@ -15,16 +15,17 @@ class Session;
 class Server : public std::enable_shared_from_this<Server>
 {
 public:
-	Server(io_context& io, tcp::acceptor& acceptor);
+	Server(const io_context::strand& strand, tcp::acceptor& acceptor);
 	~Server();
-
-	void StartServer();
-	void BroadcastAll(const std::shared_ptr<Session>& caller, const std::shared_ptr<RpcPacket>& packetPtr);
+	
+	void AcceptClientAsync();
+	void DisconnectSession(const std::shared_ptr<Session>& caller);
+	void BroadcastAll(std::shared_ptr<Session> caller, RpcPacket packet);
+	std::size_t GetSessionCount() const { return _sessions.size(); }
 
 private:
-	io_context& _io;
+	io_context::strand _strand;
 	tcp::acceptor& _acceptor;
-	std::set<std::shared_ptr<Session>> _sessions;
-
-	std::mutex _sessionsMutex;
+	std::vector<std::shared_ptr<Session>> _sessions;
+	std::size_t _sessionsCount = 0;
 };

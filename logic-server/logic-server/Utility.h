@@ -7,8 +7,11 @@ namespace Utility
 {
     static std::string PositionDataToString(const PositionData& positionData)
     {
-        return std::to_string(positionData.x()) + " "
-            + std::to_string(positionData.y()) + " "
-            + std::to_string(positionData.z());
+        return std::to_string(positionData.x1()) + " "
+            + std::to_string(positionData.y1()) + " "
+            + std::to_string(positionData.z1()) + " "
+            + std::to_string(positionData.x2()) + " "
+            + std::to_string(positionData.y2()) + " "
+            + std::to_string(positionData.z2()) + " ";
     }
 }

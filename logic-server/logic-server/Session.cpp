@@ -3,39 +3,73 @@
 #include <iostream>
 #include "Utility.h"
 
-Session::Session(boost::asio::io_context& io, std::shared_ptr<Server> serverPtr) : _io(io), _serverPtr(serverPtr)
+Session::Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr)
+	: _serverPtr(std::move(serverPtr)), _strand(strand), _socketPtr(std::make_shared<tcp::socket>(strand.context())), _receiveNetSize(0), _receiveDataSize(0)
 {
-	_socketPtr = std::make_shared<tcp::socket>(io);
+	std::cout << "Session: " << _serverPtr->GetSessionCount() << "\n";
 }
 
 Session::~Session()
 {
-	
 }
 
 void Session::Start()
 {
 	std::cout << "Session Started: " << _socketPtr->remote_endpoint().address() << "\n";
-	boost::asio::post(_io, [this]() { AsyncReadSize(); });
+	boost::asio::post(_strand.wrap([this]() { AsyncReadSize(); }));
 }
 
-void Session::RpcProcess(const std::shared_ptr<RpcPacket>& packetPtr)
+void Session::Stop()
 {
-	
+	boost::asio::post(_strand.wrap([this]() { _serverPtr->DisconnectSession(shared_from_this()); }));
+}
+
+void Session::RpcProcess(RpcPacket packet)
+{
+	auto serializedData = std::make_shared<std::string>();
+	if (!packet.SerializeToString(serializedData.get()))
+	{
+		std::cerr << "Error Serializing Data\n";
+		return;
+	}
+
+	// Send the size of the serialized data
+	const uint32_t sendNetSize =  static_cast<uint32_t>(serializedData->size());
+	const uint32_t sendDataSize = htonl(sendNetSize);
+
+	boost::asio::async_write(*_socketPtr, boost::asio::buffer(&sendDataSize, sizeof(sendDataSize)),
+		_strand.wrap([this, serializedData] (const boost::system::error_code& sizeEc, std::size_t)
+			{
+				if (sizeEc)
+				{
+					std::cerr << "Error Sending Size: " << sizeEc.message() << "\n";
+					return;
+				}
+
+				// Send the serialized data
+				boost::asio::async_write(*_socketPtr, boost::asio::buffer(*serializedData),
+				_strand.wrap([this, serializedData](const boost::system::error_code& dataEc, std::size_t)
+					{
+						if (dataEc)
+						{
+							std::cerr << "Error Sending Data: " << dataEc.message() << "\n";
+						}
+					}));
+			}));
 }
 
 void Session::AsyncReadSize()
 {
 	auto self(shared_from_this());
-	boost::asio::async_read(*_socketPtr, boost::asio::buffer(&_netSize, sizeof(_netSize)),
-		[this, self](const boost::system::error_code& sizeEc, std::size_t)
+	boost::asio::async_read(*_socketPtr, boost::asio::buffer(&_receiveNetSize, sizeof(_receiveNetSize)),
+		_strand.wrap([this, self](const boost::system::error_code& sizeEc, std::size_t)
 		{
 			if (sizeEc)
 			{
 				std::cerr << "Error Receiving Size: " << sizeEc.message() << "\n";
 				if (sizeEc == boost::asio::error::eof || sizeEc == boost::asio::error::connection_reset)
 				{
-					std::cout << "Client Disconnected: " << _socketPtr->remote_endpoint().address() << "\n";
+					Stop();
 					return;
 				}
 				
@@ -45,27 +79,27 @@ void Session::AsyncReadSize()
 			}
 
 			// Convert network byte order to host byte order
-			_netSize = ntohl(_netSize);
-			_dataSize = _netSize;
+			_receiveNetSize = ntohl(_receiveNetSize);
+			_receiveDataSize = _receiveNetSize;
 
-			if (_buffer.size() < _netSize)
-				_buffer.resize(_dataSize);
+			if (_receiveBuffer.size() < _receiveNetSize)
+				_receiveBuffer.resize(_receiveDataSize, 0);
 
-			AsyncReadData();
-		});
+			boost::asio::post(_strand.wrap([this]() { AsyncReadData(); }));
+		}));
 }
 
 void Session::AsyncReadData()
 {
 	auto self(shared_from_this());
-	boost::asio::async_read(*_socketPtr, boost::asio::buffer(_buffer),
-		[this, self](const boost::system::error_code& dataEc, std::size_t)
+	boost::asio::async_read(*_socketPtr, boost::asio::buffer(_receiveBuffer),
+		_strand.wrap([this, self](const boost::system::error_code& dataEc, std::size_t)
 		{
 			if (dataEc)
 			{
 				if (dataEc == boost::asio::error::eof || dataEc == boost::asio::error::connection_reset)
 				{
-					std::cout << "Client Disconnected: " << _socketPtr->remote_endpoint().address() << "\n";
+					Stop();
 					return;
 				}
 
@@ -75,25 +109,25 @@ void Session::AsyncReadData()
 				return;
 			}
 
-			auto receiveData = std::string(_buffer.begin(), _buffer.end());
 			RpcPacket deserializeRpcPacket;
-			if (!deserializeRpcPacket.ParseFromString(receiveData))
+			if (!deserializeRpcPacket.ParseFromArray(_receiveBuffer.data(), static_cast<int>(_receiveDataSize)))
 			{
-				std::cerr << "In ReadData Error Parsing Data: " << receiveData << "\n";
+				std::cerr << "In ReadData Error Parsing Data: " << _receiveBuffer.data() << "\n";
+				Stop();
 				return;
 			}
 
 			// Process the request asynchronously
-			boost::asio::post(_io, [this, deserializeRpcPacket]() { ProcessRequestAsync(deserializeRpcPacket); });
+			boost::asio::post(_strand.wrap([this, deserializeRpcPacket]() { ProcessRequestAsync(deserializeRpcPacket); }));
 
-			_buffer.clear();
-			_netSize = 0;
-			_dataSize = 0;
-			AsyncReadSize();
-		});
+			_receiveBuffer.clear();
+			_receiveNetSize = 0;
+			_receiveDataSize = 0;
+			boost::asio::post(_strand.wrap([this]() { AsyncReadSize(); }));
+		}));
 }
 
-void Session::ProcessRequestAsync(const RpcPacket& reqPacket)
+void Session::ProcessRequestAsync(RpcPacket reqPacket)
 {
 	switch (reqPacket.method())
 	{
@@ -106,7 +140,7 @@ void Session::ProcessRequestAsync(const RpcPacket& reqPacket)
 				return;
 			}
 
-			std::cout << reqPacket.uuid() << " Move Request: " << Utility::PositionDataToString(positionData) << "\n";
+			_serverPtr->BroadcastAll(shared_from_this(), reqPacket);
 			break;
 		}
 	// Not Implemented

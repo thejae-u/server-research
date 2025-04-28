@@ -823,42 +823,75 @@ class PositionData final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
-    kXFieldNumber = 2,
-    kYFieldNumber = 3,
-    kZFieldNumber = 4,
-    kDurationFieldNumber = 5,
+    kX1FieldNumber = 1,
+    kY1FieldNumber = 2,
+    kZ1FieldNumber = 3,
+    kX2FieldNumber = 4,
+    kY2FieldNumber = 5,
+    kZ2FieldNumber = 6,
+    kDurationFieldNumber = 7,
   };
-  // float x = 2;
-  void clear_x() ;
-  float x() const;
-  void set_x(float value);
+  // float x1 = 1;
+  void clear_x1() ;
+  float x1() const;
+  void set_x1(float value);
 
   private:
-  float _internal_x() const;
-  void _internal_set_x(float value);
+  float _internal_x1() const;
+  void _internal_set_x1(float value);
 
   public:
-  // float y = 3;
-  void clear_y() ;
-  float y() const;
-  void set_y(float value);
+  // float y1 = 2;
+  void clear_y1() ;
+  float y1() const;
+  void set_y1(float value);
 
   private:
-  float _internal_y() const;
-  void _internal_set_y(float value);
+  float _internal_y1() const;
+  void _internal_set_y1(float value);
 
   public:
-  // float z = 4;
-  void clear_z() ;
-  float z() const;
-  void set_z(float value);
+  // float z1 = 3;
+  void clear_z1() ;
+  float z1() const;
+  void set_z1(float value);
 
   private:
-  float _internal_z() const;
-  void _internal_set_z(float value);
+  float _internal_z1() const;
+  void _internal_set_z1(float value);
 
   public:
-  // float duration = 5;
+  // float x2 = 4;
+  void clear_x2() ;
+  float x2() const;
+  void set_x2(float value);
+
+  private:
+  float _internal_x2() const;
+  void _internal_set_x2(float value);
+
+  public:
+  // float y2 = 5;
+  void clear_y2() ;
+  float y2() const;
+  void set_y2(float value);
+
+  private:
+  float _internal_y2() const;
+  void _internal_set_y2(float value);
+
+  public:
+  // float z2 = 6;
+  void clear_z2() ;
+  float z2() const;
+  void set_z2(float value);
+
+  private:
+  float _internal_z2() const;
+  void _internal_set_z2(float value);
+
+  public:
+  // float duration = 7;
   void clear_duration() ;
   float duration() const;
   void set_duration(float value);
@@ -873,7 +906,7 @@ class PositionData final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      2, 4, 0,
+      3, 7, 0,
       0, 2>
       _table_;
 
@@ -891,9 +924,12 @@ class PositionData final : public ::google::protobuf::Message
     inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
                           ::google::protobuf::Arena* arena, const Impl_& from,
                           const PositionData& from_msg);
-    float x_;
-    float y_;
-    float z_;
+    float x1_;
+    float y1_;
+    float z1_;
+    float x2_;
+    float y2_;
+    float z2_;
     float duration_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -2212,73 +2248,139 @@ inline void RegisterData::set_allocated_password(std::string* value) {
 
 // PositionData
 
-// float x = 2;
-inline void PositionData::clear_x() {
+// float x1 = 1;
+inline void PositionData::clear_x1() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.x_ = 0;
+  _impl_.x1_ = 0;
 }
-inline float PositionData::x() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.x)
-  return _internal_x();
+inline float PositionData::x1() const {
+  // @@protoc_insertion_point(field_get:NetworkData.PositionData.x1)
+  return _internal_x1();
 }
-inline void PositionData::set_x(float value) {
-  _internal_set_x(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.x)
+inline void PositionData::set_x1(float value) {
+  _internal_set_x1(value);
+  // @@protoc_insertion_point(field_set:NetworkData.PositionData.x1)
 }
-inline float PositionData::_internal_x() const {
+inline float PositionData::_internal_x1() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.x_;
+  return _impl_.x1_;
 }
-inline void PositionData::_internal_set_x(float value) {
+inline void PositionData::_internal_set_x1(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.x_ = value;
+  _impl_.x1_ = value;
 }
 
-// float y = 3;
-inline void PositionData::clear_y() {
+// float y1 = 2;
+inline void PositionData::clear_y1() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.y_ = 0;
+  _impl_.y1_ = 0;
 }
-inline float PositionData::y() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.y)
-  return _internal_y();
+inline float PositionData::y1() const {
+  // @@protoc_insertion_point(field_get:NetworkData.PositionData.y1)
+  return _internal_y1();
 }
-inline void PositionData::set_y(float value) {
-  _internal_set_y(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.y)
+inline void PositionData::set_y1(float value) {
+  _internal_set_y1(value);
+  // @@protoc_insertion_point(field_set:NetworkData.PositionData.y1)
 }
-inline float PositionData::_internal_y() const {
+inline float PositionData::_internal_y1() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.y_;
+  return _impl_.y1_;
 }
-inline void PositionData::_internal_set_y(float value) {
+inline void PositionData::_internal_set_y1(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.y_ = value;
+  _impl_.y1_ = value;
 }
 
-// float z = 4;
-inline void PositionData::clear_z() {
+// float z1 = 3;
+inline void PositionData::clear_z1() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.z_ = 0;
+  _impl_.z1_ = 0;
 }
-inline float PositionData::z() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.z)
-  return _internal_z();
+inline float PositionData::z1() const {
+  // @@protoc_insertion_point(field_get:NetworkData.PositionData.z1)
+  return _internal_z1();
 }
-inline void PositionData::set_z(float value) {
-  _internal_set_z(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.z)
+inline void PositionData::set_z1(float value) {
+  _internal_set_z1(value);
+  // @@protoc_insertion_point(field_set:NetworkData.PositionData.z1)
 }
-inline float PositionData::_internal_z() const {
+inline float PositionData::_internal_z1() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.z_;
+  return _impl_.z1_;
 }
-inline void PositionData::_internal_set_z(float value) {
+inline void PositionData::_internal_set_z1(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.z_ = value;
+  _impl_.z1_ = value;
 }
 
-// float duration = 5;
+// float x2 = 4;
+inline void PositionData::clear_x2() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.x2_ = 0;
+}
+inline float PositionData::x2() const {
+  // @@protoc_insertion_point(field_get:NetworkData.PositionData.x2)
+  return _internal_x2();
+}
+inline void PositionData::set_x2(float value) {
+  _internal_set_x2(value);
+  // @@protoc_insertion_point(field_set:NetworkData.PositionData.x2)
+}
+inline float PositionData::_internal_x2() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.x2_;
+}
+inline void PositionData::_internal_set_x2(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.x2_ = value;
+}
+
+// float y2 = 5;
+inline void PositionData::clear_y2() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.y2_ = 0;
+}
+inline float PositionData::y2() const {
+  // @@protoc_insertion_point(field_get:NetworkData.PositionData.y2)
+  return _internal_y2();
+}
+inline void PositionData::set_y2(float value) {
+  _internal_set_y2(value);
+  // @@protoc_insertion_point(field_set:NetworkData.PositionData.y2)
+}
+inline float PositionData::_internal_y2() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.y2_;
+}
+inline void PositionData::_internal_set_y2(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.y2_ = value;
+}
+
+// float z2 = 6;
+inline void PositionData::clear_z2() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.z2_ = 0;
+}
+inline float PositionData::z2() const {
+  // @@protoc_insertion_point(field_get:NetworkData.PositionData.z2)
+  return _internal_z2();
+}
+inline void PositionData::set_z2(float value) {
+  _internal_set_z2(value);
+  // @@protoc_insertion_point(field_set:NetworkData.PositionData.z2)
+}
+inline float PositionData::_internal_z2() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.z2_;
+}
+inline void PositionData::_internal_set_z2(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.z2_ = value;
+}
+
+// float duration = 7;
 inline void PositionData::clear_duration() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.duration_ = 0;

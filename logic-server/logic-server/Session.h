@@ -13,26 +13,25 @@ class Server;
 class Session : public std::enable_shared_from_this<Session>
 {
 public:
-	Session(io_context& io, std::shared_ptr<Server> serverPtr);
+	Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr);
 	~Session();
 
 	void Start();
 	void Stop();
 
-	void RpcProcess(const std::shared_ptr<RpcPacket>& packetPtr);
-
+	void RpcProcess(RpcPacket packet);
 	tcp::socket& GetSocket() const { return *_socketPtr; }
 	
 private:
-	io_context& _io;
+	std::shared_ptr<Server> _serverPtr;
+	io_context::strand _strand;
 	std::shared_ptr<tcp::socket> _socketPtr;
-	std::shared_ptr<Server>& _serverPtr;
 
-	std::vector<char> _buffer;
-	uint32_t _netSize;
-	uint32_t _dataSize;
-
+	std::vector<char> _receiveBuffer;
+	uint32_t _receiveNetSize;
+	uint32_t _receiveDataSize;
+	
 	void AsyncReadSize();
 	void AsyncReadData();
-	void ProcessRequestAsync(const RpcPacket& reqPacket);
+	void ProcessRequestAsync(RpcPacket reqPacket);
 };

@@ -9,4 +9,9 @@ public class ProtoSerializer
     {
         return data.ToByteArray();
     }
+
+    public static RpcPacket DeserializeNetworkData(byte[] data)
+    {
+        return RpcPacket.Parser.ParseFrom(data);
+    }
 }

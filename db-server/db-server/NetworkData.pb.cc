@@ -89,9 +89,12 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
 
 inline constexpr PositionData::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
-      : x_{0},
-        y_{0},
-        z_{0},
+      : x1_{0},
+        y1_{0},
+        z1_{0},
+        x2_{0},
+        y2_{0},
+        z2_{0},
         duration_{0},
         _cached_size_{0} {}
 
@@ -297,9 +300,12 @@ const ::uint32_t
         ~0u,  // no _inlined_string_donated_
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.x_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.y_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.z_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.x1_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.y1_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.z1_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.x2_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.y2_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.z2_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.duration_),
         ~0u,  // no _has_bits_
         PROTOBUF_FIELD_OFFSET(::NetworkData::RemoteCallData, _internal_metadata_),
@@ -368,11 +374,11 @@ static const ::_pbi::MigrationSchema
         {0, -1, -1, sizeof(::NetworkData::LoginData)},
         {10, -1, -1, sizeof(::NetworkData::RegisterData)},
         {20, -1, -1, sizeof(::NetworkData::PositionData)},
-        {32, -1, -1, sizeof(::NetworkData::RemoteCallData)},
-        {43, -1, -1, sizeof(::NetworkData::AttackData)},
-        {53, -1, -1, sizeof(::NetworkData::ItemData)},
-        {62, 75, -1, sizeof(::NetworkData::RpcPacket)},
-        {80, 90, -1, sizeof(::NetworkData::ResponsePacket)},
+        {35, -1, -1, sizeof(::NetworkData::RemoteCallData)},
+        {46, -1, -1, sizeof(::NetworkData::AttackData)},
+        {56, -1, -1, sizeof(::NetworkData::ItemData)},
+        {65, 78, -1, sizeof(::NetworkData::RpcPacket)},
+        {83, 93, -1, sizeof(::NetworkData::ResponsePacket)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::NetworkData::_LoginData_default_instance_._instance,
@@ -390,37 +396,38 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "/protobuf/timestamp.proto\"/\n\tLoginData\022\020"
     "\n\010username\030\001 \001(\t\022\020\n\010password\030\002 \001(\t\"2\n\014Re"
     "gisterData\022\020\n\010username\030\001 \001(\t\022\020\n\010password"
-    "\030\002 \001(\t\"A\n\014PositionData\022\t\n\001x\030\002 \001(\002\022\t\n\001y\030\003"
-    " \001(\002\022\t\n\001z\030\004 \001(\002\022\020\n\010duration\030\005 \001(\002\"R\n\016Rem"
-    "oteCallData\022\n\n\002id\030\001 \001(\t\022&\n\006method\030\002 \001(\0162"
-    "\026.NetworkData.RpcMethod\022\014\n\004data\030\003 \001(\014\",\n"
-    "\nAttackData\022\016\n\006target\030\001 \001(\t\022\016\n\006damage\030\002 "
-    "\001(\005\"\033\n\010ItemData\022\017\n\007item_id\030\001 \001(\t\"\212\001\n\tRpc"
-    "Packet\022\n\n\002ip\030\001 \001(\t\022\014\n\004uuid\030\002 \001(\t\022&\n\006meth"
-    "od\030\003 \001(\0162\026.NetworkData.RpcMethod\022\014\n\004data"
-    "\030\004 \001(\014\022-\n\ttimestamp\030\005 \001(\0132\032.google.proto"
-    "buf.Timestamp\"M\n\016ResponsePacket\022\014\n\004data\030"
-    "\001 \001(\014\022-\n\ttimestamp\030\002 \001(\0132\032.google.protob"
-    "uf.Timestamp*\344\001\n\tRpcMethod\022\010\n\004NONE\020\000\022\t\n\005"
-    "LOGIN\020\001\022\014\n\010REGISTER\020\002\022\014\n\010RETRIEVE\020\003\022\n\n\006A"
-    "CCESS\020\004\022\n\n\006REJECT\020\005\022\n\n\006LOGOUT\020\006\022\020\n\014IN_GA"
-    "ME_NONE\020d\022\010\n\004MOVE\020e\022\n\n\006ATTACK\020f\022\r\n\tDROP_"
-    "ITEM\020g\022\014\n\010USE_ITEM\020h\022\r\n\tUSE_SKILL\020i\022\025\n\020R"
-    "EMOTE_MOVE_CALL\020\364\003\022\027\n\022REMOTE_ATTACK_CALL"
-    "\020\365\003*\250\002\n\021RpcResponseMethod\022\014\n\010RES_NONE\020\000\022"
-    "\r\n\tRES_LOGIN\020\001\022\020\n\014RES_REGISTER\020\002\022\020\n\014RES_"
-    "RETRIEVE\020\003\022\016\n\nRES_ACCESS\020\004\022\016\n\nRES_REJECT"
-    "\020\005\022\016\n\nRES_LOGOUT\020\006\022\024\n\020RES_IN_GAME_NONE\020d"
-    "\022\014\n\010RES_MOVE\020e\022\016\n\nRES_ATTACK\020f\022\021\n\rRES_DR"
-    "OP_ITEM\020g\022\020\n\014RES_USE_ITEM\020h\022\021\n\rRES_USE_S"
-    "KILL\020i\022\031\n\024RES_REMOTE_MOVE_CALL\020\364\003\022\033\n\026RES"
-    "_REMOTE_ATTACK_CALL\020\365\003*\234\001\n\016AdminRpcMetho"
-    "d\022\016\n\nADMIN_NONE\020\000\022\017\n\013ADMIN_LOGIN\020\001\022\020\n\014AD"
-    "MIN_LOGOUT\020\002\022\020\n\014ADMIN_NOTIFY\020d\022\025\n\020ADMIN_"
-    "SERVER_OFF\020\204\007\022\024\n\017ADMIN_SERVER_ON\020\205\007\022\030\n\023A"
-    "DMIN_SERVER_REBOOT\020\206\007*H\n\013ELoginError\022\022\n\016"
-    "USER_NOT_FOUND\020\000\022\026\n\022USER_ALREADY_EXIST\020\001"
-    "\022\r\n\tINCORRECT\020\002b\006proto3"
+    "\030\002 \001(\t\"h\n\014PositionData\022\n\n\002x1\030\001 \001(\002\022\n\n\002y1"
+    "\030\002 \001(\002\022\n\n\002z1\030\003 \001(\002\022\n\n\002x2\030\004 \001(\002\022\n\n\002y2\030\005 \001"
+    "(\002\022\n\n\002z2\030\006 \001(\002\022\020\n\010duration\030\007 \001(\002\"R\n\016Remo"
+    "teCallData\022\n\n\002id\030\001 \001(\t\022&\n\006method\030\002 \001(\0162\026"
+    ".NetworkData.RpcMethod\022\014\n\004data\030\003 \001(\014\",\n\n"
+    "AttackData\022\016\n\006target\030\001 \001(\t\022\016\n\006damage\030\002 \001"
+    "(\005\"\033\n\010ItemData\022\017\n\007item_id\030\001 \001(\t\"\212\001\n\tRpcP"
+    "acket\022\n\n\002ip\030\001 \001(\t\022\014\n\004uuid\030\002 \001(\t\022&\n\006metho"
+    "d\030\003 \001(\0162\026.NetworkData.RpcMethod\022\014\n\004data\030"
+    "\004 \001(\014\022-\n\ttimestamp\030\005 \001(\0132\032.google.protob"
+    "uf.Timestamp\"M\n\016ResponsePacket\022\014\n\004data\030\001"
+    " \001(\014\022-\n\ttimestamp\030\002 \001(\0132\032.google.protobu"
+    "f.Timestamp*\344\001\n\tRpcMethod\022\010\n\004NONE\020\000\022\t\n\005L"
+    "OGIN\020\001\022\014\n\010REGISTER\020\002\022\014\n\010RETRIEVE\020\003\022\n\n\006AC"
+    "CESS\020\004\022\n\n\006REJECT\020\005\022\n\n\006LOGOUT\020\006\022\020\n\014IN_GAM"
+    "E_NONE\020d\022\010\n\004MOVE\020e\022\n\n\006ATTACK\020f\022\r\n\tDROP_I"
+    "TEM\020g\022\014\n\010USE_ITEM\020h\022\r\n\tUSE_SKILL\020i\022\025\n\020RE"
+    "MOTE_MOVE_CALL\020\364\003\022\027\n\022REMOTE_ATTACK_CALL\020"
+    "\365\003*\250\002\n\021RpcResponseMethod\022\014\n\010RES_NONE\020\000\022\r"
+    "\n\tRES_LOGIN\020\001\022\020\n\014RES_REGISTER\020\002\022\020\n\014RES_R"
+    "ETRIEVE\020\003\022\016\n\nRES_ACCESS\020\004\022\016\n\nRES_REJECT\020"
+    "\005\022\016\n\nRES_LOGOUT\020\006\022\024\n\020RES_IN_GAME_NONE\020d\022"
+    "\014\n\010RES_MOVE\020e\022\016\n\nRES_ATTACK\020f\022\021\n\rRES_DRO"
+    "P_ITEM\020g\022\020\n\014RES_USE_ITEM\020h\022\021\n\rRES_USE_SK"
+    "ILL\020i\022\031\n\024RES_REMOTE_MOVE_CALL\020\364\003\022\033\n\026RES_"
+    "REMOTE_ATTACK_CALL\020\365\003*\234\001\n\016AdminRpcMethod"
+    "\022\016\n\nADMIN_NONE\020\000\022\017\n\013ADMIN_LOGIN\020\001\022\020\n\014ADM"
+    "IN_LOGOUT\020\002\022\020\n\014ADMIN_NOTIFY\020d\022\025\n\020ADMIN_S"
+    "ERVER_OFF\020\204\007\022\024\n\017ADMIN_SERVER_ON\020\205\007\022\030\n\023AD"
+    "MIN_SERVER_REBOOT\020\206\007*H\n\013ELoginError\022\022\n\016U"
+    "SER_NOT_FOUND\020\000\022\026\n\022USER_ALREADY_EXIST\020\001\022"
+    "\r\n\tINCORRECT\020\002b\006proto3"
 };
 static const ::_pbi::DescriptorTable* const descriptor_table_NetworkData_2eproto_deps[1] =
     {
@@ -430,7 +437,7 @@ static ::absl::once_flag descriptor_table_NetworkData_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2eproto = {
     false,
     false,
-    1383,
+    1422,
     descriptor_table_protodef_NetworkData_2eproto,
     "NetworkData.proto",
     &descriptor_table_NetworkData_2eproto_once,
@@ -1028,10 +1035,10 @@ inline PROTOBUF_NDEBUG_INLINE PositionData::Impl_::Impl_(
 inline void PositionData::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
   ::memset(reinterpret_cast<char *>(&_impl_) +
-               offsetof(Impl_, x_),
+               offsetof(Impl_, x1_),
            0,
            offsetof(Impl_, duration_) -
-               offsetof(Impl_, x_) +
+               offsetof(Impl_, x1_) +
                sizeof(Impl_::duration_));
 }
 PositionData::~PositionData() {
@@ -1081,15 +1088,15 @@ const ::google::protobuf::internal::ClassData* PositionData::GetClassData() cons
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<2, 4, 0, 0, 2> PositionData::_table_ = {
+const ::_pbi::TcParseTable<3, 7, 0, 0, 2> PositionData::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
-    5, 24,  // max_field_number, fast_idx_mask
+    7, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967265,  // skipmap
+    4294967168,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    4,  // num_field_entries
+    7,  // num_field_entries
     0,  // num_aux_entries
     offsetof(decltype(_table_), field_names),  // no aux_entries
     _class_data_.base(),
@@ -1099,31 +1106,50 @@ const ::_pbi::TcParseTable<2, 4, 0, 0, 2> PositionData::_table_ = {
     ::_pbi::TcParser::GetTable<::NetworkData::PositionData>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // float z = 4;
+    {::_pbi::TcParser::MiniParse, {}},
+    // float x1 = 1;
     {::_pbi::TcParser::FastF32S1,
-     {37, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z_)}},
-    // float duration = 5;
+     {13, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x1_)}},
+    // float y1 = 2;
     {::_pbi::TcParser::FastF32S1,
-     {45, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.duration_)}},
-    // float x = 2;
+     {21, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y1_)}},
+    // float z1 = 3;
     {::_pbi::TcParser::FastF32S1,
-     {21, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x_)}},
-    // float y = 3;
+     {29, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z1_)}},
+    // float x2 = 4;
     {::_pbi::TcParser::FastF32S1,
-     {29, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y_)}},
+     {37, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x2_)}},
+    // float y2 = 5;
+    {::_pbi::TcParser::FastF32S1,
+     {45, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y2_)}},
+    // float z2 = 6;
+    {::_pbi::TcParser::FastF32S1,
+     {53, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z2_)}},
+    // float duration = 7;
+    {::_pbi::TcParser::FastF32S1,
+     {61, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.duration_)}},
   }}, {{
     65535, 65535
   }}, {{
-    // float x = 2;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x_), 0, 0,
+    // float x1 = 1;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x1_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
-    // float y = 3;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y_), 0, 0,
+    // float y1 = 2;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y1_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
-    // float z = 4;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z_), 0, 0,
+    // float z1 = 3;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z1_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
-    // float duration = 5;
+    // float x2 = 4;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x2_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+    // float y2 = 5;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y2_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+    // float z2 = 6;
+    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z2_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+    // float duration = 7;
     {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.duration_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
   }},
@@ -1139,9 +1165,9 @@ PROTOBUF_NOINLINE void PositionData::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&_impl_.x_, 0, static_cast<::size_t>(
+  ::memset(&_impl_.x1_, 0, static_cast<::size_t>(
       reinterpret_cast<char*>(&_impl_.duration_) -
-      reinterpret_cast<char*>(&_impl_.x_)) + sizeof(_impl_.duration_));
+      reinterpret_cast<char*>(&_impl_.x1_)) + sizeof(_impl_.duration_));
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
 
@@ -1160,32 +1186,53 @@ PROTOBUF_NOINLINE void PositionData::Clear() {
           ::uint32_t cached_has_bits = 0;
           (void)cached_has_bits;
 
-          // float x = 2;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_x()) != 0) {
+          // float x1 = 1;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_x1()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                2, this_._internal_x(), target);
+                1, this_._internal_x1(), target);
           }
 
-          // float y = 3;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_y()) != 0) {
+          // float y1 = 2;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_y1()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                3, this_._internal_y(), target);
+                2, this_._internal_y1(), target);
           }
 
-          // float z = 4;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_z()) != 0) {
+          // float z1 = 3;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_z1()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                4, this_._internal_z(), target);
+                3, this_._internal_z1(), target);
           }
 
-          // float duration = 5;
+          // float x2 = 4;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_x2()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                4, this_._internal_x2(), target);
+          }
+
+          // float y2 = 5;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_y2()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                5, this_._internal_y2(), target);
+          }
+
+          // float z2 = 6;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_z2()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                6, this_._internal_z2(), target);
+          }
+
+          // float duration = 7;
           if (::absl::bit_cast<::uint32_t>(this_._internal_duration()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                5, this_._internal_duration(), target);
+                7, this_._internal_duration(), target);
           }
 
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -1213,19 +1260,31 @@ PROTOBUF_NOINLINE void PositionData::Clear() {
 
           ::_pbi::Prefetch5LinesFrom7Lines(&this_);
            {
-            // float x = 2;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_x()) != 0) {
+            // float x1 = 1;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_x1()) != 0) {
               total_size += 5;
             }
-            // float y = 3;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_y()) != 0) {
+            // float y1 = 2;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_y1()) != 0) {
               total_size += 5;
             }
-            // float z = 4;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_z()) != 0) {
+            // float z1 = 3;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_z1()) != 0) {
               total_size += 5;
             }
-            // float duration = 5;
+            // float x2 = 4;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_x2()) != 0) {
+              total_size += 5;
+            }
+            // float y2 = 5;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_y2()) != 0) {
+              total_size += 5;
+            }
+            // float z2 = 6;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_z2()) != 0) {
+              total_size += 5;
+            }
+            // float duration = 7;
             if (::absl::bit_cast<::uint32_t>(this_._internal_duration()) != 0) {
               total_size += 5;
             }
@@ -1242,14 +1301,23 @@ void PositionData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::go
   ::uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (::absl::bit_cast<::uint32_t>(from._internal_x()) != 0) {
-    _this->_impl_.x_ = from._impl_.x_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_x1()) != 0) {
+    _this->_impl_.x1_ = from._impl_.x1_;
   }
-  if (::absl::bit_cast<::uint32_t>(from._internal_y()) != 0) {
-    _this->_impl_.y_ = from._impl_.y_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_y1()) != 0) {
+    _this->_impl_.y1_ = from._impl_.y1_;
   }
-  if (::absl::bit_cast<::uint32_t>(from._internal_z()) != 0) {
-    _this->_impl_.z_ = from._impl_.z_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_z1()) != 0) {
+    _this->_impl_.z1_ = from._impl_.z1_;
+  }
+  if (::absl::bit_cast<::uint32_t>(from._internal_x2()) != 0) {
+    _this->_impl_.x2_ = from._impl_.x2_;
+  }
+  if (::absl::bit_cast<::uint32_t>(from._internal_y2()) != 0) {
+    _this->_impl_.y2_ = from._impl_.y2_;
+  }
+  if (::absl::bit_cast<::uint32_t>(from._internal_z2()) != 0) {
+    _this->_impl_.z2_ = from._impl_.z2_;
   }
   if (::absl::bit_cast<::uint32_t>(from._internal_duration()) != 0) {
     _this->_impl_.duration_ = from._impl_.duration_;
@@ -1271,9 +1339,9 @@ void PositionData::InternalSwap(PositionData* PROTOBUF_RESTRICT other) {
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(PositionData, _impl_.duration_)
       + sizeof(PositionData::_impl_.duration_)
-      - PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x_)>(
-          reinterpret_cast<char*>(&_impl_.x_),
-          reinterpret_cast<char*>(&other->_impl_.x_));
+      - PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x1_)>(
+          reinterpret_cast<char*>(&_impl_.x1_),
+          reinterpret_cast<char*>(&other->_impl_.x1_));
 }
 
 ::google::protobuf::Metadata PositionData::GetMetadata() const {

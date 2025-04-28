@@ -16,10 +16,18 @@ message RegisterData
 
 message PositionData
 {
-  float x = 2;
-  float y = 3;
-  float z = 4;
-  float duration = 5;
+  // start position
+  float x1 = 1;
+  float y1 = 2;
+  float z1 = 3;
+  
+  // end position
+  float x2 = 4;
+  float y2 = 5;
+  float z2 = 6;
+  
+  // Move Duration
+  float duration = 7;
 }
 
 message RemoteCallData

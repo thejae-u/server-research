@@ -14,15 +14,16 @@ using namespace boost::asio::ip;
 int main()
 {
 	io_context io;
+	io_context::strand ioStrand(io);
 
 	tcp::endpoint thisEndPoint(tcp::v4(), THIS_PORT);
 	tcp::acceptor acceptor(io, thisEndPoint);
 	
 	std::vector<std::shared_ptr<std::thread>> ioThreads;
-	const auto server = std::make_shared<Server>(io, acceptor);
+	auto server = std::make_shared<Server>(ioStrand, acceptor);
 	const auto ioThreadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 100;
 
-	server->StartServer();
+	boost::asio::post(ioStrand.wrap([server]() { server->AcceptClientAsync(); }));
 	std::cout << "Logic Server Started\n";
 
 	ioThreads.reserve(ioThreadCount);

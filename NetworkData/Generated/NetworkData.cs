@@ -27,40 +27,41 @@ namespace NetworkData {
             "ChFOZXR3b3JrRGF0YS5wcm90bxILTmV0d29ya0RhdGEaH2dvb2dsZS9wcm90",
             "b2J1Zi90aW1lc3RhbXAucHJvdG8iLwoJTG9naW5EYXRhEhAKCHVzZXJuYW1l",
             "GAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIjIKDFJlZ2lzdGVyRGF0YRIQCgh1",
-            "c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJBCgxQb3NpdGlvbkRh",
-            "dGESCQoBeBgCIAEoAhIJCgF5GAMgASgCEgkKAXoYBCABKAISEAoIZHVyYXRp",
-            "b24YBSABKAIiUgoOUmVtb3RlQ2FsbERhdGESCgoCaWQYASABKAkSJgoGbWV0",
-            "aG9kGAIgASgOMhYuTmV0d29ya0RhdGEuUnBjTWV0aG9kEgwKBGRhdGEYAyAB",
-            "KAwiLAoKQXR0YWNrRGF0YRIOCgZ0YXJnZXQYASABKAkSDgoGZGFtYWdlGAIg",
-            "ASgFIhsKCEl0ZW1EYXRhEg8KB2l0ZW1faWQYASABKAkiigEKCVJwY1BhY2tl",
-            "dBIKCgJpcBgBIAEoCRIMCgR1dWlkGAIgASgJEiYKBm1ldGhvZBgDIAEoDjIW",
-            "Lk5ldHdvcmtEYXRhLlJwY01ldGhvZBIMCgRkYXRhGAQgASgMEi0KCXRpbWVz",
-            "dGFtcBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiTQoOUmVz",
-            "cG9uc2VQYWNrZXQSDAoEZGF0YRgBIAEoDBItCgl0aW1lc3RhbXAYAiABKAsy",
-            "Gi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKuQBCglScGNNZXRob2QSCAoE",
-            "Tk9ORRAAEgkKBUxPR0lOEAESDAoIUkVHSVNURVIQAhIMCghSRVRSSUVWRRAD",
-            "EgoKBkFDQ0VTUxAEEgoKBlJFSkVDVBAFEgoKBkxPR09VVBAGEhAKDElOX0dB",
-            "TUVfTk9ORRBkEggKBE1PVkUQZRIKCgZBVFRBQ0sQZhINCglEUk9QX0lURU0Q",
-            "ZxIMCghVU0VfSVRFTRBoEg0KCVVTRV9TS0lMTBBpEhUKEFJFTU9URV9NT1ZF",
-            "X0NBTEwQ9AMSFwoSUkVNT1RFX0FUVEFDS19DQUxMEPUDKqgCChFScGNSZXNw",
-            "b25zZU1ldGhvZBIMCghSRVNfTk9ORRAAEg0KCVJFU19MT0dJThABEhAKDFJF",
-            "U19SRUdJU1RFUhACEhAKDFJFU19SRVRSSUVWRRADEg4KClJFU19BQ0NFU1MQ",
-            "BBIOCgpSRVNfUkVKRUNUEAUSDgoKUkVTX0xPR09VVBAGEhQKEFJFU19JTl9H",
-            "QU1FX05PTkUQZBIMCghSRVNfTU9WRRBlEg4KClJFU19BVFRBQ0sQZhIRCg1S",
-            "RVNfRFJPUF9JVEVNEGcSEAoMUkVTX1VTRV9JVEVNEGgSEQoNUkVTX1VTRV9T",
-            "S0lMTBBpEhkKFFJFU19SRU1PVEVfTU9WRV9DQUxMEPQDEhsKFlJFU19SRU1P",
-            "VEVfQVRUQUNLX0NBTEwQ9QMqnAEKDkFkbWluUnBjTWV0aG9kEg4KCkFETUlO",
-            "X05PTkUQABIPCgtBRE1JTl9MT0dJThABEhAKDEFETUlOX0xPR09VVBACEhAK",
-            "DEFETUlOX05PVElGWRBkEhUKEEFETUlOX1NFUlZFUl9PRkYQhAcSFAoPQURN",
-            "SU5fU0VSVkVSX09OEIUHEhgKE0FETUlOX1NFUlZFUl9SRUJPT1QQhgcqSAoL",
-            "RUxvZ2luRXJyb3ISEgoOVVNFUl9OT1RfRk9VTkQQABIWChJVU0VSX0FMUkVB",
-            "RFlfRVhJU1QQARINCglJTkNPUlJFQ1QQAmIGcHJvdG8z"));
+            "c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJoCgxQb3NpdGlvbkRh",
+            "dGESCgoCeDEYASABKAISCgoCeTEYAiABKAISCgoCejEYAyABKAISCgoCeDIY",
+            "BCABKAISCgoCeTIYBSABKAISCgoCejIYBiABKAISEAoIZHVyYXRpb24YByAB",
+            "KAIiUgoOUmVtb3RlQ2FsbERhdGESCgoCaWQYASABKAkSJgoGbWV0aG9kGAIg",
+            "ASgOMhYuTmV0d29ya0RhdGEuUnBjTWV0aG9kEgwKBGRhdGEYAyABKAwiLAoK",
+            "QXR0YWNrRGF0YRIOCgZ0YXJnZXQYASABKAkSDgoGZGFtYWdlGAIgASgFIhsK",
+            "CEl0ZW1EYXRhEg8KB2l0ZW1faWQYASABKAkiigEKCVJwY1BhY2tldBIKCgJp",
+            "cBgBIAEoCRIMCgR1dWlkGAIgASgJEiYKBm1ldGhvZBgDIAEoDjIWLk5ldHdv",
+            "cmtEYXRhLlJwY01ldGhvZBIMCgRkYXRhGAQgASgMEi0KCXRpbWVzdGFtcBgF",
+            "IAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiTQoOUmVzcG9uc2VQ",
+            "YWNrZXQSDAoEZGF0YRgBIAEoDBItCgl0aW1lc3RhbXAYAiABKAsyGi5nb29n",
+            "bGUucHJvdG9idWYuVGltZXN0YW1wKuQBCglScGNNZXRob2QSCAoETk9ORRAA",
+            "EgkKBUxPR0lOEAESDAoIUkVHSVNURVIQAhIMCghSRVRSSUVWRRADEgoKBkFD",
+            "Q0VTUxAEEgoKBlJFSkVDVBAFEgoKBkxPR09VVBAGEhAKDElOX0dBTUVfTk9O",
+            "RRBkEggKBE1PVkUQZRIKCgZBVFRBQ0sQZhINCglEUk9QX0lURU0QZxIMCghV",
+            "U0VfSVRFTRBoEg0KCVVTRV9TS0lMTBBpEhUKEFJFTU9URV9NT1ZFX0NBTEwQ",
+            "9AMSFwoSUkVNT1RFX0FUVEFDS19DQUxMEPUDKqgCChFScGNSZXNwb25zZU1l",
+            "dGhvZBIMCghSRVNfTk9ORRAAEg0KCVJFU19MT0dJThABEhAKDFJFU19SRUdJ",
+            "U1RFUhACEhAKDFJFU19SRVRSSUVWRRADEg4KClJFU19BQ0NFU1MQBBIOCgpS",
+            "RVNfUkVKRUNUEAUSDgoKUkVTX0xPR09VVBAGEhQKEFJFU19JTl9HQU1FX05P",
+            "TkUQZBIMCghSRVNfTU9WRRBlEg4KClJFU19BVFRBQ0sQZhIRCg1SRVNfRFJP",
+            "UF9JVEVNEGcSEAoMUkVTX1VTRV9JVEVNEGgSEQoNUkVTX1VTRV9TS0lMTBBp",
+            "EhkKFFJFU19SRU1PVEVfTU9WRV9DQUxMEPQDEhsKFlJFU19SRU1PVEVfQVRU",
+            "QUNLX0NBTEwQ9QMqnAEKDkFkbWluUnBjTWV0aG9kEg4KCkFETUlOX05PTkUQ",
+            "ABIPCgtBRE1JTl9MT0dJThABEhAKDEFETUlOX0xPR09VVBACEhAKDEFETUlO",
+            "X05PVElGWRBkEhUKEEFETUlOX1NFUlZFUl9PRkYQhAcSFAoPQURNSU5fU0VS",
+            "VkVSX09OEIUHEhgKE0FETUlOX1NFUlZFUl9SRUJPT1QQhgcqSAoLRUxvZ2lu",
+            "RXJyb3ISEgoOVVNFUl9OT1RfRk9VTkQQABIWChJVU0VSX0FMUkVBRFlfRVhJ",
+            "U1QQARINCglJTkNPUlJFQ1QQAmIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::NetworkData.RpcMethod), typeof(global::NetworkData.RpcResponseMethod), typeof(global::NetworkData.AdminRpcMethod), typeof(global::NetworkData.ELoginError), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.LoginData), global::NetworkData.LoginData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RegisterData), global::NetworkData.RegisterData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.PositionData), global::NetworkData.PositionData.Parser, new[]{ "X", "Y", "Z", "Duration" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.PositionData), global::NetworkData.PositionData.Parser, new[]{ "X1", "Y1", "Z1", "X2", "Y2", "Z2", "Duration" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RemoteCallData), global::NetworkData.RemoteCallData.Parser, new[]{ "Id", "Method", "Data" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.AttackData), global::NetworkData.AttackData.Parser, new[]{ "Target", "Damage" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.ItemData), global::NetworkData.ItemData.Parser, new[]{ "ItemId" }, null, null, null, null),
@@ -638,9 +639,12 @@ namespace NetworkData {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public PositionData(PositionData other) : this() {
-      x_ = other.x_;
-      y_ = other.y_;
-      z_ = other.z_;
+      x1_ = other.x1_;
+      y1_ = other.y1_;
+      z1_ = other.z1_;
+      x2_ = other.x2_;
+      y2_ = other.y2_;
+      z2_ = other.z2_;
       duration_ = other.duration_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
@@ -651,45 +655,90 @@ namespace NetworkData {
       return new PositionData(this);
     }
 
-    /// <summary>Field number for the "x" field.</summary>
-    public const int XFieldNumber = 2;
-    private float x_;
+    /// <summary>Field number for the "x1" field.</summary>
+    public const int X1FieldNumber = 1;
+    private float x1_;
+    /// <summary>
+    /// start position
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float X {
-      get { return x_; }
+    public float X1 {
+      get { return x1_; }
       set {
-        x_ = value;
+        x1_ = value;
       }
     }
 
-    /// <summary>Field number for the "y" field.</summary>
-    public const int YFieldNumber = 3;
-    private float y_;
+    /// <summary>Field number for the "y1" field.</summary>
+    public const int Y1FieldNumber = 2;
+    private float y1_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Y {
-      get { return y_; }
+    public float Y1 {
+      get { return y1_; }
       set {
-        y_ = value;
+        y1_ = value;
       }
     }
 
-    /// <summary>Field number for the "z" field.</summary>
-    public const int ZFieldNumber = 4;
-    private float z_;
+    /// <summary>Field number for the "z1" field.</summary>
+    public const int Z1FieldNumber = 3;
+    private float z1_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Z {
-      get { return z_; }
+    public float Z1 {
+      get { return z1_; }
       set {
-        z_ = value;
+        z1_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "x2" field.</summary>
+    public const int X2FieldNumber = 4;
+    private float x2_;
+    /// <summary>
+    /// end position
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float X2 {
+      get { return x2_; }
+      set {
+        x2_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "y2" field.</summary>
+    public const int Y2FieldNumber = 5;
+    private float y2_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Y2 {
+      get { return y2_; }
+      set {
+        y2_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "z2" field.</summary>
+    public const int Z2FieldNumber = 6;
+    private float z2_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float Z2 {
+      get { return z2_; }
+      set {
+        z2_ = value;
       }
     }
 
     /// <summary>Field number for the "duration" field.</summary>
-    public const int DurationFieldNumber = 5;
+    public const int DurationFieldNumber = 7;
     private float duration_;
+    /// <summary>
+    /// Move Duration
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public float Duration {
@@ -714,9 +763,12 @@ namespace NetworkData {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(X, other.X)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Y, other.Y)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Z, other.Z)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(X1, other.X1)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Y1, other.Y1)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Z1, other.Z1)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(X2, other.X2)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Y2, other.Y2)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Z2, other.Z2)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Duration, other.Duration)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -725,9 +777,12 @@ namespace NetworkData {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (X != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(X);
-      if (Y != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Y);
-      if (Z != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Z);
+      if (X1 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(X1);
+      if (Y1 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Y1);
+      if (Z1 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Z1);
+      if (X2 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(X2);
+      if (Y2 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Y2);
+      if (Z2 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Z2);
       if (Duration != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Duration);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -747,20 +802,32 @@ namespace NetworkData {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (X != 0F) {
+      if (X1 != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(X1);
+      }
+      if (Y1 != 0F) {
         output.WriteRawTag(21);
-        output.WriteFloat(X);
+        output.WriteFloat(Y1);
       }
-      if (Y != 0F) {
+      if (Z1 != 0F) {
         output.WriteRawTag(29);
-        output.WriteFloat(Y);
+        output.WriteFloat(Z1);
       }
-      if (Z != 0F) {
+      if (X2 != 0F) {
         output.WriteRawTag(37);
-        output.WriteFloat(Z);
+        output.WriteFloat(X2);
+      }
+      if (Y2 != 0F) {
+        output.WriteRawTag(45);
+        output.WriteFloat(Y2);
+      }
+      if (Z2 != 0F) {
+        output.WriteRawTag(53);
+        output.WriteFloat(Z2);
       }
       if (Duration != 0F) {
-        output.WriteRawTag(45);
+        output.WriteRawTag(61);
         output.WriteFloat(Duration);
       }
       if (_unknownFields != null) {
@@ -773,20 +840,32 @@ namespace NetworkData {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (X != 0F) {
+      if (X1 != 0F) {
+        output.WriteRawTag(13);
+        output.WriteFloat(X1);
+      }
+      if (Y1 != 0F) {
         output.WriteRawTag(21);
-        output.WriteFloat(X);
+        output.WriteFloat(Y1);
       }
-      if (Y != 0F) {
+      if (Z1 != 0F) {
         output.WriteRawTag(29);
-        output.WriteFloat(Y);
+        output.WriteFloat(Z1);
       }
-      if (Z != 0F) {
+      if (X2 != 0F) {
         output.WriteRawTag(37);
-        output.WriteFloat(Z);
+        output.WriteFloat(X2);
+      }
+      if (Y2 != 0F) {
+        output.WriteRawTag(45);
+        output.WriteFloat(Y2);
+      }
+      if (Z2 != 0F) {
+        output.WriteRawTag(53);
+        output.WriteFloat(Z2);
       }
       if (Duration != 0F) {
-        output.WriteRawTag(45);
+        output.WriteRawTag(61);
         output.WriteFloat(Duration);
       }
       if (_unknownFields != null) {
@@ -799,13 +878,22 @@ namespace NetworkData {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (X != 0F) {
+      if (X1 != 0F) {
         size += 1 + 4;
       }
-      if (Y != 0F) {
+      if (Y1 != 0F) {
         size += 1 + 4;
       }
-      if (Z != 0F) {
+      if (Z1 != 0F) {
+        size += 1 + 4;
+      }
+      if (X2 != 0F) {
+        size += 1 + 4;
+      }
+      if (Y2 != 0F) {
+        size += 1 + 4;
+      }
+      if (Z2 != 0F) {
         size += 1 + 4;
       }
       if (Duration != 0F) {
@@ -823,14 +911,23 @@ namespace NetworkData {
       if (other == null) {
         return;
       }
-      if (other.X != 0F) {
-        X = other.X;
+      if (other.X1 != 0F) {
+        X1 = other.X1;
       }
-      if (other.Y != 0F) {
-        Y = other.Y;
+      if (other.Y1 != 0F) {
+        Y1 = other.Y1;
       }
-      if (other.Z != 0F) {
-        Z = other.Z;
+      if (other.Z1 != 0F) {
+        Z1 = other.Z1;
+      }
+      if (other.X2 != 0F) {
+        X2 = other.X2;
+      }
+      if (other.Y2 != 0F) {
+        Y2 = other.Y2;
+      }
+      if (other.Z2 != 0F) {
+        Z2 = other.Z2;
       }
       if (other.Duration != 0F) {
         Duration = other.Duration;
@@ -854,19 +951,31 @@ namespace NetworkData {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
+          case 13: {
+            X1 = input.ReadFloat();
+            break;
+          }
           case 21: {
-            X = input.ReadFloat();
+            Y1 = input.ReadFloat();
             break;
           }
           case 29: {
-            Y = input.ReadFloat();
+            Z1 = input.ReadFloat();
             break;
           }
           case 37: {
-            Z = input.ReadFloat();
+            X2 = input.ReadFloat();
             break;
           }
           case 45: {
+            Y2 = input.ReadFloat();
+            break;
+          }
+          case 53: {
+            Z2 = input.ReadFloat();
+            break;
+          }
+          case 61: {
             Duration = input.ReadFloat();
             break;
           }
@@ -889,19 +998,31 @@ namespace NetworkData {
           default:
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
+          case 13: {
+            X1 = input.ReadFloat();
+            break;
+          }
           case 21: {
-            X = input.ReadFloat();
+            Y1 = input.ReadFloat();
             break;
           }
           case 29: {
-            Y = input.ReadFloat();
+            Z1 = input.ReadFloat();
             break;
           }
           case 37: {
-            Z = input.ReadFloat();
+            X2 = input.ReadFloat();
             break;
           }
           case 45: {
+            Y2 = input.ReadFloat();
+            break;
+          }
+          case 53: {
+            Z2 = input.ReadFloat();
+            break;
+          }
+          case 61: {
             Duration = input.ReadFloat();
             break;
           }
