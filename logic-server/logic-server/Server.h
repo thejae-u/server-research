@@ -1,24 +1,31 @@
-#ifndef SERVER_H
-#define SERVER_H
+#pragma once
+#include <vector>
+#include <boost/asio.hpp>
+#include <mutex>
+#include <memory>
 
-#include "Session.h"
-#include <set>
+#include "NetworkData.pb.h"
 
 using io_context = boost::asio::io_context;
+using namespace boost::asio::ip;
+using namespace NetworkData;
 
-class Server : std::enable_shared_from_this<Server>
+class Session;
+
+class Server : public std::enable_shared_from_this<Server>
 {
 public:
-	Server(io_context& io);
+	Server(const io_context::strand& strand, tcp::acceptor& acceptor);
 	~Server();
-
-	void StartServer();
-	void FlushSessions();
+	
+	void AcceptClientAsync();
+	void DisconnectSession(const std::shared_ptr<Session>& caller);
+	void BroadcastAll(std::shared_ptr<Session> caller, RpcPacket packet);
+	std::size_t GetSessionCount() const { return _sessions.size(); }
 
 private:
-	io_context& _io;
-	std::set<std::shared_ptr<Session>> _sessions;
+	io_context::strand _strand;
+	tcp::acceptor& _acceptor;
+	std::vector<std::shared_ptr<Session>> _sessions;
+	std::size_t _sessionsCount = 0;
 };
-
-#endif // SERVER_H
-
