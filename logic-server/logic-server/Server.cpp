@@ -8,14 +8,10 @@ Server::Server(const io_context::strand& strand, tcp::acceptor& acceptor) : _str
 	_sessions.resize(_sessionsCount);
 }
 
-Server::~Server()
-{
-}
-
 void Server::AcceptClientAsync()
 {
 	auto self(shared_from_this());
-	auto newSession = std::make_shared<Session>(_strand, self);
+	auto newSession = std::make_shared<Session>(_strand, self, _guidGenerator());
 
 	_acceptor.async_accept(newSession->GetSocket(), _strand.wrap([this, newSession](const boost::system::error_code& ec)
 	{
@@ -43,15 +39,4 @@ void Server::DisconnectSession(const std::shared_ptr<Session>& caller)
 	std::cout << "Client Disconnected: " << caller->GetSocket().remote_endpoint().address() << "\n";
 	_sessions.erase(std::find(_sessions.begin(), _sessions.end(), caller));
 	--_sessionsCount;
-}
-
-void Server::BroadcastAll(std::shared_ptr<Session> caller, RpcPacket packet) 
-{
-	for (auto& session : _sessions)
-	{
-		if (session == caller)
-			continue;
-
-		boost::asio::post(_strand.wrap([this, session, packet]() { session->RpcProcess(packet); }));
-	}
 }

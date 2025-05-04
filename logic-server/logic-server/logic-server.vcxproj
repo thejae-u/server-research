@@ -104,6 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,12 +128,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="LockstepGroup.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NetworkData.pb.cc" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="Session.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="LockstepGroup.h" />
     <ClInclude Include="NetworkData.pb.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Session.h" />

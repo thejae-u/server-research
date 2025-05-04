@@ -25,42 +25,24 @@ message PositionData
   float x2 = 4;
   float y2 = 5;
   float z2 = 6;
-  
-  // Move Duration
-  float duration = 7;
 }
 
-message RemoteCallData
-{
-  string id = 1;
-  RpcMethod method = 2;
-  bytes data = 3; // serialized parameter data (Login Data, Position Data, etc.)
-}
-
-message AttackData
-{
-  string target = 1;
-  int32 damage = 2;
-}
-
-message ItemData
-{
-  string item_id = 1;
-}
-
-message RpcPacket
+message RpcRequest
 {
   string ip = 1;
-  string uuid = 2;
+  bytes guid = 2;
   RpcMethod method = 3;
   bytes data = 4; // serialized parameter data (Login Data, Position Data, etc.)
   google.protobuf.Timestamp timestamp = 5;
 }
 
-message ResponsePacket
+message RpcPacket
 {
-  bytes data = 1; // serialized response data
-  google.protobuf.Timestamp timestamp = 2;
+  string ip = 1;
+  bytes guid = 2;
+  RpcMethod method = 3;
+  bytes data = 4; // serialized parameter data (Login Data, Position Data, etc.)
+  google.protobuf.Timestamp timestamp = 5;
 }
 
 enum RpcMethod
@@ -80,6 +62,13 @@ enum RpcMethod
   DROP_ITEM = 103;
   USE_ITEM = 104;
   USE_SKILL = 105;
+  
+  // State Calls
+  STATE_NONE = 200;
+  STATE_MOVE_START = 201;
+  STATE_MOVE_END = 202;
+  STATE_ATTACK_START = 203;
+  STATE_ATTACK_END = 204;
   
   REMOTE_MOVE_CALL = 500;
   REMOTE_ATTACK_CALL = 501;

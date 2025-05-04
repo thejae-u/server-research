@@ -1,16 +1,16 @@
 #include "Session.h"
 #include "Server.h"
 #include <iostream>
+
+#include "LockstepGroup.h"
 #include "Utility.h"
 
-Session::Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr)
-	: _serverPtr(std::move(serverPtr)), _strand(strand), _socketPtr(std::make_shared<tcp::socket>(strand.context())), _receiveNetSize(0), _receiveDataSize(0)
+Session::Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr, boost::uuids::uuid guid)
+	: _serverPtr(std::move(serverPtr)), _strand(strand),
+		_socketPtr(std::make_shared<tcp::socket>(strand.context())), _receiveNetSize(0), _receiveDataSize(0),
+		_sessionGuid(guid)
 {
 	std::cout << "Session: " << _serverPtr->GetSessionCount() << "\n";
-}
-
-Session::~Session()
-{
 }
 
 void Session::Start()
@@ -117,52 +117,21 @@ void Session::AsyncReadData()
 				return;
 			}
 
-			// Process the request asynchronously
-			boost::asio::post(_strand.wrap([this, deserializeRpcPacket]() { ProcessRequestAsync(deserializeRpcPacket); }));
+			std::cout << "Received Data: " << deserializeRpcPacket.guid() << " " << deserializeRpcPacket.method() << "\n";
+
+			RpcRequest rpcRequest;
+			rpcRequest.set_guid(deserializeRpcPacket.guid());
+			rpcRequest.set_method(deserializeRpcPacket.method());
+			rpcRequest.set_data(deserializeRpcPacket.data());
+			// Process the RPC request
+			if (_lockstepGroupPtr)
+			{
+				_lockstepGroupPtr->CollectInput({{_sessionGuid, std::make_shared<RpcRequest>(rpcRequest)}});
+			}
 
 			_receiveBuffer.clear();
 			_receiveNetSize = 0;
 			_receiveDataSize = 0;
 			boost::asio::post(_strand.wrap([this]() { AsyncReadSize(); }));
 		}));
-}
-
-void Session::ProcessRequestAsync(RpcPacket reqPacket)
-{
-	switch (reqPacket.method())
-	{
-	case MOVE: // handle move request
-		{
-			PositionData positionData;
-			if (!positionData.ParseFromString(reqPacket.data()))
-			{
-				std::cerr << "In PR Error Parsing Position Data\n";
-				return;
-			}
-
-			_serverPtr->BroadcastAll(shared_from_this(), reqPacket);
-			break;
-		}
-	// Not Implemented
-	case ATTACK:
-		break;
-	case DROP_ITEM:
-		break;
-	case USE_ITEM:
-		break;
-	case USE_SKILL:
-		break;
-
-	case LOGOUT:
-		// Handle logout request
-		break;
-		
-	case NONE:
-	case IN_GAME_NONE:
-		// No operation
-		break;
-	default:
-		assert(false, "Unknown method in RpcPacket");
-		break;
-	}
 }

@@ -14,4 +14,9 @@ namespace Utility
             + std::to_string(positionData.y2()) + " "
             + std::to_string(positionData.z2()) + " ";
     }
+
+    static std::string GuidToBytes(boost::uuids::uuid guid)
+    {
+        return std::string(guid.begin(), guid.end());
+    }
 }
