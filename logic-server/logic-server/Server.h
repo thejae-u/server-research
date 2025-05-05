@@ -33,9 +33,11 @@ private:
 	std::vector<std::shared_ptr<Session>> _sessions;
 	std::size_t _sessionsCount = 0;
 
-	std::vector<std::shared_ptr<LockstepGroup>> _groups;
+	std::set<std::shared_ptr<LockstepGroup>> _groups;
 	std::size_t _groupsCount = 0;
 	std::size_t _maxSessionCountPerGroup = 10;
 
 	boost::uuids::random_generator_mt19937 _guidGenerator;
+
+	void CreateNewGroup();
 };

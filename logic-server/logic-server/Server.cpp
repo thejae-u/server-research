@@ -1,5 +1,6 @@
 ﻿#include "Server.h"
 #include "Session.h"
+#include "LockstepGroup.h"
 
 #include <iostream>
 
@@ -39,4 +40,10 @@ void Server::DisconnectSession(const std::shared_ptr<Session>& caller)
 	std::cout << "Client Disconnected: " << caller->GetSocket().remote_endpoint().address() << "\n";
 	_sessions.erase(std::find(_sessions.begin(), _sessions.end(), caller));
 	--_sessionsCount;
+}
+
+void Server::CreateNewGroup()
+{
+	const auto newGroup = std::make_shared<LockstepGroup>(_strand, _guidGenerator());
+	_groups.insert(newGroup);
 }

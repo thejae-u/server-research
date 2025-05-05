@@ -1,15 +1,40 @@
 ﻿#include "LockstepGroup.h"
-
-#include <boost/uuid/uuid_io.hpp>
-
 #include "Utility.h"
 
-void LockstepGroup::CollectInput(std::unordered_map<boost::uuids::uuid, std::shared_ptr<RpcRequest>> rpcRequest)
+LockstepGroup::LockstepGroup(const io_context::strand& strand, const uuid groupId) : _groupId(groupId), _timer(strand.context()), _groupMaxDelayMs(-1)
+{
+}
+
+void LockstepGroup::Start()
+{
+    ScheduleNextTick(); // Start the first tick
+}
+
+void LockstepGroup::AddMember(std::shared_ptr<Session> newSession)
+{
+    {
+        std::lock_guard<std::mutex> lock(_memberMutex);
+        if (const auto [it, success] = _members.insert(newSession); !success)
+        {
+            std::cerr << "Failed to add member\n";
+        }
+    }
+
+    std::cout << _groupId << ": Added Member\n";
+}
+
+void LockstepGroup::RemoveMember(std::shared_ptr<Session> session)
+{
+    std::lock_guard<std::mutex> lock(_memberMutex);
+    _members.erase(session);
+}
+
+void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcRequest>> rpcRequest)
 {
     std::lock_guard<std::mutex> lock(_bufferMutex);
     for (auto& [guid, request] : rpcRequest)
     {
-        auto packet = std::make_shared<RpcPacket>();
+        const auto packet = std::make_shared<RpcPacket>();
         packet->set_guid(Utility::GuidToBytes(guid));
         packet->set_method(request->method());
         packet->set_data(request->data());
@@ -27,7 +52,7 @@ void LockstepGroup::ProcessStep()
     for (auto& [guid, packet] : input)
     {
         // Process each packet
-        std::cout << boost::uuids::to_string(guid) << ": "<< packet->method() << "\n";
+        std::cout << /*uuids*/ to_string(guid) << ": "<< packet->method() << "\n";
     }
 }
 
