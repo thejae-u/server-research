@@ -68,7 +68,7 @@ void Server::InsertSessionToGroup(const std::shared_ptr<Session>& session)
 		}
 	}
 
-	// 모든 그룹이 다 찬 경우 새로운 그룹 생성
+	// All Groups are full, create a new group
 	const auto newGroup = std::make_shared<LockstepGroup>(_strand, _guidGenerator());
 	_groups.insert(newGroup);
 	newGroup->AddMember(session);

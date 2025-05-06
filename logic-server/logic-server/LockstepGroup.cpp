@@ -45,8 +45,8 @@ void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcReq
 
         auto key = SSessionKey{_currentBucket, guid};
         _inputBuffer[_currentBucket][key] = packet;
-        std::cout << "CollectInput: " << to_string(guid) << ": " << packet->method() << "\n";
-        std::cout << "Tick: " << _currentBucket << "\n";
+        //std::cout << "CollectInput: " << to_string(guid) << ": " << packet->method() << "\n";
+        //std::cout << "Tick: " << _currentBucket << "\n";
     }
 }
 
@@ -76,7 +76,6 @@ void LockstepGroup::Tick()
         std::cout << "Process Step\n";
         ProcessStep();
 
-        std::cout << "Tick: " << _currentBucket << "\n";
         _currentBucket++;
         
         // Calculate the bucket count

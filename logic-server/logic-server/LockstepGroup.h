@@ -33,7 +33,8 @@ struct SSessionKey
 namespace std {
     template <>
     struct hash<SSessionKey> {
-        std::size_t operator()(const SSessionKey& key) const {
+        std::size_t operator()(const SSessionKey& key) const noexcept
+        {
             const std::size_t h1 = std::hash<std::size_t>()(key.frame);
             const std::size_t h2 = std::hash<uuid>()(key.guid);
             return h1 ^ (h2 << 1); // 해시 결합
