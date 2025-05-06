@@ -1,4 +1,6 @@
 ﻿#include "LockstepGroup.h"
+
+#include "Session.h"
 #include "Utility.h"
 
 LockstepGroup::LockstepGroup(const io_context::strand& strand, const uuid groupId) : _groupId(groupId), _timer(strand.context()), _groupMaxDelayMs(-1)
@@ -7,10 +9,11 @@ LockstepGroup::LockstepGroup(const io_context::strand& strand, const uuid groupI
 
 void LockstepGroup::Start()
 {
-    ScheduleNextTick(); // Start the first tick
+    _isRunning = true;
+    Tick();
 }
 
-void LockstepGroup::AddMember(std::shared_ptr<Session> newSession)
+void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 {
     {
         std::lock_guard<std::mutex> lock(_memberMutex);
@@ -20,10 +23,11 @@ void LockstepGroup::AddMember(std::shared_ptr<Session> newSession)
         }
     }
 
+    newSession->SetGroup(shared_from_this());
     std::cout << _groupId << ": Added Member\n";
 }
 
-void LockstepGroup::RemoveMember(std::shared_ptr<Session> session)
+void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
     std::lock_guard<std::mutex> lock(_memberMutex);
     _members.erase(session);
@@ -35,11 +39,14 @@ void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcReq
     for (auto& [guid, request] : rpcRequest)
     {
         const auto packet = std::make_shared<RpcPacket>();
-        packet->set_guid(Utility::GuidToBytes(guid));
+        packet->set_uuid(Utility::GuidToBytes(guid));
         packet->set_method(request->method());
         packet->set_data(request->data());
-    
-        _inputBuffer[_currentFrame][guid] = packet;
+
+        auto key = SSessionKey{_currentBucket, guid};
+        _inputBuffer[_currentBucket][key] = packet;
+        std::cout << "CollectInput: " << to_string(guid) << ": " << packet->method() << "\n";
+        std::cout << "Tick: " << _currentBucket << "\n";
     }
 }
 
@@ -47,10 +54,12 @@ void LockstepGroup::ProcessStep()
 {
     // _inputBuffer is must locked by Tick()
     // Process the input buffer for the current frame
-    auto& input = _inputBuffer[_currentFrame];
+    auto& input = _inputBuffer[_currentBucket];
 
-    for (auto& [guid, packet] : input)
+    for (auto& [key, packet] : input)
     {
+        auto [frame, guid] = key;
+        
         // Process each packet
         std::cout << /*uuids*/ to_string(guid) << ": "<< packet->method() << "\n";
     }
@@ -64,12 +73,15 @@ void LockstepGroup::Tick()
             return;
     
         // Process current frame
+        std::cout << "Process Step\n";
         ProcessStep();
-    
-        _currentFrame++;
-        _inputBuffer.erase(_currentFrame - 1);
+
+        std::cout << "Tick: " << _currentBucket << "\n";
+        _currentBucket++;
+        
+        // Calculate the bucket count
+        _inputBuffer.erase(_currentBucket - 1);
     }
-    
 
     // Schedule the next tick
     ScheduleNextTick();
@@ -78,6 +90,8 @@ void LockstepGroup::Tick()
 void LockstepGroup::ScheduleNextTick()
 {
     auto self(shared_from_this());
+    
+    // Set the timer for the next tick (input delay)
     _timer.expires_after(std::chrono::milliseconds(_fixedDeltaMs));
     _timer.async_wait([self](const boost::system::error_code& ec)
         {

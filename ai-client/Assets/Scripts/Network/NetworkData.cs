@@ -30,10 +30,10 @@ namespace NetworkData {
             "c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJWCgxQb3NpdGlvbkRh",
             "dGESCgoCeDEYASABKAISCgoCeTEYAiABKAISCgoCejEYAyABKAISCgoCeDIY",
             "BCABKAISCgoCeTIYBSABKAISCgoCejIYBiABKAIiiwEKClJwY1JlcXVlc3QS",
-            "CgoCaXAYASABKAkSDAoEZ3VpZBgCIAEoDBImCgZtZXRob2QYAyABKA4yFi5O",
+            "CgoCaXAYASABKAkSDAoEdXVpZBgCIAEoDBImCgZtZXRob2QYAyABKA4yFi5O",
             "ZXR3b3JrRGF0YS5ScGNNZXRob2QSDAoEZGF0YRgEIAEoDBItCgl0aW1lc3Rh",
             "bXAYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIooBCglScGNQ",
-            "YWNrZXQSCgoCaXAYASABKAkSDAoEZ3VpZBgCIAEoDBImCgZtZXRob2QYAyAB",
+            "YWNrZXQSCgoCaXAYASABKAkSDAoEdXVpZBgCIAEoDBImCgZtZXRob2QYAyAB",
             "KA4yFi5OZXR3b3JrRGF0YS5ScGNNZXRob2QSDAoEZGF0YRgEIAEoDBItCgl0",
             "aW1lc3RhbXAYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKtEC",
             "CglScGNNZXRob2QSCAoETk9ORRAAEgkKBUxPR0lOEAESDAoIUkVHSVNURVIQ",
@@ -62,8 +62,8 @@ namespace NetworkData {
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.LoginData), global::NetworkData.LoginData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RegisterData), global::NetworkData.RegisterData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.PositionData), global::NetworkData.PositionData.Parser, new[]{ "X1", "Y1", "Z1", "X2", "Y2", "Z2" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RpcRequest), global::NetworkData.RpcRequest.Parser, new[]{ "Ip", "Guid", "Method", "Data", "Timestamp" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RpcPacket), global::NetworkData.RpcPacket.Parser, new[]{ "Ip", "Guid", "Method", "Data", "Timestamp" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RpcRequest), global::NetworkData.RpcRequest.Parser, new[]{ "Ip", "Uuid", "Method", "Data", "Timestamp" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RpcPacket), global::NetworkData.RpcPacket.Parser, new[]{ "Ip", "Uuid", "Method", "Data", "Timestamp" }, null, null, null, null)
           }));
     }
     #endregion
@@ -1034,7 +1034,7 @@ namespace NetworkData {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public RpcRequest(RpcRequest other) : this() {
       ip_ = other.ip_;
-      guid_ = other.guid_;
+      uuid_ = other.uuid_;
       method_ = other.method_;
       data_ = other.data_;
       timestamp_ = other.timestamp_ != null ? other.timestamp_.Clone() : null;
@@ -1059,15 +1059,15 @@ namespace NetworkData {
       }
     }
 
-    /// <summary>Field number for the "guid" field.</summary>
-    public const int GuidFieldNumber = 2;
-    private pb::ByteString guid_ = pb::ByteString.Empty;
+    /// <summary>Field number for the "uuid" field.</summary>
+    public const int UuidFieldNumber = 2;
+    private pb::ByteString uuid_ = pb::ByteString.Empty;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pb::ByteString Guid {
-      get { return guid_; }
+    public pb::ByteString Uuid {
+      get { return uuid_; }
       set {
-        guid_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        uuid_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
     }
 
@@ -1126,7 +1126,7 @@ namespace NetworkData {
         return true;
       }
       if (Ip != other.Ip) return false;
-      if (Guid != other.Guid) return false;
+      if (Uuid != other.Uuid) return false;
       if (Method != other.Method) return false;
       if (Data != other.Data) return false;
       if (!object.Equals(Timestamp, other.Timestamp)) return false;
@@ -1138,7 +1138,7 @@ namespace NetworkData {
     public override int GetHashCode() {
       int hash = 1;
       if (Ip.Length != 0) hash ^= Ip.GetHashCode();
-      if (Guid.Length != 0) hash ^= Guid.GetHashCode();
+      if (Uuid.Length != 0) hash ^= Uuid.GetHashCode();
       if (Method != global::NetworkData.RpcMethod.None) hash ^= Method.GetHashCode();
       if (Data.Length != 0) hash ^= Data.GetHashCode();
       if (timestamp_ != null) hash ^= Timestamp.GetHashCode();
@@ -1164,9 +1164,9 @@ namespace NetworkData {
         output.WriteRawTag(10);
         output.WriteString(Ip);
       }
-      if (Guid.Length != 0) {
+      if (Uuid.Length != 0) {
         output.WriteRawTag(18);
-        output.WriteBytes(Guid);
+        output.WriteBytes(Uuid);
       }
       if (Method != global::NetworkData.RpcMethod.None) {
         output.WriteRawTag(24);
@@ -1194,9 +1194,9 @@ namespace NetworkData {
         output.WriteRawTag(10);
         output.WriteString(Ip);
       }
-      if (Guid.Length != 0) {
+      if (Uuid.Length != 0) {
         output.WriteRawTag(18);
-        output.WriteBytes(Guid);
+        output.WriteBytes(Uuid);
       }
       if (Method != global::NetworkData.RpcMethod.None) {
         output.WriteRawTag(24);
@@ -1223,8 +1223,8 @@ namespace NetworkData {
       if (Ip.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Ip);
       }
-      if (Guid.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeBytesSize(Guid);
+      if (Uuid.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeBytesSize(Uuid);
       }
       if (Method != global::NetworkData.RpcMethod.None) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Method);
@@ -1250,8 +1250,8 @@ namespace NetworkData {
       if (other.Ip.Length != 0) {
         Ip = other.Ip;
       }
-      if (other.Guid.Length != 0) {
-        Guid = other.Guid;
+      if (other.Uuid.Length != 0) {
+        Uuid = other.Uuid;
       }
       if (other.Method != global::NetworkData.RpcMethod.None) {
         Method = other.Method;
@@ -1289,7 +1289,7 @@ namespace NetworkData {
             break;
           }
           case 18: {
-            Guid = input.ReadBytes();
+            Uuid = input.ReadBytes();
             break;
           }
           case 24: {
@@ -1331,7 +1331,7 @@ namespace NetworkData {
             break;
           }
           case 18: {
-            Guid = input.ReadBytes();
+            Uuid = input.ReadBytes();
             break;
           }
           case 24: {
@@ -1392,7 +1392,7 @@ namespace NetworkData {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public RpcPacket(RpcPacket other) : this() {
       ip_ = other.ip_;
-      guid_ = other.guid_;
+      uuid_ = other.uuid_;
       method_ = other.method_;
       data_ = other.data_;
       timestamp_ = other.timestamp_ != null ? other.timestamp_.Clone() : null;
@@ -1417,15 +1417,15 @@ namespace NetworkData {
       }
     }
 
-    /// <summary>Field number for the "guid" field.</summary>
-    public const int GuidFieldNumber = 2;
-    private pb::ByteString guid_ = pb::ByteString.Empty;
+    /// <summary>Field number for the "uuid" field.</summary>
+    public const int UuidFieldNumber = 2;
+    private pb::ByteString uuid_ = pb::ByteString.Empty;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pb::ByteString Guid {
-      get { return guid_; }
+    public pb::ByteString Uuid {
+      get { return uuid_; }
       set {
-        guid_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        uuid_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
     }
 
@@ -1484,7 +1484,7 @@ namespace NetworkData {
         return true;
       }
       if (Ip != other.Ip) return false;
-      if (Guid != other.Guid) return false;
+      if (Uuid != other.Uuid) return false;
       if (Method != other.Method) return false;
       if (Data != other.Data) return false;
       if (!object.Equals(Timestamp, other.Timestamp)) return false;
@@ -1496,7 +1496,7 @@ namespace NetworkData {
     public override int GetHashCode() {
       int hash = 1;
       if (Ip.Length != 0) hash ^= Ip.GetHashCode();
-      if (Guid.Length != 0) hash ^= Guid.GetHashCode();
+      if (Uuid.Length != 0) hash ^= Uuid.GetHashCode();
       if (Method != global::NetworkData.RpcMethod.None) hash ^= Method.GetHashCode();
       if (Data.Length != 0) hash ^= Data.GetHashCode();
       if (timestamp_ != null) hash ^= Timestamp.GetHashCode();
@@ -1522,9 +1522,9 @@ namespace NetworkData {
         output.WriteRawTag(10);
         output.WriteString(Ip);
       }
-      if (Guid.Length != 0) {
+      if (Uuid.Length != 0) {
         output.WriteRawTag(18);
-        output.WriteBytes(Guid);
+        output.WriteBytes(Uuid);
       }
       if (Method != global::NetworkData.RpcMethod.None) {
         output.WriteRawTag(24);
@@ -1552,9 +1552,9 @@ namespace NetworkData {
         output.WriteRawTag(10);
         output.WriteString(Ip);
       }
-      if (Guid.Length != 0) {
+      if (Uuid.Length != 0) {
         output.WriteRawTag(18);
-        output.WriteBytes(Guid);
+        output.WriteBytes(Uuid);
       }
       if (Method != global::NetworkData.RpcMethod.None) {
         output.WriteRawTag(24);
@@ -1581,8 +1581,8 @@ namespace NetworkData {
       if (Ip.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Ip);
       }
-      if (Guid.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeBytesSize(Guid);
+      if (Uuid.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeBytesSize(Uuid);
       }
       if (Method != global::NetworkData.RpcMethod.None) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Method);
@@ -1608,8 +1608,8 @@ namespace NetworkData {
       if (other.Ip.Length != 0) {
         Ip = other.Ip;
       }
-      if (other.Guid.Length != 0) {
-        Guid = other.Guid;
+      if (other.Uuid.Length != 0) {
+        Uuid = other.Uuid;
       }
       if (other.Method != global::NetworkData.RpcMethod.None) {
         Method = other.Method;
@@ -1647,7 +1647,7 @@ namespace NetworkData {
             break;
           }
           case 18: {
-            Guid = input.ReadBytes();
+            Uuid = input.ReadBytes();
             break;
           }
           case 24: {
@@ -1689,7 +1689,7 @@ namespace NetworkData {
             break;
           }
           case 18: {
-            Guid = input.ReadBytes();
+            Uuid = input.ReadBytes();
             break;
           }
           case 24: {

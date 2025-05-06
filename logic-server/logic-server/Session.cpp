@@ -16,6 +16,22 @@ Session::Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr, 
 void Session::Start()
 {
 	std::cout << "Session Started: " << _socketPtr->remote_endpoint().address() << "\n";
+	// Send guid to client
+	RpcPacket packet;
+	packet.set_uuid(Utility::GuidToBytes(_sessionGuid));
+	packet.set_method(NONE);
+	packet.set_data("");
+
+	auto serializedGuid = packet.SerializeAsString();
+	const uint32_t sendNetSize =  static_cast<uint32_t>(serializedGuid.size());
+	const uint32_t sendDataSize = htonl(sendNetSize);
+
+	// Blocking write
+	boost::asio::write(*_socketPtr, boost::asio::buffer(&sendDataSize, sizeof(sendDataSize)));
+	boost::asio::write(*_socketPtr, boost::asio::buffer(serializedGuid));
+	// Blocking write end
+
+	// Start reading data
 	boost::asio::post(_strand.wrap([this]() { AsyncReadSize(); }));
 }
 
@@ -66,7 +82,6 @@ void Session::AsyncReadSize()
 		{
 			if (sizeEc)
 			{
-				std::cerr << "Error Receiving Size: " << sizeEc.message() << "\n";
 				if (sizeEc == boost::asio::error::eof || sizeEc == boost::asio::error::connection_reset)
 				{
 					Stop();
@@ -117,10 +132,10 @@ void Session::AsyncReadData()
 				return;
 			}
 
-			std::cout << "Received Data: " << deserializeRpcPacket.guid() << " " << deserializeRpcPacket.method() << "\n";
+			//std::cout << "Received Data: " << to_string(Utility::BytesToUuid(deserializeRpcPacket.uuid())) << " " << deserializeRpcPacket.method() << "\n";
 
 			RpcRequest rpcRequest;
-			rpcRequest.set_guid(deserializeRpcPacket.guid());
+			rpcRequest.set_uuid(deserializeRpcPacket.uuid());
 			rpcRequest.set_method(deserializeRpcPacket.method());
 			rpcRequest.set_data(deserializeRpcPacket.data());
 			// Process the RPC request

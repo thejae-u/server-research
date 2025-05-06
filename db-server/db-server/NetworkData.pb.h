@@ -1058,7 +1058,7 @@ class RpcRequest final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kIpFieldNumber = 1,
-    kGuidFieldNumber = 2,
+    kUuidFieldNumber = 2,
     kDataFieldNumber = 4,
     kTimestampFieldNumber = 5,
     kMethodFieldNumber = 3,
@@ -1079,20 +1079,20 @@ class RpcRequest final : public ::google::protobuf::Message
   std::string* _internal_mutable_ip();
 
   public:
-  // bytes guid = 2;
-  void clear_guid() ;
-  const std::string& guid() const;
+  // bytes uuid = 2;
+  void clear_uuid() ;
+  const std::string& uuid() const;
   template <typename Arg_ = const std::string&, typename... Args_>
-  void set_guid(Arg_&& arg, Args_... args);
-  std::string* mutable_guid();
-  PROTOBUF_NODISCARD std::string* release_guid();
-  void set_allocated_guid(std::string* value);
+  void set_uuid(Arg_&& arg, Args_... args);
+  std::string* mutable_uuid();
+  PROTOBUF_NODISCARD std::string* release_uuid();
+  void set_allocated_uuid(std::string* value);
 
   private:
-  const std::string& _internal_guid() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_guid(
+  const std::string& _internal_uuid() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_uuid(
       const std::string& value);
-  std::string* _internal_mutable_guid();
+  std::string* _internal_mutable_uuid();
 
   public:
   // bytes data = 4;
@@ -1162,7 +1162,7 @@ class RpcRequest final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr ip_;
-    ::google::protobuf::internal::ArenaStringPtr guid_;
+    ::google::protobuf::internal::ArenaStringPtr uuid_;
     ::google::protobuf::internal::ArenaStringPtr data_;
     ::google::protobuf::Timestamp* timestamp_;
     int method_;
@@ -1320,7 +1320,7 @@ class RpcPacket final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kIpFieldNumber = 1,
-    kGuidFieldNumber = 2,
+    kUuidFieldNumber = 2,
     kDataFieldNumber = 4,
     kTimestampFieldNumber = 5,
     kMethodFieldNumber = 3,
@@ -1341,20 +1341,20 @@ class RpcPacket final : public ::google::protobuf::Message
   std::string* _internal_mutable_ip();
 
   public:
-  // bytes guid = 2;
-  void clear_guid() ;
-  const std::string& guid() const;
+  // bytes uuid = 2;
+  void clear_uuid() ;
+  const std::string& uuid() const;
   template <typename Arg_ = const std::string&, typename... Args_>
-  void set_guid(Arg_&& arg, Args_... args);
-  std::string* mutable_guid();
-  PROTOBUF_NODISCARD std::string* release_guid();
-  void set_allocated_guid(std::string* value);
+  void set_uuid(Arg_&& arg, Args_... args);
+  std::string* mutable_uuid();
+  PROTOBUF_NODISCARD std::string* release_uuid();
+  void set_allocated_uuid(std::string* value);
 
   private:
-  const std::string& _internal_guid() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_guid(
+  const std::string& _internal_uuid() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_uuid(
       const std::string& value);
-  std::string* _internal_mutable_guid();
+  std::string* _internal_mutable_uuid();
 
   public:
   // bytes data = 4;
@@ -1424,7 +1424,7 @@ class RpcPacket final : public ::google::protobuf::Message
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     ::google::protobuf::internal::ArenaStringPtr ip_;
-    ::google::protobuf::internal::ArenaStringPtr guid_;
+    ::google::protobuf::internal::ArenaStringPtr uuid_;
     ::google::protobuf::internal::ArenaStringPtr data_;
     ::google::protobuf::Timestamp* timestamp_;
     int method_;
@@ -1834,52 +1834,52 @@ inline void RpcRequest::set_allocated_ip(std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcRequest.ip)
 }
 
-// bytes guid = 2;
-inline void RpcRequest::clear_guid() {
+// bytes uuid = 2;
+inline void RpcRequest::clear_uuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.guid_.ClearToEmpty();
+  _impl_.uuid_.ClearToEmpty();
 }
-inline const std::string& RpcRequest::guid() const
+inline const std::string& RpcRequest::uuid() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.RpcRequest.guid)
-  return _internal_guid();
+  // @@protoc_insertion_point(field_get:NetworkData.RpcRequest.uuid)
+  return _internal_uuid();
 }
 template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void RpcRequest::set_guid(Arg_&& arg,
+inline PROTOBUF_ALWAYS_INLINE void RpcRequest::set_uuid(Arg_&& arg,
                                                      Args_... args) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.guid_.SetBytes(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.RpcRequest.guid)
+  _impl_.uuid_.SetBytes(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:NetworkData.RpcRequest.uuid)
 }
-inline std::string* RpcRequest::mutable_guid() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_guid();
-  // @@protoc_insertion_point(field_mutable:NetworkData.RpcRequest.guid)
+inline std::string* RpcRequest::mutable_uuid() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_uuid();
+  // @@protoc_insertion_point(field_mutable:NetworkData.RpcRequest.uuid)
   return _s;
 }
-inline const std::string& RpcRequest::_internal_guid() const {
+inline const std::string& RpcRequest::_internal_uuid() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.guid_.Get();
+  return _impl_.uuid_.Get();
 }
-inline void RpcRequest::_internal_set_guid(const std::string& value) {
+inline void RpcRequest::_internal_set_uuid(const std::string& value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.guid_.Set(value, GetArena());
+  _impl_.uuid_.Set(value, GetArena());
 }
-inline std::string* RpcRequest::_internal_mutable_guid() {
+inline std::string* RpcRequest::_internal_mutable_uuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.guid_.Mutable( GetArena());
+  return _impl_.uuid_.Mutable( GetArena());
 }
-inline std::string* RpcRequest::release_guid() {
+inline std::string* RpcRequest::release_uuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.RpcRequest.guid)
-  return _impl_.guid_.Release();
+  // @@protoc_insertion_point(field_release:NetworkData.RpcRequest.uuid)
+  return _impl_.uuid_.Release();
 }
-inline void RpcRequest::set_allocated_guid(std::string* value) {
+inline void RpcRequest::set_allocated_uuid(std::string* value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.guid_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.guid_.IsDefault()) {
-    _impl_.guid_.Set("", GetArena());
+  _impl_.uuid_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.uuid_.IsDefault()) {
+    _impl_.uuid_.Set("", GetArena());
   }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcRequest.guid)
+  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcRequest.uuid)
 }
 
 // .NetworkData.RpcMethod method = 3;
@@ -2095,52 +2095,52 @@ inline void RpcPacket::set_allocated_ip(std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcPacket.ip)
 }
 
-// bytes guid = 2;
-inline void RpcPacket::clear_guid() {
+// bytes uuid = 2;
+inline void RpcPacket::clear_uuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.guid_.ClearToEmpty();
+  _impl_.uuid_.ClearToEmpty();
 }
-inline const std::string& RpcPacket::guid() const
+inline const std::string& RpcPacket::uuid() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.RpcPacket.guid)
-  return _internal_guid();
+  // @@protoc_insertion_point(field_get:NetworkData.RpcPacket.uuid)
+  return _internal_uuid();
 }
 template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void RpcPacket::set_guid(Arg_&& arg,
+inline PROTOBUF_ALWAYS_INLINE void RpcPacket::set_uuid(Arg_&& arg,
                                                      Args_... args) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.guid_.SetBytes(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.RpcPacket.guid)
+  _impl_.uuid_.SetBytes(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:NetworkData.RpcPacket.uuid)
 }
-inline std::string* RpcPacket::mutable_guid() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_guid();
-  // @@protoc_insertion_point(field_mutable:NetworkData.RpcPacket.guid)
+inline std::string* RpcPacket::mutable_uuid() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_uuid();
+  // @@protoc_insertion_point(field_mutable:NetworkData.RpcPacket.uuid)
   return _s;
 }
-inline const std::string& RpcPacket::_internal_guid() const {
+inline const std::string& RpcPacket::_internal_uuid() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.guid_.Get();
+  return _impl_.uuid_.Get();
 }
-inline void RpcPacket::_internal_set_guid(const std::string& value) {
+inline void RpcPacket::_internal_set_uuid(const std::string& value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.guid_.Set(value, GetArena());
+  _impl_.uuid_.Set(value, GetArena());
 }
-inline std::string* RpcPacket::_internal_mutable_guid() {
+inline std::string* RpcPacket::_internal_mutable_uuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.guid_.Mutable( GetArena());
+  return _impl_.uuid_.Mutable( GetArena());
 }
-inline std::string* RpcPacket::release_guid() {
+inline std::string* RpcPacket::release_uuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.RpcPacket.guid)
-  return _impl_.guid_.Release();
+  // @@protoc_insertion_point(field_release:NetworkData.RpcPacket.uuid)
+  return _impl_.uuid_.Release();
 }
-inline void RpcPacket::set_allocated_guid(std::string* value) {
+inline void RpcPacket::set_allocated_uuid(std::string* value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.guid_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.guid_.IsDefault()) {
-    _impl_.guid_.Set("", GetArena());
+  _impl_.uuid_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.uuid_.IsDefault()) {
+    _impl_.uuid_.Set("", GetArena());
   }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcPacket.guid)
+  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcPacket.uuid)
 }
 
 // .NetworkData.RpcMethod method = 3;

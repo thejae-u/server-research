@@ -30,7 +30,7 @@ message PositionData
 message RpcRequest
 {
   string ip = 1;
-  bytes guid = 2;
+  bytes uuid = 2;
   RpcMethod method = 3;
   bytes data = 4; // serialized parameter data (Login Data, Position Data, etc.)
   google.protobuf.Timestamp timestamp = 5;
@@ -39,7 +39,7 @@ message RpcRequest
 message RpcPacket
 {
   string ip = 1;
-  bytes guid = 2;
+  bytes uuid = 2;
   RpcMethod method = 3;
   bytes data = 4; // serialized parameter data (Login Data, Position Data, etc.)
   google.protobuf.Timestamp timestamp = 5;

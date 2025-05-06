@@ -122,7 +122,7 @@ inline constexpr RpcRequest::Impl_::Impl_(
         ip_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
-        guid_(
+        uuid_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
         data_(
@@ -157,7 +157,7 @@ inline constexpr RpcPacket::Impl_::Impl_(
         ip_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
-        guid_(
+        uuid_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
         data_(
@@ -235,7 +235,7 @@ const ::uint32_t
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcRequest, _impl_.ip_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcRequest, _impl_.guid_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcRequest, _impl_.uuid_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcRequest, _impl_.method_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcRequest, _impl_.data_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcRequest, _impl_.timestamp_),
@@ -253,7 +253,7 @@ const ::uint32_t
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.ip_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.guid_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.uuid_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.method_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.data_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_.timestamp_),
@@ -288,10 +288,10 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "\030\002 \001(\t\"V\n\014PositionData\022\n\n\002x1\030\001 \001(\002\022\n\n\002y1"
     "\030\002 \001(\002\022\n\n\002z1\030\003 \001(\002\022\n\n\002x2\030\004 \001(\002\022\n\n\002y2\030\005 \001"
     "(\002\022\n\n\002z2\030\006 \001(\002\"\213\001\n\nRpcRequest\022\n\n\002ip\030\001 \001("
-    "\t\022\014\n\004guid\030\002 \001(\014\022&\n\006method\030\003 \001(\0162\026.Networ"
+    "\t\022\014\n\004uuid\030\002 \001(\014\022&\n\006method\030\003 \001(\0162\026.Networ"
     "kData.RpcMethod\022\014\n\004data\030\004 \001(\014\022-\n\ttimesta"
     "mp\030\005 \001(\0132\032.google.protobuf.Timestamp\"\212\001\n"
-    "\tRpcPacket\022\n\n\002ip\030\001 \001(\t\022\014\n\004guid\030\002 \001(\014\022&\n\006"
+    "\tRpcPacket\022\n\n\002ip\030\001 \001(\t\022\014\n\004uuid\030\002 \001(\014\022&\n\006"
     "method\030\003 \001(\0162\026.NetworkData.RpcMethod\022\014\n\004"
     "data\030\004 \001(\014\022-\n\ttimestamp\030\005 \001(\0132\032.google.p"
     "rotobuf.Timestamp*\321\002\n\tRpcMethod\022\010\n\004NONE\020"
@@ -1247,7 +1247,7 @@ inline PROTOBUF_NDEBUG_INLINE RpcRequest::Impl_::Impl_(
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
         ip_(arena, from.ip_),
-        guid_(arena, from.guid_),
+        uuid_(arena, from.uuid_),
         data_(arena, from.data_) {}
 
 RpcRequest::RpcRequest(
@@ -1276,7 +1276,7 @@ inline PROTOBUF_NDEBUG_INLINE RpcRequest::Impl_::Impl_(
     ::google::protobuf::Arena* arena)
       : _cached_size_{0},
         ip_(arena),
-        guid_(arena),
+        uuid_(arena),
         data_(arena) {}
 
 inline void RpcRequest::SharedCtor(::_pb::Arena* arena) {
@@ -1297,7 +1297,7 @@ inline void RpcRequest::SharedDtor(MessageLite& self) {
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.ip_.Destroy();
-  this_._impl_.guid_.Destroy();
+  this_._impl_.uuid_.Destroy();
   this_._impl_.data_.Destroy();
   delete this_._impl_.timestamp_;
   this_._impl_.~Impl_();
@@ -1361,9 +1361,9 @@ const ::_pbi::TcParseTable<3, 5, 1, 33, 2> RpcRequest::_table_ = {
     // string ip = 1;
     {::_pbi::TcParser::FastUS1,
      {10, 63, 0, PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.ip_)}},
-    // bytes guid = 2;
+    // bytes uuid = 2;
     {::_pbi::TcParser::FastBS1,
-     {18, 63, 0, PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.guid_)}},
+     {18, 63, 0, PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.uuid_)}},
     // .NetworkData.RpcMethod method = 3;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(RpcRequest, _impl_.method_), 63>(),
      {24, 63, 0, PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.method_)}},
@@ -1381,8 +1381,8 @@ const ::_pbi::TcParseTable<3, 5, 1, 33, 2> RpcRequest::_table_ = {
     // string ip = 1;
     {PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.ip_), -1, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
-    // bytes guid = 2;
-    {PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.guid_), -1, 0,
+    // bytes uuid = 2;
+    {PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.uuid_), -1, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kBytes | ::_fl::kRepAString)},
     // .NetworkData.RpcMethod method = 3;
     {PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.method_), -1, 0,
@@ -1410,7 +1410,7 @@ PROTOBUF_NOINLINE void RpcRequest::Clear() {
   (void) cached_has_bits;
 
   _impl_.ip_.ClearToEmpty();
-  _impl_.guid_.ClearToEmpty();
+  _impl_.uuid_.ClearToEmpty();
   _impl_.data_.ClearToEmpty();
   cached_has_bits = _impl_._has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
@@ -1445,9 +1445,9 @@ PROTOBUF_NOINLINE void RpcRequest::Clear() {
             target = stream->WriteStringMaybeAliased(1, _s, target);
           }
 
-          // bytes guid = 2;
-          if (!this_._internal_guid().empty()) {
-            const std::string& _s = this_._internal_guid();
+          // bytes uuid = 2;
+          if (!this_._internal_uuid().empty()) {
+            const std::string& _s = this_._internal_uuid();
             target = stream->WriteBytesMaybeAliased(2, _s, target);
           }
 
@@ -1502,10 +1502,10 @@ PROTOBUF_NOINLINE void RpcRequest::Clear() {
               total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
                                               this_._internal_ip());
             }
-            // bytes guid = 2;
-            if (!this_._internal_guid().empty()) {
+            // bytes uuid = 2;
+            if (!this_._internal_uuid().empty()) {
               total_size += 1 + ::google::protobuf::internal::WireFormatLite::BytesSize(
-                                              this_._internal_guid());
+                                              this_._internal_uuid());
             }
             // bytes data = 4;
             if (!this_._internal_data().empty()) {
@@ -1544,8 +1544,8 @@ void RpcRequest::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::goog
   if (!from._internal_ip().empty()) {
     _this->_internal_set_ip(from._internal_ip());
   }
-  if (!from._internal_guid().empty()) {
-    _this->_internal_set_guid(from._internal_guid());
+  if (!from._internal_uuid().empty()) {
+    _this->_internal_set_uuid(from._internal_uuid());
   }
   if (!from._internal_data().empty()) {
     _this->_internal_set_data(from._internal_data());
@@ -1582,7 +1582,7 @@ void RpcRequest::InternalSwap(RpcRequest* PROTOBUF_RESTRICT other) {
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.ip_, &other->_impl_.ip_, arena);
-  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.guid_, &other->_impl_.guid_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.uuid_, &other->_impl_.uuid_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.data_, &other->_impl_.data_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(RpcRequest, _impl_.method_)
@@ -1625,7 +1625,7 @@ inline PROTOBUF_NDEBUG_INLINE RpcPacket::Impl_::Impl_(
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
         ip_(arena, from.ip_),
-        guid_(arena, from.guid_),
+        uuid_(arena, from.uuid_),
         data_(arena, from.data_) {}
 
 RpcPacket::RpcPacket(
@@ -1654,7 +1654,7 @@ inline PROTOBUF_NDEBUG_INLINE RpcPacket::Impl_::Impl_(
     ::google::protobuf::Arena* arena)
       : _cached_size_{0},
         ip_(arena),
-        guid_(arena),
+        uuid_(arena),
         data_(arena) {}
 
 inline void RpcPacket::SharedCtor(::_pb::Arena* arena) {
@@ -1675,7 +1675,7 @@ inline void RpcPacket::SharedDtor(MessageLite& self) {
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.ip_.Destroy();
-  this_._impl_.guid_.Destroy();
+  this_._impl_.uuid_.Destroy();
   this_._impl_.data_.Destroy();
   delete this_._impl_.timestamp_;
   this_._impl_.~Impl_();
@@ -1739,9 +1739,9 @@ const ::_pbi::TcParseTable<3, 5, 1, 32, 2> RpcPacket::_table_ = {
     // string ip = 1;
     {::_pbi::TcParser::FastUS1,
      {10, 63, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.ip_)}},
-    // bytes guid = 2;
+    // bytes uuid = 2;
     {::_pbi::TcParser::FastBS1,
-     {18, 63, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.guid_)}},
+     {18, 63, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.uuid_)}},
     // .NetworkData.RpcMethod method = 3;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(RpcPacket, _impl_.method_), 63>(),
      {24, 63, 0, PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.method_)}},
@@ -1759,8 +1759,8 @@ const ::_pbi::TcParseTable<3, 5, 1, 32, 2> RpcPacket::_table_ = {
     // string ip = 1;
     {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.ip_), -1, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
-    // bytes guid = 2;
-    {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.guid_), -1, 0,
+    // bytes uuid = 2;
+    {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.uuid_), -1, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kBytes | ::_fl::kRepAString)},
     // .NetworkData.RpcMethod method = 3;
     {PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.method_), -1, 0,
@@ -1788,7 +1788,7 @@ PROTOBUF_NOINLINE void RpcPacket::Clear() {
   (void) cached_has_bits;
 
   _impl_.ip_.ClearToEmpty();
-  _impl_.guid_.ClearToEmpty();
+  _impl_.uuid_.ClearToEmpty();
   _impl_.data_.ClearToEmpty();
   cached_has_bits = _impl_._has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
@@ -1823,9 +1823,9 @@ PROTOBUF_NOINLINE void RpcPacket::Clear() {
             target = stream->WriteStringMaybeAliased(1, _s, target);
           }
 
-          // bytes guid = 2;
-          if (!this_._internal_guid().empty()) {
-            const std::string& _s = this_._internal_guid();
+          // bytes uuid = 2;
+          if (!this_._internal_uuid().empty()) {
+            const std::string& _s = this_._internal_uuid();
             target = stream->WriteBytesMaybeAliased(2, _s, target);
           }
 
@@ -1880,10 +1880,10 @@ PROTOBUF_NOINLINE void RpcPacket::Clear() {
               total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
                                               this_._internal_ip());
             }
-            // bytes guid = 2;
-            if (!this_._internal_guid().empty()) {
+            // bytes uuid = 2;
+            if (!this_._internal_uuid().empty()) {
               total_size += 1 + ::google::protobuf::internal::WireFormatLite::BytesSize(
-                                              this_._internal_guid());
+                                              this_._internal_uuid());
             }
             // bytes data = 4;
             if (!this_._internal_data().empty()) {
@@ -1922,8 +1922,8 @@ void RpcPacket::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::googl
   if (!from._internal_ip().empty()) {
     _this->_internal_set_ip(from._internal_ip());
   }
-  if (!from._internal_guid().empty()) {
-    _this->_internal_set_guid(from._internal_guid());
+  if (!from._internal_uuid().empty()) {
+    _this->_internal_set_uuid(from._internal_uuid());
   }
   if (!from._internal_data().empty()) {
     _this->_internal_set_data(from._internal_data());
@@ -1960,7 +1960,7 @@ void RpcPacket::InternalSwap(RpcPacket* PROTOBUF_RESTRICT other) {
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.ip_, &other->_impl_.ip_, arena);
-  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.guid_, &other->_impl_.guid_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.uuid_, &other->_impl_.uuid_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.data_, &other->_impl_.data_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(RpcPacket, _impl_.method_)

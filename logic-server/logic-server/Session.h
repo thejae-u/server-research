@@ -20,11 +20,13 @@ public:
 	Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr, boost::uuids::uuid guid);
 	~Session() = default;
 
+
 	void Start();
 	void Stop();
 
 	void RpcProcess(RpcPacket packet);
 	tcp::socket& GetSocket() const { return *_socketPtr; }
+	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 	
 private:
 	std::shared_ptr<Server> _serverPtr;

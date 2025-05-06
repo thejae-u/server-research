@@ -24,11 +24,14 @@ void Server::AcceptClientAsync()
 		}
 		
 		std::cout << "Client Connected: " << newSession->GetSocket().remote_endpoint().address() << "\n";
+
+		InsertSessionToGroup(newSession); // Insert session to group
 		newSession->Start();
             
 		// Add session to the set
 		_sessions.push_back(newSession);
 		++_sessionsCount;
+		
 		std::cout << "Sessions.size(): " << _sessions.size() << "\n";
 		
 		boost::asio::post(_strand.wrap([this]() { AcceptClientAsync(); })); // Accept next client
@@ -46,4 +49,27 @@ void Server::CreateNewGroup()
 {
 	const auto newGroup = std::make_shared<LockstepGroup>(_strand, _guidGenerator());
 	_groups.insert(newGroup);
+	newGroup->Start();
+}
+
+void Server::InsertSessionToGroup(const std::shared_ptr<Session>& session)
+{
+	if (_groups.empty())
+	{
+		CreateNewGroup();
+	}
+
+	for (auto& group : _groups)
+	{
+		if (!group->IsFull())
+		{
+			group->AddMember(session);
+			return;
+		}
+	}
+
+	// 모든 그룹이 다 찬 경우 새로운 그룹 생성
+	const auto newGroup = std::make_shared<LockstepGroup>(_strand, _guidGenerator());
+	_groups.insert(newGroup);
+	newGroup->AddMember(session);
 }

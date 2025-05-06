@@ -19,16 +19,15 @@ class ClientMain
         
         for (var i = 0; i < 50; ++i)
         {
-            var uuid = Guid.NewGuid().ToString();
-            var client = new Client(ip, port, uuid);
+            var client = new Client(ip, port);
 
             if (!clients.Add(client))
             {
-                Console.WriteLine($"Client {uuid} already exists.");
+                Console.WriteLine($"Client already exists.");
                 continue;
             }
             
-            Console.WriteLine($"Client {uuid} created.");
+            Console.WriteLine($"Client created.");
             clientTasks.Add(client.AsyncConnect());
         }
 

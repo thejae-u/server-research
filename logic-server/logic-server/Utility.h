@@ -15,8 +15,27 @@ namespace Utility
             + std::to_string(positionData.z2()) + " ";
     }
 
-    static std::string GuidToBytes(boost::uuids::uuid guid)
+    static std::string GuidToBytes(boost::uuids::uuid uuid)
     {
-        return std::string(guid.begin(), guid.end());
+        std::string bytes(uuid.begin(), uuid.end());
+
+        // Reverse the byte order for the first 8 bytes (to little-endian)
+        std::reverse(bytes.begin(), bytes.begin() + 4);
+        std::reverse(bytes.begin() + 4, bytes.begin() + 6);
+        std::reverse(bytes.begin() + 6, bytes.begin() + 8);
+        return bytes;
+    }
+
+    static uuid BytesToUuid(const std::string& bytes)
+    {
+        if (bytes.size() != 16) throw std::invalid_argument("Invalid UUID size");
+        boost::uuids::uuid uuid;
+        std::copy(bytes.begin(), bytes.end(), uuid.begin());
+
+        // Reverse the byte order for the first 8 bytes (to big-endian)
+        std::reverse(uuid.begin(), uuid.begin() + 4);
+        std::reverse(uuid.begin() + 4, uuid.begin() + 6);
+        std::reverse(uuid.begin() + 6, uuid.begin() + 8);
+        return uuid;
     }
 }
