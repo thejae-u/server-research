@@ -29,16 +29,13 @@ namespace NetworkData {
             "GAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIjIKDFJlZ2lzdGVyRGF0YRIQCgh1",
             "c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJWCgxQb3NpdGlvbkRh",
             "dGESCgoCeDEYASABKAISCgoCeTEYAiABKAISCgoCejEYAyABKAISCgoCeDIY",
-            "BCABKAISCgoCeTIYBSABKAISCgoCejIYBiABKAIiiwEKClJwY1JlcXVlc3QS",
-            "CgoCaXAYASABKAkSDAoEdXVpZBgCIAEoDBImCgZtZXRob2QYAyABKA4yFi5O",
-            "ZXR3b3JrRGF0YS5ScGNNZXRob2QSDAoEZGF0YRgEIAEoDBItCgl0aW1lc3Rh",
-            "bXAYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIooBCglScGNQ",
-            "YWNrZXQSCgoCaXAYASABKAkSDAoEdXVpZBgCIAEoDBImCgZtZXRob2QYAyAB",
-            "KA4yFi5OZXR3b3JrRGF0YS5ScGNNZXRob2QSDAoEZGF0YRgEIAEoDBItCgl0",
-            "aW1lc3RhbXAYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wKtEC",
-            "CglScGNNZXRob2QSCAoETk9ORRAAEgkKBUxPR0lOEAESDAoIUkVHSVNURVIQ",
-            "AhIMCghSRVRSSUVWRRADEgoKBkFDQ0VTUxAEEgoKBlJFSkVDVBAFEgoKBkxP",
-            "R09VVBAGEhAKDElOX0dBTUVfTk9ORRBkEggKBE1PVkUQZRIKCgZBVFRBQ0sQ",
+            "BCABKAISCgoCeTIYBSABKAISCgoCejIYBiABKAIifgoJUnBjUGFja2V0EgwK",
+            "BHV1aWQYASABKAwSJgoGbWV0aG9kGAIgASgOMhYuTmV0d29ya0RhdGEuUnBj",
+            "TWV0aG9kEgwKBGRhdGEYAyABKAwSLQoJdGltZXN0YW1wGAQgASgLMhouZ29v",
+            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcCrlAgoJUnBjTWV0aG9kEggKBE5PTkUQ",
+            "ABIJCgVMT0dJThABEgwKCFJFR0lTVEVSEAISDAoIUkVUUklFVkUQAxIKCgZB",
+            "Q0NFU1MQBBIKCgZSRUpFQ1QQBRIKCgZMT0dPVVQQBhIICgRQSU5HEAcSCAoE",
+            "UE9ORxAIEhAKDElOX0dBTUVfTk9ORRBkEggKBE1PVkUQZRIKCgZBVFRBQ0sQ",
             "ZhINCglEUk9QX0lURU0QZxIMCghVU0VfSVRFTRBoEg0KCVVTRV9TS0lMTBBp",
             "Eg8KClNUQVRFX05PTkUQyAESFQoQU1RBVEVfTU9WRV9TVEFSVBDJARITCg5T",
             "VEFURV9NT1ZFX0VORBDKARIXChJTVEFURV9BVFRBQ0tfU1RBUlQQywESFQoQ",
@@ -62,8 +59,7 @@ namespace NetworkData {
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.LoginData), global::NetworkData.LoginData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RegisterData), global::NetworkData.RegisterData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.PositionData), global::NetworkData.PositionData.Parser, new[]{ "X1", "Y1", "Z1", "X2", "Y2", "Z2" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RpcRequest), global::NetworkData.RpcRequest.Parser, new[]{ "Ip", "Uuid", "Method", "Data", "Timestamp" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RpcPacket), global::NetworkData.RpcPacket.Parser, new[]{ "Ip", "Uuid", "Method", "Data", "Timestamp" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RpcPacket), global::NetworkData.RpcPacket.Parser, new[]{ "Uuid", "Method", "Data", "Timestamp" }, null, null, null, null)
           }));
     }
     #endregion
@@ -77,10 +73,12 @@ namespace NetworkData {
     [pbr::OriginalName("RETRIEVE")] Retrieve = 3,
     [pbr::OriginalName("ACCESS")] Access = 4,
     [pbr::OriginalName("REJECT")] Reject = 5,
+    [pbr::OriginalName("LOGOUT")] Logout = 6,
+    [pbr::OriginalName("PING")] Ping = 7,
     /// <summary>
     /// Limit DB access to 99
     /// </summary>
-    [pbr::OriginalName("LOGOUT")] Logout = 6,
+    [pbr::OriginalName("PONG")] Pong = 8,
     [pbr::OriginalName("IN_GAME_NONE")] InGameNone = 100,
     [pbr::OriginalName("MOVE")] Move = 101,
     [pbr::OriginalName("ATTACK")] Attack = 102,
@@ -999,364 +997,6 @@ namespace NetworkData {
   }
 
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
-  public sealed partial class RpcRequest : pb::IMessage<RpcRequest>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<RpcRequest> _parser = new pb::MessageParser<RpcRequest>(() => new RpcRequest());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<RpcRequest> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::NetworkData.NetworkDataReflection.Descriptor.MessageTypes[3]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RpcRequest() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RpcRequest(RpcRequest other) : this() {
-      ip_ = other.ip_;
-      uuid_ = other.uuid_;
-      method_ = other.method_;
-      data_ = other.data_;
-      timestamp_ = other.timestamp_ != null ? other.timestamp_.Clone() : null;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RpcRequest Clone() {
-      return new RpcRequest(this);
-    }
-
-    /// <summary>Field number for the "ip" field.</summary>
-    public const int IpFieldNumber = 1;
-    private string ip_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Ip {
-      get { return ip_; }
-      set {
-        ip_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "uuid" field.</summary>
-    public const int UuidFieldNumber = 2;
-    private pb::ByteString uuid_ = pb::ByteString.Empty;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pb::ByteString Uuid {
-      get { return uuid_; }
-      set {
-        uuid_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "method" field.</summary>
-    public const int MethodFieldNumber = 3;
-    private global::NetworkData.RpcMethod method_ = global::NetworkData.RpcMethod.None;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::NetworkData.RpcMethod Method {
-      get { return method_; }
-      set {
-        method_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "data" field.</summary>
-    public const int DataFieldNumber = 4;
-    private pb::ByteString data_ = pb::ByteString.Empty;
-    /// <summary>
-    /// serialized parameter data (Login Data, Position Data, etc.)
-    /// </summary>
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public pb::ByteString Data {
-      get { return data_; }
-      set {
-        data_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "timestamp" field.</summary>
-    public const int TimestampFieldNumber = 5;
-    private global::Google.Protobuf.WellKnownTypes.Timestamp timestamp_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Google.Protobuf.WellKnownTypes.Timestamp Timestamp {
-      get { return timestamp_; }
-      set {
-        timestamp_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as RpcRequest);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(RpcRequest other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (Ip != other.Ip) return false;
-      if (Uuid != other.Uuid) return false;
-      if (Method != other.Method) return false;
-      if (Data != other.Data) return false;
-      if (!object.Equals(Timestamp, other.Timestamp)) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (Ip.Length != 0) hash ^= Ip.GetHashCode();
-      if (Uuid.Length != 0) hash ^= Uuid.GetHashCode();
-      if (Method != global::NetworkData.RpcMethod.None) hash ^= Method.GetHashCode();
-      if (Data.Length != 0) hash ^= Data.GetHashCode();
-      if (timestamp_ != null) hash ^= Timestamp.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (Ip.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(Ip);
-      }
-      if (Uuid.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteBytes(Uuid);
-      }
-      if (Method != global::NetworkData.RpcMethod.None) {
-        output.WriteRawTag(24);
-        output.WriteEnum((int) Method);
-      }
-      if (Data.Length != 0) {
-        output.WriteRawTag(34);
-        output.WriteBytes(Data);
-      }
-      if (timestamp_ != null) {
-        output.WriteRawTag(42);
-        output.WriteMessage(Timestamp);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Ip.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(Ip);
-      }
-      if (Uuid.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteBytes(Uuid);
-      }
-      if (Method != global::NetworkData.RpcMethod.None) {
-        output.WriteRawTag(24);
-        output.WriteEnum((int) Method);
-      }
-      if (Data.Length != 0) {
-        output.WriteRawTag(34);
-        output.WriteBytes(Data);
-      }
-      if (timestamp_ != null) {
-        output.WriteRawTag(42);
-        output.WriteMessage(Timestamp);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (Ip.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Ip);
-      }
-      if (Uuid.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeBytesSize(Uuid);
-      }
-      if (Method != global::NetworkData.RpcMethod.None) {
-        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Method);
-      }
-      if (Data.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeBytesSize(Data);
-      }
-      if (timestamp_ != null) {
-        size += 1 + pb::CodedOutputStream.ComputeMessageSize(Timestamp);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(RpcRequest other) {
-      if (other == null) {
-        return;
-      }
-      if (other.Ip.Length != 0) {
-        Ip = other.Ip;
-      }
-      if (other.Uuid.Length != 0) {
-        Uuid = other.Uuid;
-      }
-      if (other.Method != global::NetworkData.RpcMethod.None) {
-        Method = other.Method;
-      }
-      if (other.Data.Length != 0) {
-        Data = other.Data;
-      }
-      if (other.timestamp_ != null) {
-        if (timestamp_ == null) {
-          Timestamp = new global::Google.Protobuf.WellKnownTypes.Timestamp();
-        }
-        Timestamp.MergeFrom(other.Timestamp);
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            Ip = input.ReadString();
-            break;
-          }
-          case 18: {
-            Uuid = input.ReadBytes();
-            break;
-          }
-          case 24: {
-            Method = (global::NetworkData.RpcMethod) input.ReadEnum();
-            break;
-          }
-          case 34: {
-            Data = input.ReadBytes();
-            break;
-          }
-          case 42: {
-            if (timestamp_ == null) {
-              Timestamp = new global::Google.Protobuf.WellKnownTypes.Timestamp();
-            }
-            input.ReadMessage(Timestamp);
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            Ip = input.ReadString();
-            break;
-          }
-          case 18: {
-            Uuid = input.ReadBytes();
-            break;
-          }
-          case 24: {
-            Method = (global::NetworkData.RpcMethod) input.ReadEnum();
-            break;
-          }
-          case 34: {
-            Data = input.ReadBytes();
-            break;
-          }
-          case 42: {
-            if (timestamp_ == null) {
-              Timestamp = new global::Google.Protobuf.WellKnownTypes.Timestamp();
-            }
-            input.ReadMessage(Timestamp);
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class RpcPacket : pb::IMessage<RpcPacket>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -1371,7 +1011,7 @@ namespace NetworkData {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::NetworkData.NetworkDataReflection.Descriptor.MessageTypes[4]; }
+      get { return global::NetworkData.NetworkDataReflection.Descriptor.MessageTypes[3]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1391,7 +1031,6 @@ namespace NetworkData {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public RpcPacket(RpcPacket other) : this() {
-      ip_ = other.ip_;
       uuid_ = other.uuid_;
       method_ = other.method_;
       data_ = other.data_;
@@ -1405,20 +1044,8 @@ namespace NetworkData {
       return new RpcPacket(this);
     }
 
-    /// <summary>Field number for the "ip" field.</summary>
-    public const int IpFieldNumber = 1;
-    private string ip_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Ip {
-      get { return ip_; }
-      set {
-        ip_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
     /// <summary>Field number for the "uuid" field.</summary>
-    public const int UuidFieldNumber = 2;
+    public const int UuidFieldNumber = 1;
     private pb::ByteString uuid_ = pb::ByteString.Empty;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1430,7 +1057,7 @@ namespace NetworkData {
     }
 
     /// <summary>Field number for the "method" field.</summary>
-    public const int MethodFieldNumber = 3;
+    public const int MethodFieldNumber = 2;
     private global::NetworkData.RpcMethod method_ = global::NetworkData.RpcMethod.None;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1442,7 +1069,7 @@ namespace NetworkData {
     }
 
     /// <summary>Field number for the "data" field.</summary>
-    public const int DataFieldNumber = 4;
+    public const int DataFieldNumber = 3;
     private pb::ByteString data_ = pb::ByteString.Empty;
     /// <summary>
     /// serialized parameter data (Login Data, Position Data, etc.)
@@ -1457,7 +1084,7 @@ namespace NetworkData {
     }
 
     /// <summary>Field number for the "timestamp" field.</summary>
-    public const int TimestampFieldNumber = 5;
+    public const int TimestampFieldNumber = 4;
     private global::Google.Protobuf.WellKnownTypes.Timestamp timestamp_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -1483,7 +1110,6 @@ namespace NetworkData {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (Ip != other.Ip) return false;
       if (Uuid != other.Uuid) return false;
       if (Method != other.Method) return false;
       if (Data != other.Data) return false;
@@ -1495,7 +1121,6 @@ namespace NetworkData {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Ip.Length != 0) hash ^= Ip.GetHashCode();
       if (Uuid.Length != 0) hash ^= Uuid.GetHashCode();
       if (Method != global::NetworkData.RpcMethod.None) hash ^= Method.GetHashCode();
       if (Data.Length != 0) hash ^= Data.GetHashCode();
@@ -1518,24 +1143,20 @@ namespace NetworkData {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Ip.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(Ip);
-      }
       if (Uuid.Length != 0) {
-        output.WriteRawTag(18);
+        output.WriteRawTag(10);
         output.WriteBytes(Uuid);
       }
       if (Method != global::NetworkData.RpcMethod.None) {
-        output.WriteRawTag(24);
+        output.WriteRawTag(16);
         output.WriteEnum((int) Method);
       }
       if (Data.Length != 0) {
-        output.WriteRawTag(34);
+        output.WriteRawTag(26);
         output.WriteBytes(Data);
       }
       if (timestamp_ != null) {
-        output.WriteRawTag(42);
+        output.WriteRawTag(34);
         output.WriteMessage(Timestamp);
       }
       if (_unknownFields != null) {
@@ -1548,24 +1169,20 @@ namespace NetworkData {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Ip.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(Ip);
-      }
       if (Uuid.Length != 0) {
-        output.WriteRawTag(18);
+        output.WriteRawTag(10);
         output.WriteBytes(Uuid);
       }
       if (Method != global::NetworkData.RpcMethod.None) {
-        output.WriteRawTag(24);
+        output.WriteRawTag(16);
         output.WriteEnum((int) Method);
       }
       if (Data.Length != 0) {
-        output.WriteRawTag(34);
+        output.WriteRawTag(26);
         output.WriteBytes(Data);
       }
       if (timestamp_ != null) {
-        output.WriteRawTag(42);
+        output.WriteRawTag(34);
         output.WriteMessage(Timestamp);
       }
       if (_unknownFields != null) {
@@ -1578,9 +1195,6 @@ namespace NetworkData {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Ip.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Ip);
-      }
       if (Uuid.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeBytesSize(Uuid);
       }
@@ -1604,9 +1218,6 @@ namespace NetworkData {
     public void MergeFrom(RpcPacket other) {
       if (other == null) {
         return;
-      }
-      if (other.Ip.Length != 0) {
-        Ip = other.Ip;
       }
       if (other.Uuid.Length != 0) {
         Uuid = other.Uuid;
@@ -1643,22 +1254,18 @@ namespace NetworkData {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            Ip = input.ReadString();
-            break;
-          }
-          case 18: {
             Uuid = input.ReadBytes();
             break;
           }
-          case 24: {
+          case 16: {
             Method = (global::NetworkData.RpcMethod) input.ReadEnum();
             break;
           }
-          case 34: {
+          case 26: {
             Data = input.ReadBytes();
             break;
           }
-          case 42: {
+          case 34: {
             if (timestamp_ == null) {
               Timestamp = new global::Google.Protobuf.WellKnownTypes.Timestamp();
             }
@@ -1685,22 +1292,18 @@ namespace NetworkData {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            Ip = input.ReadString();
-            break;
-          }
-          case 18: {
             Uuid = input.ReadBytes();
             break;
           }
-          case 24: {
+          case 16: {
             Method = (global::NetworkData.RpcMethod) input.ReadEnum();
             break;
           }
-          case 34: {
+          case 26: {
             Data = input.ReadBytes();
             break;
           }
-          case 42: {
+          case 34: {
             if (timestamp_ == null) {
               Timestamp = new global::Google.Protobuf.WellKnownTypes.Timestamp();
             }

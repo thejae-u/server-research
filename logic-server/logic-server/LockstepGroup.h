@@ -45,42 +45,42 @@ namespace std {
 class LockstepGroup : public std::enable_shared_from_this<LockstepGroup>
 {
 public:
-    LockstepGroup(const io_context::strand& strand, uuid groupId);
+    LockstepGroup(const io_context::strand& strand, uuid groupId, std::size_t groupNumber);
     ~LockstepGroup() = default;
 
     void Start();
     void AddMember(const std::shared_ptr<Session>& newSession);
     void RemoveMember(const std::shared_ptr<Session>& session);
-    void CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcRequest>> rpcRequest);
+    void CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcPacket>> rpcRequest);
     void ProcessStep();
     void Tick();
 
-    bool IsFull() const { return _members.size() == _maxSessionCount; }
+    uuid GetGroupId() const { return _groupId; }
+    bool IsFull()
+    {
+        std::lock_guard<std::mutex> lock(_memberMutex);
+        return _members.size() == _maxSessionCount;
+    }
 
     // Operator will be used for sorting
-    /*bool operator<(const LockstepGroup& rhs) const
+    bool operator<(const LockstepGroup& rhs) const
     {
-        if (rhs._groupMaxDelayMs == -1 && this->_groupMaxDelayMs == -1)
-            return false;
-        
-        return this->_groupMaxDelayMs < rhs._groupMaxDelayMs;
-    }*/
+        return this->_groupNumber < rhs._groupNumber;
+    }
 
 private:
     uuid _groupId;
+    std::size_t _groupNumber;
+    io_context::strand _strand;
     std::set<std::shared_ptr<Session>> _members;
-    const std::size_t _maxSessionCount = 10;
+    const std::size_t _maxSessionCount = 3;
     std::mutex _memberMutex;
-
-    short _groupMaxDelayMs;
     
     const std::size_t _fixedDeltaMs = 33;
-    uint64_t _lastTickTime = 0;
-    
     std::size_t _currentBucket = 0;
 
     // input buffer by bucket frame
-    std::unordered_map<std::size_t/*bucket frame*/, std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>>> _inputBuffer;
+    std::unordered_map<std::size_t, std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>>> _inputBuffer;
     
     std::mutex _bufferMutex;
 

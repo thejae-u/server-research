@@ -17,7 +17,7 @@ class ClientMain
         var clientTasks = new List<Task>();
 
         
-        for (var i = 0; i < 50; ++i)
+        for (var i = 0; i < 3; ++i)
         {
             var client = new Client(ip, port);
 

@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 
+#include "GroupManager.h"
 #include "NetworkData.pb.h"
 
 using io_context = boost::asio::io_context;
@@ -24,19 +25,11 @@ public:
 	~Server() = default;
 	
 	void AcceptClientAsync();
-	void DisconnectSession(const std::shared_ptr<Session>& caller);
-	std::size_t GetSessionCount() const { return _sessions.size(); }
 
 private:
 	io_context::strand _strand;
 	tcp::acceptor& _acceptor;
-	std::vector<std::shared_ptr<Session>> _sessions;
-	std::size_t _sessionsCount = 0;
 
-	std::set<std::shared_ptr<LockstepGroup>> _groups;
-
-	boost::uuids::random_generator_mt19937 _guidGenerator;
-
-	void CreateNewGroup();
-	void InsertSessionToGroup(const std::shared_ptr<Session>& session);
+	std::unique_ptr<GroupManager> _groupManager;
+	boost::uuids::random_generator_mt19937 _sessionUuidGenerator;
 };

@@ -38,4 +38,11 @@ namespace Utility
         std::reverse(uuid.begin() + 6, uuid.begin() + 8);
         return uuid;
     }
+
+    static PositionData ParseToPositionData(const RpcPacket& packet)
+    {
+        PositionData result;
+        result.ParseFromString(packet.data());
+        return result;
+    }
 }

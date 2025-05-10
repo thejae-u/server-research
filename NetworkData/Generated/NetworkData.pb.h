@@ -66,9 +66,6 @@ extern RegisterDataDefaultTypeInternal _RegisterData_default_instance_;
 class RpcPacket;
 struct RpcPacketDefaultTypeInternal;
 extern RpcPacketDefaultTypeInternal _RpcPacket_default_instance_;
-class RpcRequest;
-struct RpcRequestDefaultTypeInternal;
-extern RpcRequestDefaultTypeInternal _RpcRequest_default_instance_;
 }  // namespace NetworkData
 namespace google {
 namespace protobuf {
@@ -84,6 +81,8 @@ enum RpcMethod : int {
   ACCESS = 4,
   REJECT = 5,
   LOGOUT = 6,
+  PING = 7,
+  PONG = 8,
   IN_GAME_NONE = 100,
   MOVE = 101,
   ATTACK = 102,
@@ -911,268 +910,6 @@ class LoginData final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
-class RpcRequest final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:NetworkData.RpcRequest) */ {
- public:
-  inline RpcRequest() : RpcRequest(nullptr) {}
-  ~RpcRequest() PROTOBUF_FINAL;
-
-#if defined(PROTOBUF_CUSTOM_VTABLE)
-  void operator delete(RpcRequest* msg, std::destroying_delete_t) {
-    SharedDtor(*msg);
-    ::google::protobuf::internal::SizedDelete(msg, sizeof(RpcRequest));
-  }
-#endif
-
-  template <typename = void>
-  explicit PROTOBUF_CONSTEXPR RpcRequest(
-      ::google::protobuf::internal::ConstantInitialized);
-
-  inline RpcRequest(const RpcRequest& from) : RpcRequest(nullptr, from) {}
-  inline RpcRequest(RpcRequest&& from) noexcept
-      : RpcRequest(nullptr, std::move(from)) {}
-  inline RpcRequest& operator=(const RpcRequest& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  inline RpcRequest& operator=(RpcRequest&& from) noexcept {
-    if (this == &from) return *this;
-    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
-      InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
-  }
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
-      ABSL_ATTRIBUTE_LIFETIME_BOUND {
-    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor() {
-    return GetDescriptor();
-  }
-  static const ::google::protobuf::Descriptor* GetDescriptor() {
-    return default_instance().GetMetadata().descriptor;
-  }
-  static const ::google::protobuf::Reflection* GetReflection() {
-    return default_instance().GetMetadata().reflection;
-  }
-  static const RpcRequest& default_instance() {
-    return *internal_default_instance();
-  }
-  static inline const RpcRequest* internal_default_instance() {
-    return reinterpret_cast<const RpcRequest*>(
-        &_RpcRequest_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages = 3;
-  friend void swap(RpcRequest& a, RpcRequest& b) { a.Swap(&b); }
-  inline void Swap(RpcRequest* other) {
-    if (other == this) return;
-    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
-      InternalSwap(other);
-    } else {
-      ::google::protobuf::internal::GenericSwap(this, other);
-    }
-  }
-  void UnsafeArenaSwap(RpcRequest* other) {
-    if (other == this) return;
-    ABSL_DCHECK(GetArena() == other->GetArena());
-    InternalSwap(other);
-  }
-
-  // implements Message ----------------------------------------------
-
-  RpcRequest* New(::google::protobuf::Arena* arena = nullptr) const {
-    return ::google::protobuf::Message::DefaultConstruct<RpcRequest>(arena);
-  }
-  using ::google::protobuf::Message::CopyFrom;
-  void CopyFrom(const RpcRequest& from);
-  using ::google::protobuf::Message::MergeFrom;
-  void MergeFrom(const RpcRequest& from) { RpcRequest::MergeImpl(*this, from); }
-
-  private:
-  static void MergeImpl(
-      ::google::protobuf::MessageLite& to_msg,
-      const ::google::protobuf::MessageLite& from_msg);
-
-  public:
-  bool IsInitialized() const {
-    return true;
-  }
-  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
-  #if defined(PROTOBUF_CUSTOM_VTABLE)
-  private:
-  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
-  static ::uint8_t* _InternalSerialize(
-      const MessageLite& msg, ::uint8_t* target,
-      ::google::protobuf::io::EpsCopyOutputStream* stream);
-
-  public:
-  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
-  ::uint8_t* _InternalSerialize(
-      ::uint8_t* target,
-      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
-    return _InternalSerialize(*this, target, stream);
-  }
-  #else   // PROTOBUF_CUSTOM_VTABLE
-  ::size_t ByteSizeLong() const final;
-  ::uint8_t* _InternalSerialize(
-      ::uint8_t* target,
-      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
-  #endif  // PROTOBUF_CUSTOM_VTABLE
-  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
-
-  private:
-  void SharedCtor(::google::protobuf::Arena* arena);
-  static void SharedDtor(MessageLite& self);
-  void InternalSwap(RpcRequest* other);
- private:
-  template <typename T>
-  friend ::absl::string_view(
-      ::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "NetworkData.RpcRequest"; }
-
- protected:
-  explicit RpcRequest(::google::protobuf::Arena* arena);
-  RpcRequest(::google::protobuf::Arena* arena, const RpcRequest& from);
-  RpcRequest(::google::protobuf::Arena* arena, RpcRequest&& from) noexcept
-      : RpcRequest(arena) {
-    *this = ::std::move(from);
-  }
-  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
-  static void* PlacementNew_(const void*, void* mem,
-                             ::google::protobuf::Arena* arena);
-  static constexpr auto InternalNewImpl_();
-  static const ::google::protobuf::internal::ClassDataFull _class_data_;
-
- public:
-  ::google::protobuf::Metadata GetMetadata() const;
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-  enum : int {
-    kIpFieldNumber = 1,
-    kUuidFieldNumber = 2,
-    kDataFieldNumber = 4,
-    kTimestampFieldNumber = 5,
-    kMethodFieldNumber = 3,
-  };
-  // string ip = 1;
-  void clear_ip() ;
-  const std::string& ip() const;
-  template <typename Arg_ = const std::string&, typename... Args_>
-  void set_ip(Arg_&& arg, Args_... args);
-  std::string* mutable_ip();
-  PROTOBUF_NODISCARD std::string* release_ip();
-  void set_allocated_ip(std::string* value);
-
-  private:
-  const std::string& _internal_ip() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_ip(
-      const std::string& value);
-  std::string* _internal_mutable_ip();
-
-  public:
-  // bytes uuid = 2;
-  void clear_uuid() ;
-  const std::string& uuid() const;
-  template <typename Arg_ = const std::string&, typename... Args_>
-  void set_uuid(Arg_&& arg, Args_... args);
-  std::string* mutable_uuid();
-  PROTOBUF_NODISCARD std::string* release_uuid();
-  void set_allocated_uuid(std::string* value);
-
-  private:
-  const std::string& _internal_uuid() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_uuid(
-      const std::string& value);
-  std::string* _internal_mutable_uuid();
-
-  public:
-  // bytes data = 4;
-  void clear_data() ;
-  const std::string& data() const;
-  template <typename Arg_ = const std::string&, typename... Args_>
-  void set_data(Arg_&& arg, Args_... args);
-  std::string* mutable_data();
-  PROTOBUF_NODISCARD std::string* release_data();
-  void set_allocated_data(std::string* value);
-
-  private:
-  const std::string& _internal_data() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_data(
-      const std::string& value);
-  std::string* _internal_mutable_data();
-
-  public:
-  // .google.protobuf.Timestamp timestamp = 5;
-  bool has_timestamp() const;
-  void clear_timestamp() ;
-  const ::google::protobuf::Timestamp& timestamp() const;
-  PROTOBUF_NODISCARD ::google::protobuf::Timestamp* release_timestamp();
-  ::google::protobuf::Timestamp* mutable_timestamp();
-  void set_allocated_timestamp(::google::protobuf::Timestamp* value);
-  void unsafe_arena_set_allocated_timestamp(::google::protobuf::Timestamp* value);
-  ::google::protobuf::Timestamp* unsafe_arena_release_timestamp();
-
-  private:
-  const ::google::protobuf::Timestamp& _internal_timestamp() const;
-  ::google::protobuf::Timestamp* _internal_mutable_timestamp();
-
-  public:
-  // .NetworkData.RpcMethod method = 3;
-  void clear_method() ;
-  ::NetworkData::RpcMethod method() const;
-  void set_method(::NetworkData::RpcMethod value);
-
-  private:
-  ::NetworkData::RpcMethod _internal_method() const;
-  void _internal_set_method(::NetworkData::RpcMethod value);
-
-  public:
-  // @@protoc_insertion_point(class_scope:NetworkData.RpcRequest)
- private:
-  class _Internal;
-  friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<
-      3, 5, 1,
-      33, 2>
-      _table_;
-
-  friend class ::google::protobuf::MessageLite;
-  friend class ::google::protobuf::Arena;
-  template <typename T>
-  friend class ::google::protobuf::Arena::InternalHelper;
-  using InternalArenaConstructable_ = void;
-  using DestructorSkippable_ = void;
-  struct Impl_ {
-    inline explicit constexpr Impl_(
-        ::google::protobuf::internal::ConstantInitialized) noexcept;
-    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
-                          ::google::protobuf::Arena* arena);
-    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
-                          ::google::protobuf::Arena* arena, const Impl_& from,
-                          const RpcRequest& from_msg);
-    ::google::protobuf::internal::HasBits<1> _has_bits_;
-    ::google::protobuf::internal::CachedSize _cached_size_;
-    ::google::protobuf::internal::ArenaStringPtr ip_;
-    ::google::protobuf::internal::ArenaStringPtr uuid_;
-    ::google::protobuf::internal::ArenaStringPtr data_;
-    ::google::protobuf::Timestamp* timestamp_;
-    int method_;
-    PROTOBUF_TSAN_DECLARE_MEMBER
-  };
-  union { Impl_ _impl_; };
-  friend struct ::TableStruct_NetworkData_2eproto;
-};
-// -------------------------------------------------------------------
-
 class RpcPacket final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:NetworkData.RpcPacket) */ {
  public:
@@ -1232,7 +969,7 @@ class RpcPacket final : public ::google::protobuf::Message
     return reinterpret_cast<const RpcPacket*>(
         &_RpcPacket_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 4;
+  static constexpr int kIndexInFileMessages = 3;
   friend void swap(RpcPacket& a, RpcPacket& b) { a.Swap(&b); }
   inline void Swap(RpcPacket* other) {
     if (other == this) return;
@@ -1319,29 +1056,12 @@ class RpcPacket final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
-    kIpFieldNumber = 1,
-    kUuidFieldNumber = 2,
-    kDataFieldNumber = 4,
-    kTimestampFieldNumber = 5,
-    kMethodFieldNumber = 3,
+    kUuidFieldNumber = 1,
+    kDataFieldNumber = 3,
+    kTimestampFieldNumber = 4,
+    kMethodFieldNumber = 2,
   };
-  // string ip = 1;
-  void clear_ip() ;
-  const std::string& ip() const;
-  template <typename Arg_ = const std::string&, typename... Args_>
-  void set_ip(Arg_&& arg, Args_... args);
-  std::string* mutable_ip();
-  PROTOBUF_NODISCARD std::string* release_ip();
-  void set_allocated_ip(std::string* value);
-
-  private:
-  const std::string& _internal_ip() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_ip(
-      const std::string& value);
-  std::string* _internal_mutable_ip();
-
-  public:
-  // bytes uuid = 2;
+  // bytes uuid = 1;
   void clear_uuid() ;
   const std::string& uuid() const;
   template <typename Arg_ = const std::string&, typename... Args_>
@@ -1357,7 +1077,7 @@ class RpcPacket final : public ::google::protobuf::Message
   std::string* _internal_mutable_uuid();
 
   public:
-  // bytes data = 4;
+  // bytes data = 3;
   void clear_data() ;
   const std::string& data() const;
   template <typename Arg_ = const std::string&, typename... Args_>
@@ -1373,7 +1093,7 @@ class RpcPacket final : public ::google::protobuf::Message
   std::string* _internal_mutable_data();
 
   public:
-  // .google.protobuf.Timestamp timestamp = 5;
+  // .google.protobuf.Timestamp timestamp = 4;
   bool has_timestamp() const;
   void clear_timestamp() ;
   const ::google::protobuf::Timestamp& timestamp() const;
@@ -1388,7 +1108,7 @@ class RpcPacket final : public ::google::protobuf::Message
   ::google::protobuf::Timestamp* _internal_mutable_timestamp();
 
   public:
-  // .NetworkData.RpcMethod method = 3;
+  // .NetworkData.RpcMethod method = 2;
   void clear_method() ;
   ::NetworkData::RpcMethod method() const;
   void set_method(::NetworkData::RpcMethod value);
@@ -1403,8 +1123,8 @@ class RpcPacket final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 5, 1,
-      32, 2>
+      2, 4, 1,
+      0, 2>
       _table_;
 
   friend class ::google::protobuf::MessageLite;
@@ -1423,7 +1143,6 @@ class RpcPacket final : public ::google::protobuf::Message
                           const RpcPacket& from_msg);
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
-    ::google::protobuf::internal::ArenaStringPtr ip_;
     ::google::protobuf::internal::ArenaStringPtr uuid_;
     ::google::protobuf::internal::ArenaStringPtr data_;
     ::google::protobuf::Timestamp* timestamp_;
@@ -1784,318 +1503,9 @@ inline void PositionData::_internal_set_z2(float value) {
 
 // -------------------------------------------------------------------
 
-// RpcRequest
-
-// string ip = 1;
-inline void RpcRequest::clear_ip() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.ip_.ClearToEmpty();
-}
-inline const std::string& RpcRequest::ip() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.RpcRequest.ip)
-  return _internal_ip();
-}
-template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void RpcRequest::set_ip(Arg_&& arg,
-                                                     Args_... args) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.ip_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.RpcRequest.ip)
-}
-inline std::string* RpcRequest::mutable_ip() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_ip();
-  // @@protoc_insertion_point(field_mutable:NetworkData.RpcRequest.ip)
-  return _s;
-}
-inline const std::string& RpcRequest::_internal_ip() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.ip_.Get();
-}
-inline void RpcRequest::_internal_set_ip(const std::string& value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.ip_.Set(value, GetArena());
-}
-inline std::string* RpcRequest::_internal_mutable_ip() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.ip_.Mutable( GetArena());
-}
-inline std::string* RpcRequest::release_ip() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.RpcRequest.ip)
-  return _impl_.ip_.Release();
-}
-inline void RpcRequest::set_allocated_ip(std::string* value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.ip_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.ip_.IsDefault()) {
-    _impl_.ip_.Set("", GetArena());
-  }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcRequest.ip)
-}
-
-// bytes uuid = 2;
-inline void RpcRequest::clear_uuid() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.uuid_.ClearToEmpty();
-}
-inline const std::string& RpcRequest::uuid() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.RpcRequest.uuid)
-  return _internal_uuid();
-}
-template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void RpcRequest::set_uuid(Arg_&& arg,
-                                                     Args_... args) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.uuid_.SetBytes(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.RpcRequest.uuid)
-}
-inline std::string* RpcRequest::mutable_uuid() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_uuid();
-  // @@protoc_insertion_point(field_mutable:NetworkData.RpcRequest.uuid)
-  return _s;
-}
-inline const std::string& RpcRequest::_internal_uuid() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.uuid_.Get();
-}
-inline void RpcRequest::_internal_set_uuid(const std::string& value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.uuid_.Set(value, GetArena());
-}
-inline std::string* RpcRequest::_internal_mutable_uuid() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.uuid_.Mutable( GetArena());
-}
-inline std::string* RpcRequest::release_uuid() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.RpcRequest.uuid)
-  return _impl_.uuid_.Release();
-}
-inline void RpcRequest::set_allocated_uuid(std::string* value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.uuid_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.uuid_.IsDefault()) {
-    _impl_.uuid_.Set("", GetArena());
-  }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcRequest.uuid)
-}
-
-// .NetworkData.RpcMethod method = 3;
-inline void RpcRequest::clear_method() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.method_ = 0;
-}
-inline ::NetworkData::RpcMethod RpcRequest::method() const {
-  // @@protoc_insertion_point(field_get:NetworkData.RpcRequest.method)
-  return _internal_method();
-}
-inline void RpcRequest::set_method(::NetworkData::RpcMethod value) {
-  _internal_set_method(value);
-  // @@protoc_insertion_point(field_set:NetworkData.RpcRequest.method)
-}
-inline ::NetworkData::RpcMethod RpcRequest::_internal_method() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return static_cast<::NetworkData::RpcMethod>(_impl_.method_);
-}
-inline void RpcRequest::_internal_set_method(::NetworkData::RpcMethod value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.method_ = value;
-}
-
-// bytes data = 4;
-inline void RpcRequest::clear_data() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.data_.ClearToEmpty();
-}
-inline const std::string& RpcRequest::data() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.RpcRequest.data)
-  return _internal_data();
-}
-template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void RpcRequest::set_data(Arg_&& arg,
-                                                     Args_... args) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.data_.SetBytes(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.RpcRequest.data)
-}
-inline std::string* RpcRequest::mutable_data() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_data();
-  // @@protoc_insertion_point(field_mutable:NetworkData.RpcRequest.data)
-  return _s;
-}
-inline const std::string& RpcRequest::_internal_data() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.data_.Get();
-}
-inline void RpcRequest::_internal_set_data(const std::string& value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.data_.Set(value, GetArena());
-}
-inline std::string* RpcRequest::_internal_mutable_data() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.data_.Mutable( GetArena());
-}
-inline std::string* RpcRequest::release_data() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.RpcRequest.data)
-  return _impl_.data_.Release();
-}
-inline void RpcRequest::set_allocated_data(std::string* value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.data_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.data_.IsDefault()) {
-    _impl_.data_.Set("", GetArena());
-  }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcRequest.data)
-}
-
-// .google.protobuf.Timestamp timestamp = 5;
-inline bool RpcRequest::has_timestamp() const {
-  bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
-  PROTOBUF_ASSUME(!value || _impl_.timestamp_ != nullptr);
-  return value;
-}
-inline const ::google::protobuf::Timestamp& RpcRequest::_internal_timestamp() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  const ::google::protobuf::Timestamp* p = _impl_.timestamp_;
-  return p != nullptr ? *p : reinterpret_cast<const ::google::protobuf::Timestamp&>(::google::protobuf::_Timestamp_default_instance_);
-}
-inline const ::google::protobuf::Timestamp& RpcRequest::timestamp() const ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.RpcRequest.timestamp)
-  return _internal_timestamp();
-}
-inline void RpcRequest::unsafe_arena_set_allocated_timestamp(::google::protobuf::Timestamp* value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (GetArena() == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.timestamp_);
-  }
-  _impl_.timestamp_ = reinterpret_cast<::google::protobuf::Timestamp*>(value);
-  if (value != nullptr) {
-    _impl_._has_bits_[0] |= 0x00000001u;
-  } else {
-    _impl_._has_bits_[0] &= ~0x00000001u;
-  }
-  // @@protoc_insertion_point(field_unsafe_arena_set_allocated:NetworkData.RpcRequest.timestamp)
-}
-inline ::google::protobuf::Timestamp* RpcRequest::release_timestamp() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-
-  _impl_._has_bits_[0] &= ~0x00000001u;
-  ::google::protobuf::Timestamp* released = _impl_.timestamp_;
-  _impl_.timestamp_ = nullptr;
-  if (::google::protobuf::internal::DebugHardenForceCopyInRelease()) {
-    auto* old = reinterpret_cast<::google::protobuf::MessageLite*>(released);
-    released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    if (GetArena() == nullptr) {
-      delete old;
-    }
-  } else {
-    if (GetArena() != nullptr) {
-      released = ::google::protobuf::internal::DuplicateIfNonNull(released);
-    }
-  }
-  return released;
-}
-inline ::google::protobuf::Timestamp* RpcRequest::unsafe_arena_release_timestamp() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.RpcRequest.timestamp)
-
-  _impl_._has_bits_[0] &= ~0x00000001u;
-  ::google::protobuf::Timestamp* temp = _impl_.timestamp_;
-  _impl_.timestamp_ = nullptr;
-  return temp;
-}
-inline ::google::protobuf::Timestamp* RpcRequest::_internal_mutable_timestamp() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (_impl_.timestamp_ == nullptr) {
-    auto* p = ::google::protobuf::Message::DefaultConstruct<::google::protobuf::Timestamp>(GetArena());
-    _impl_.timestamp_ = reinterpret_cast<::google::protobuf::Timestamp*>(p);
-  }
-  return _impl_.timestamp_;
-}
-inline ::google::protobuf::Timestamp* RpcRequest::mutable_timestamp() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  _impl_._has_bits_[0] |= 0x00000001u;
-  ::google::protobuf::Timestamp* _msg = _internal_mutable_timestamp();
-  // @@protoc_insertion_point(field_mutable:NetworkData.RpcRequest.timestamp)
-  return _msg;
-}
-inline void RpcRequest::set_allocated_timestamp(::google::protobuf::Timestamp* value) {
-  ::google::protobuf::Arena* message_arena = GetArena();
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  if (message_arena == nullptr) {
-    delete reinterpret_cast<::google::protobuf::MessageLite*>(_impl_.timestamp_);
-  }
-
-  if (value != nullptr) {
-    ::google::protobuf::Arena* submessage_arena = reinterpret_cast<::google::protobuf::MessageLite*>(value)->GetArena();
-    if (message_arena != submessage_arena) {
-      value = ::google::protobuf::internal::GetOwnedMessage(message_arena, value, submessage_arena);
-    }
-    _impl_._has_bits_[0] |= 0x00000001u;
-  } else {
-    _impl_._has_bits_[0] &= ~0x00000001u;
-  }
-
-  _impl_.timestamp_ = reinterpret_cast<::google::protobuf::Timestamp*>(value);
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcRequest.timestamp)
-}
-
-// -------------------------------------------------------------------
-
 // RpcPacket
 
-// string ip = 1;
-inline void RpcPacket::clear_ip() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.ip_.ClearToEmpty();
-}
-inline const std::string& RpcPacket::ip() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.RpcPacket.ip)
-  return _internal_ip();
-}
-template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void RpcPacket::set_ip(Arg_&& arg,
-                                                     Args_... args) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.ip_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.RpcPacket.ip)
-}
-inline std::string* RpcPacket::mutable_ip() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_ip();
-  // @@protoc_insertion_point(field_mutable:NetworkData.RpcPacket.ip)
-  return _s;
-}
-inline const std::string& RpcPacket::_internal_ip() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.ip_.Get();
-}
-inline void RpcPacket::_internal_set_ip(const std::string& value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.ip_.Set(value, GetArena());
-}
-inline std::string* RpcPacket::_internal_mutable_ip() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.ip_.Mutable( GetArena());
-}
-inline std::string* RpcPacket::release_ip() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.RpcPacket.ip)
-  return _impl_.ip_.Release();
-}
-inline void RpcPacket::set_allocated_ip(std::string* value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.ip_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.ip_.IsDefault()) {
-    _impl_.ip_.Set("", GetArena());
-  }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcPacket.ip)
-}
-
-// bytes uuid = 2;
+// bytes uuid = 1;
 inline void RpcPacket::clear_uuid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.uuid_.ClearToEmpty();
@@ -2143,7 +1553,7 @@ inline void RpcPacket::set_allocated_uuid(std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcPacket.uuid)
 }
 
-// .NetworkData.RpcMethod method = 3;
+// .NetworkData.RpcMethod method = 2;
 inline void RpcPacket::clear_method() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.method_ = 0;
@@ -2165,7 +1575,7 @@ inline void RpcPacket::_internal_set_method(::NetworkData::RpcMethod value) {
   _impl_.method_ = value;
 }
 
-// bytes data = 4;
+// bytes data = 3;
 inline void RpcPacket::clear_data() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.data_.ClearToEmpty();
@@ -2213,7 +1623,7 @@ inline void RpcPacket::set_allocated_data(std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:NetworkData.RpcPacket.data)
 }
 
-// .google.protobuf.Timestamp timestamp = 5;
+// .google.protobuf.Timestamp timestamp = 4;
 inline bool RpcPacket::has_timestamp() const {
   bool value = (_impl_._has_bits_[0] & 0x00000001u) != 0;
   PROTOBUF_ASSUME(!value || _impl_.timestamp_ != nullptr);

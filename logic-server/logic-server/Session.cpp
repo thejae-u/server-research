@@ -10,12 +10,11 @@ Session::Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr, 
 		_socketPtr(std::make_shared<tcp::socket>(strand.context())), _receiveNetSize(0), _receiveDataSize(0),
 		_sessionGuid(guid)
 {
-	std::cout << "Session: " << _serverPtr->GetSessionCount() << "\n";
 }
 
 void Session::Start()
 {
-	std::cout << "Session Started: " << _socketPtr->remote_endpoint().address() << "\n";
+	//std::cout << "Session Started: " << _socketPtr->remote_endpoint().address() << "\n";
 	// Send guid to client
 	RpcPacket packet;
 	packet.set_uuid(Utility::GuidToBytes(_sessionGuid));
@@ -37,7 +36,10 @@ void Session::Start()
 
 void Session::Stop()
 {
-	boost::asio::post(_strand.wrap([this]() { _serverPtr->DisconnectSession(shared_from_this()); }));
+	boost::asio::post(_strand.wrap([this]()
+	{
+		_lockstepGroupPtr->RemoveMember(shared_from_this());
+	}));
 }
 
 void Session::RpcProcess(RpcPacket packet)
@@ -134,14 +136,14 @@ void Session::AsyncReadData()
 
 			//std::cout << "Received Data: " << to_string(Utility::BytesToUuid(deserializeRpcPacket.uuid())) << " " << deserializeRpcPacket.method() << "\n";
 
-			RpcRequest rpcRequest;
-			rpcRequest.set_uuid(deserializeRpcPacket.uuid());
-			rpcRequest.set_method(deserializeRpcPacket.method());
-			rpcRequest.set_data(deserializeRpcPacket.data());
+			RpcPacket request;
+			request.set_uuid(deserializeRpcPacket.uuid());
+			request.set_method(deserializeRpcPacket.method());
+			request.set_data(deserializeRpcPacket.data());
 			// Process the RPC request
 			if (_lockstepGroupPtr)
 			{
-				_lockstepGroupPtr->CollectInput({{_sessionGuid, std::make_shared<RpcRequest>(rpcRequest)}});
+				_lockstepGroupPtr->CollectInput({{_sessionGuid, std::make_shared<RpcPacket>(request)}});
 			}
 
 			_receiveBuffer.clear();

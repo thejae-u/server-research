@@ -27,22 +27,12 @@ message PositionData
   float z2 = 6;
 }
 
-message RpcRequest
-{
-  string ip = 1;
-  bytes uuid = 2;
-  RpcMethod method = 3;
-  bytes data = 4; // serialized parameter data (Login Data, Position Data, etc.)
-  google.protobuf.Timestamp timestamp = 5;
-}
-
 message RpcPacket
 {
-  string ip = 1;
-  bytes uuid = 2;
-  RpcMethod method = 3;
-  bytes data = 4; // serialized parameter data (Login Data, Position Data, etc.)
-  google.protobuf.Timestamp timestamp = 5;
+  bytes uuid = 1;
+  RpcMethod method = 2;
+  bytes data = 3; // serialized parameter data (Login Data, Position Data, etc.)
+  google.protobuf.Timestamp timestamp = 4;
 }
 
 enum RpcMethod
@@ -54,6 +44,8 @@ enum RpcMethod
   ACCESS = 4;
   REJECT = 5;
   LOGOUT = 6;
+  PING = 7;
+  PONG = 8;
   // Limit DB access to 99
 
   IN_GAME_NONE = 100;

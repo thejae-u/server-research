@@ -27,6 +27,7 @@ public:
 	void RpcProcess(RpcPacket packet);
 	tcp::socket& GetSocket() const { return *_socketPtr; }
 	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
+	const boost::uuids::uuid& GetSessionUuid() const { return _sessionGuid; }
 	
 private:
 	std::shared_ptr<Server> _serverPtr;

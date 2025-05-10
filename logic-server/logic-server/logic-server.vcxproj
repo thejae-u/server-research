@@ -128,6 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GroupManager.cpp" />
     <ClCompile Include="LockstepGroup.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NetworkData.pb.cc" />
@@ -135,6 +136,7 @@
     <ClCompile Include="Session.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GroupManager.h" />
     <ClInclude Include="LockstepGroup.h" />
     <ClInclude Include="NetworkData.pb.h" />
     <ClInclude Include="Server.h" />

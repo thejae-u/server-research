@@ -3,7 +3,8 @@
 #include "Session.h"
 #include "Utility.h"
 
-LockstepGroup::LockstepGroup(const io_context::strand& strand, const uuid groupId) : _groupId(groupId), _timer(strand.context()), _groupMaxDelayMs(-1)
+LockstepGroup::LockstepGroup(const io_context::strand& strand, const uuid groupId, const std::size_t groupNumber)
+    : _groupId(groupId), _groupNumber(groupNumber), _strand(strand), _timer(strand.context())
 {
 }
 
@@ -29,24 +30,20 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 
 void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
+    std::cout << session->GetSessionUuid() << ": Removed from "<< _groupId << "\n";
+    
     std::lock_guard<std::mutex> lock(_memberMutex);
     _members.erase(session);
 }
 
-void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcRequest>> rpcRequest)
+void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcPacket>> rpcRequest)
 {
     std::lock_guard<std::mutex> lock(_bufferMutex);
     for (auto& [guid, request] : rpcRequest)
     {
-        const auto packet = std::make_shared<RpcPacket>();
-        packet->set_uuid(Utility::GuidToBytes(guid));
-        packet->set_method(request->method());
-        packet->set_data(request->data());
-
         auto key = SSessionKey{_currentBucket, guid};
-        _inputBuffer[_currentBucket][key] = packet;
-        //std::cout << "CollectInput: " << to_string(guid) << ": " << packet->method() << "\n";
-        //std::cout << "Tick: " << _currentBucket << "\n";
+        _inputBuffer[_currentBucket][key] = request;
+        std::cout << "CollectInput: " << to_string(guid) << ": " << request->method() << "\n";
     }
 }
 
@@ -61,7 +58,17 @@ void LockstepGroup::ProcessStep()
         auto [frame, guid] = key;
         
         // Process each packet
-        std::cout << /*uuids*/ to_string(guid) << ": "<< packet->method() << "\n";
+        //std::cout << /*uuids*/ to_string(guid) << ": "<< packet->method() << "\n";
+        for (auto& member : _members)
+        {
+            if (member->GetSocket().is_open())
+            {
+                if (guid == member->GetSessionUuid())
+                    continue;
+                
+                member->RpcProcess(*packet);
+            }
+        }
     }
 }
 
@@ -71,9 +78,15 @@ void LockstepGroup::Tick()
         std::lock_guard<std::mutex> lock(_bufferMutex);
         if (!_isRunning)
             return;
+
+        std::lock_guard<std::mutex> memberLock(_memberMutex);
+        if (_members.empty())
+        {
+            ScheduleNextTick();
+            return;
+        }
     
         // Process current frame
-        std::cout << "Process Step\n";
         ProcessStep();
 
         _currentBucket++;
