@@ -4,13 +4,13 @@
 #include "Session.h"
 #include "Utility.h"
 
-GroupManager::GroupManager(const io_context::strand& strand): _strand(strand)
+GroupManager::GroupManager(const IoContext::strand& strand): _strand(strand)
 {
 }
 
 void GroupManager::AddSession(const std::shared_ptr<Session>& newSessionPtr)
 {
-    const auto rtt = CheckRtt(newSessionPtr);
+    const auto rtt = CheckClientRTT(newSessionPtr);
     std::cout << newSessionPtr->GetSessionUuid() << " Session RTT: " << rtt << "ms\n";
 
     if (!InsertSessionToGroup(newSessionPtr, rtt))
@@ -23,7 +23,7 @@ void GroupManager::AddSession(const std::shared_ptr<Session>& newSessionPtr)
     newSessionPtr->Start();
 }
 
-std::uint64_t GroupManager::CheckRtt(const std::shared_ptr<Session>& newSessionPtr)
+std::uint64_t GroupManager::CheckClientRTT(const std::shared_ptr<Session>& newSessionPtr)
 {
     tcp::socket& sessionSocket = newSessionPtr->GetSocket();
     

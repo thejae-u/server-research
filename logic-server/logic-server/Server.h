@@ -11,7 +11,7 @@
 #include "GroupManager.h"
 #include "NetworkData.pb.h"
 
-using io_context = boost::asio::io_context;
+using IoContext = boost::asio::io_context;
 using namespace boost::asio::ip;
 using namespace NetworkData;
 
@@ -21,13 +21,13 @@ class LockstepGroup;
 class Server : public std::enable_shared_from_this<Server>
 {
 public:
-	Server(const io_context::strand& strand, tcp::acceptor& acceptor);
+	Server(const IoContext::strand& strand, tcp::acceptor& acceptor);
 	~Server() = default;
 	
 	void AcceptClientAsync();
 
 private:
-	io_context::strand _strand;
+	IoContext::strand _strand;
 	tcp::acceptor& _acceptor;
 
 	std::unique_ptr<GroupManager> _groupManager;

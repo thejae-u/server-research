@@ -3,7 +3,7 @@
 #include "Session.h"
 #include "Utility.h"
 
-LockstepGroup::LockstepGroup(const io_context::strand& strand, const uuid groupId, const std::size_t groupNumber)
+LockstepGroup::LockstepGroup(const IoContext::strand& strand, const uuid groupId, const std::size_t groupNumber)
     : _groupId(groupId), _groupNumber(groupNumber), _strand(strand), _timer(strand.context())
 {
 }

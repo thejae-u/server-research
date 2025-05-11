@@ -12,7 +12,7 @@
 
 #include "NetworkData.pb.h"
 
-using io_context = boost::asio::io_context;
+using IoContext = boost::asio::io_context;
 using namespace boost::uuids;
 using namespace NetworkData;
 class Session;
@@ -45,7 +45,7 @@ namespace std {
 class LockstepGroup : public std::enable_shared_from_this<LockstepGroup>
 {
 public:
-    LockstepGroup(const io_context::strand& strand, uuid groupId, std::size_t groupNumber);
+    LockstepGroup(const IoContext::strand& strand, uuid groupId, std::size_t groupNumber);
     ~LockstepGroup() = default;
 
     void Start();
@@ -71,7 +71,7 @@ public:
 private:
     uuid _groupId;
     std::size_t _groupNumber;
-    io_context::strand _strand;
+    IoContext::strand _strand;
     std::set<std::shared_ptr<Session>> _members;
     const std::size_t _maxSessionCount = 3;
     std::mutex _memberMutex;

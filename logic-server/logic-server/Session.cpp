@@ -5,7 +5,7 @@
 #include "LockstepGroup.h"
 #include "Utility.h"
 
-Session::Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr, boost::uuids::uuid guid)
+Session::Session(IoContext::strand& strand, std::shared_ptr<Server> serverPtr, boost::uuids::uuid guid)
 	: _serverPtr(std::move(serverPtr)), _strand(strand),
 		_socketPtr(std::make_shared<tcp::socket>(strand.context())), _receiveNetSize(0), _receiveDataSize(0),
 		_sessionGuid(guid)

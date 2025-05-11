@@ -13,8 +13,8 @@ using namespace boost::asio::ip;
 
 int main()
 {
-	io_context ctx;
-	io_context::strand ctxStrand(ctx);
+	IoContext ctx;
+	IoContext::strand ctxStrand(ctx);
 
 	tcp::endpoint thisEndPoint(tcp::v4(), THIS_PORT);
 	tcp::acceptor acceptor(ctx, thisEndPoint);

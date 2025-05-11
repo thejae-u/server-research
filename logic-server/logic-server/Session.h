@@ -8,7 +8,7 @@
 #include "NetworkData.pb.h"
 
 using namespace NetworkData;
-using io_context = boost::asio::io_context;
+using IoContext = boost::asio::io_context;
 using boost::asio::ip::tcp;
 
 class Server;
@@ -17,9 +17,8 @@ class LockstepGroup;
 class Session : public std::enable_shared_from_this<Session>
 {
 public:
-	Session(io_context::strand& strand, std::shared_ptr<Server> serverPtr, boost::uuids::uuid guid);
+	Session(IoContext::strand& strand, std::shared_ptr<Server> serverPtr, boost::uuids::uuid guid);
 	~Session() = default;
-
 
 	void Start();
 	void Stop();
@@ -31,7 +30,7 @@ public:
 	
 private:
 	std::shared_ptr<Server> _serverPtr;
-	io_context::strand _strand;
+	IoContext::strand _strand;
 	std::shared_ptr<tcp::socket> _socketPtr;
 
 	std::vector<char> _receiveBuffer;

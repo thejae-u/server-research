@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-Server::Server(const io_context::strand& strand, tcp::acceptor& acceptor) : _strand(strand), _acceptor(acceptor)
+Server::Server(const IoContext::strand& strand, tcp::acceptor& acceptor) : _strand(strand), _acceptor(acceptor)
 {
 	_groupManager = std::make_unique<GroupManager>(strand);
 }
