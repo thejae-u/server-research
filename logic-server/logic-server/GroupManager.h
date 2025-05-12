@@ -21,7 +21,8 @@ class GroupManager
 {
 public:
     explicit GroupManager(const IoContext::strand& strand);
-    void AddSession(const std::shared_ptr<Session>& newSessionPtr);
+    void AddSession(const std::shared_ptr<Session>& newSession);
+    void RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyGroup);
 
 private:
     IoContext::strand _strand;
@@ -30,8 +31,7 @@ private:
     std::map<std::uint64_t, std::map<std::size_t, std::shared_ptr<LockstepGroup>>> _groups;
     std::mutex _groupMutex;
     
-    std::uint64_t CheckClientRTT(const std::shared_ptr<Session>& newSessionPtr);
-    bool InsertSessionToGroup(const std::shared_ptr<Session>& sessionPtr, const uint64_t& rtt);
+    bool InsertSessionToGroup(const std::shared_ptr<Session>& session, const int64_t& rtt);
     std::shared_ptr<LockstepGroup> FindGroupByGroupKey(const std::uint64_t& groupKey);
     std::shared_ptr<LockstepGroup> CreateNewKeyGroup(const std::uint64_t& groupKey);
 };

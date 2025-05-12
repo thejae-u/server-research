@@ -32,30 +32,20 @@ namespace NetworkData {
             "BCABKAISCgoCeTIYBSABKAISCgoCejIYBiABKAIifgoJUnBjUGFja2V0EgwK",
             "BHV1aWQYASABKAwSJgoGbWV0aG9kGAIgASgOMhYuTmV0d29ya0RhdGEuUnBj",
             "TWV0aG9kEgwKBGRhdGEYAyABKAwSLQoJdGltZXN0YW1wGAQgASgLMhouZ29v",
-            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcCrlAgoJUnBjTWV0aG9kEggKBE5PTkUQ",
+            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcCrvAgoJUnBjTWV0aG9kEggKBE5PTkUQ",
             "ABIJCgVMT0dJThABEgwKCFJFR0lTVEVSEAISDAoIUkVUUklFVkUQAxIKCgZB",
-            "Q0NFU1MQBBIKCgZSRUpFQ1QQBRIKCgZMT0dPVVQQBhIICgRQSU5HEAcSCAoE",
-            "UE9ORxAIEhAKDElOX0dBTUVfTk9ORRBkEggKBE1PVkUQZRIKCgZBVFRBQ0sQ",
-            "ZhINCglEUk9QX0lURU0QZxIMCghVU0VfSVRFTRBoEg0KCVVTRV9TS0lMTBBp",
-            "Eg8KClNUQVRFX05PTkUQyAESFQoQU1RBVEVfTU9WRV9TVEFSVBDJARITCg5T",
-            "VEFURV9NT1ZFX0VORBDKARIXChJTVEFURV9BVFRBQ0tfU1RBUlQQywESFQoQ",
-            "U1RBVEVfQVRUQUNLX0VORBDMARIVChBSRU1PVEVfTU9WRV9DQUxMEPQDEhcK",
-            "ElJFTU9URV9BVFRBQ0tfQ0FMTBD1AyqoAgoRUnBjUmVzcG9uc2VNZXRob2QS",
-            "DAoIUkVTX05PTkUQABINCglSRVNfTE9HSU4QARIQCgxSRVNfUkVHSVNURVIQ",
-            "AhIQCgxSRVNfUkVUUklFVkUQAxIOCgpSRVNfQUNDRVNTEAQSDgoKUkVTX1JF",
-            "SkVDVBAFEg4KClJFU19MT0dPVVQQBhIUChBSRVNfSU5fR0FNRV9OT05FEGQS",
-            "DAoIUkVTX01PVkUQZRIOCgpSRVNfQVRUQUNLEGYSEQoNUkVTX0RST1BfSVRF",
-            "TRBnEhAKDFJFU19VU0VfSVRFTRBoEhEKDVJFU19VU0VfU0tJTEwQaRIZChRS",
-            "RVNfUkVNT1RFX01PVkVfQ0FMTBD0AxIbChZSRVNfUkVNT1RFX0FUVEFDS19D",
-            "QUxMEPUDKpwBCg5BZG1pblJwY01ldGhvZBIOCgpBRE1JTl9OT05FEAASDwoL",
-            "QURNSU5fTE9HSU4QARIQCgxBRE1JTl9MT0dPVVQQAhIQCgxBRE1JTl9OT1RJ",
-            "RlkQZBIVChBBRE1JTl9TRVJWRVJfT0ZGEIQHEhQKD0FETUlOX1NFUlZFUl9P",
-            "ThCFBxIYChNBRE1JTl9TRVJWRVJfUkVCT09UEIYHKkgKC0VMb2dpbkVycm9y",
-            "EhIKDlVTRVJfTk9UX0ZPVU5EEAASFgoSVVNFUl9BTFJFQURZX0VYSVNUEAES",
-            "DQoJSU5DT1JSRUNUEAJiBnByb3RvMw=="));
+            "Q0NFU1MQBBIKCgZSRUpFQ1QQBRIKCgZMT0dPVVQQBhIICgRVVUlEEAcSCAoE",
+            "UElORxAIEggKBFBPTkcQCRIQCgxJTl9HQU1FX05PTkUQZBIICgRNT1ZFEGUS",
+            "CgoGQVRUQUNLEGYSDQoJRFJPUF9JVEVNEGcSDAoIVVNFX0lURU0QaBINCglV",
+            "U0VfU0tJTEwQaRIPCgpTVEFURV9OT05FEMgBEhUKEFNUQVRFX01PVkVfU1RB",
+            "UlQQyQESEwoOU1RBVEVfTU9WRV9FTkQQygESFwoSU1RBVEVfQVRUQUNLX1NU",
+            "QVJUEMsBEhUKEFNUQVRFX0FUVEFDS19FTkQQzAESFQoQUkVNT1RFX01PVkVf",
+            "Q0FMTBD0AxIXChJSRU1PVEVfQVRUQUNLX0NBTEwQ9QMqSAoLRUxvZ2luRXJy",
+            "b3ISEgoOVVNFUl9OT1RfRk9VTkQQABIWChJVU0VSX0FMUkVBRFlfRVhJU1QQ",
+            "ARINCglJTkNPUlJFQ1QQAmIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
-          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::NetworkData.RpcMethod), typeof(global::NetworkData.RpcResponseMethod), typeof(global::NetworkData.AdminRpcMethod), typeof(global::NetworkData.ELoginError), }, null, new pbr::GeneratedClrTypeInfo[] {
+          new pbr::GeneratedClrTypeInfo(new[] {typeof(global::NetworkData.RpcMethod), typeof(global::NetworkData.ELoginError), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.LoginData), global::NetworkData.LoginData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RegisterData), global::NetworkData.RegisterData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.PositionData), global::NetworkData.PositionData.Parser, new[]{ "X1", "Y1", "Z1", "X2", "Y2", "Z2" }, null, null, null, null),
@@ -74,11 +64,12 @@ namespace NetworkData {
     [pbr::OriginalName("ACCESS")] Access = 4,
     [pbr::OriginalName("REJECT")] Reject = 5,
     [pbr::OriginalName("LOGOUT")] Logout = 6,
-    [pbr::OriginalName("PING")] Ping = 7,
+    [pbr::OriginalName("UUID")] Uuid = 7,
+    [pbr::OriginalName("PING")] Ping = 8,
     /// <summary>
     /// Limit DB access to 99
     /// </summary>
-    [pbr::OriginalName("PONG")] Pong = 8,
+    [pbr::OriginalName("PONG")] Pong = 9,
     [pbr::OriginalName("IN_GAME_NONE")] InGameNone = 100,
     [pbr::OriginalName("MOVE")] Move = 101,
     [pbr::OriginalName("ATTACK")] Attack = 102,
@@ -95,37 +86,6 @@ namespace NetworkData {
     [pbr::OriginalName("STATE_ATTACK_END")] StateAttackEnd = 204,
     [pbr::OriginalName("REMOTE_MOVE_CALL")] RemoteMoveCall = 500,
     [pbr::OriginalName("REMOTE_ATTACK_CALL")] RemoteAttackCall = 501,
-  }
-
-  public enum RpcResponseMethod {
-    [pbr::OriginalName("RES_NONE")] ResNone = 0,
-    [pbr::OriginalName("RES_LOGIN")] ResLogin = 1,
-    [pbr::OriginalName("RES_REGISTER")] ResRegister = 2,
-    [pbr::OriginalName("RES_RETRIEVE")] ResRetrieve = 3,
-    [pbr::OriginalName("RES_ACCESS")] ResAccess = 4,
-    [pbr::OriginalName("RES_REJECT")] ResReject = 5,
-    /// <summary>
-    /// Limit DB access to 99
-    /// </summary>
-    [pbr::OriginalName("RES_LOGOUT")] ResLogout = 6,
-    [pbr::OriginalName("RES_IN_GAME_NONE")] ResInGameNone = 100,
-    [pbr::OriginalName("RES_MOVE")] ResMove = 101,
-    [pbr::OriginalName("RES_ATTACK")] ResAttack = 102,
-    [pbr::OriginalName("RES_DROP_ITEM")] ResDropItem = 103,
-    [pbr::OriginalName("RES_USE_ITEM")] ResUseItem = 104,
-    [pbr::OriginalName("RES_USE_SKILL")] ResUseSkill = 105,
-    [pbr::OriginalName("RES_REMOTE_MOVE_CALL")] ResRemoteMoveCall = 500,
-    [pbr::OriginalName("RES_REMOTE_ATTACK_CALL")] ResRemoteAttackCall = 501,
-  }
-
-  public enum AdminRpcMethod {
-    [pbr::OriginalName("ADMIN_NONE")] AdminNone = 0,
-    [pbr::OriginalName("ADMIN_LOGIN")] AdminLogin = 1,
-    [pbr::OriginalName("ADMIN_LOGOUT")] AdminLogout = 2,
-    [pbr::OriginalName("ADMIN_NOTIFY")] AdminNotify = 100,
-    [pbr::OriginalName("ADMIN_SERVER_OFF")] AdminServerOff = 900,
-    [pbr::OriginalName("ADMIN_SERVER_ON")] AdminServerOn = 901,
-    [pbr::OriginalName("ADMIN_SERVER_REBOOT")] AdminServerReboot = 902,
   }
 
   public enum ELoginError {

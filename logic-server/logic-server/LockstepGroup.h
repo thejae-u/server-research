@@ -5,6 +5,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <set>
+#include <functional>
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -45,8 +46,11 @@ namespace std {
 class LockstepGroup : public std::enable_shared_from_this<LockstepGroup>
 {
 public:
-    LockstepGroup(const IoContext::strand& strand, uuid groupId, std::size_t groupNumber);
+    LockstepGroup(const IoContext::strand& strand, uuid groupId, std::uint64_t groupRttKey, std::size_t groupNumber);
     ~LockstepGroup() = default;
+
+    using NotifyEmptyCallback = std::function<void(const std::shared_ptr<LockstepGroup>&)>;
+    void SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallback);
 
     void Start();
     void AddMember(const std::shared_ptr<Session>& newSession);
@@ -56,6 +60,9 @@ public:
     void Tick();
 
     uuid GetGroupId() const { return _groupId; }
+    std::uint64_t GetGroupRttKey() const { return _groupRttKey; }
+    std::size_t GetGroupNumber() const { return _groupNumber; }
+    
     bool IsFull()
     {
         std::lock_guard<std::mutex> lock(_memberMutex);
@@ -70,6 +77,7 @@ public:
 
 private:
     uuid _groupId;
+    std::uint64_t _groupRttKey;
     std::size_t _groupNumber;
     IoContext::strand _strand;
     std::set<std::shared_ptr<Session>> _members;
@@ -86,6 +94,8 @@ private:
 
     boost::asio::steady_timer _timer;
     bool _isRunning = false;
+
+    NotifyEmptyCallback _notifyEmptyCallback;
 
     void ScheduleNextTick();
 };

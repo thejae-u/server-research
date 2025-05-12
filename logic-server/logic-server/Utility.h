@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <chrono>
 #include "NetworkData.pb.h"
 using namespace NetworkData;
 
@@ -43,6 +44,66 @@ namespace Utility
     {
         PositionData result;
         result.ParseFromString(packet.data());
+        return result;
+    }
+
+    static std::chrono::high_resolution_clock::time_point StartStopwatch()
+    {
+        return std::chrono::high_resolution_clock::now();
+    }
+
+    static std::int64_t StopStopwatch(const std::chrono::high_resolution_clock::time_point startTime)
+    {
+        std::cout << "RTT Check end\n";
+        auto endTime = std::chrono::high_resolution_clock::now();
+        return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+    }
+
+    static std::string MethodToString(const RpcMethod& method)
+    {
+        std::string result;
+        switch (method)
+        {
+        case PING:
+            result = "PING";
+            break;
+            
+        case PONG:
+            result = "PONG";
+            break;
+            
+        case UUID:
+            result = "UUID";
+            break;
+            
+        case MOVE:
+            result = "MOVE";
+            break;
+        
+        case LOGIN:
+        case REGISTER:
+        case RETRIEVE:
+        case ACCESS:
+        case REJECT:
+        case LOGOUT:
+        case ATTACK:
+        case DROP_ITEM:
+        case USE_ITEM:
+        case USE_SKILL:
+        case STATE_NONE:
+        case STATE_MOVE_START:
+        case STATE_MOVE_END:
+        case STATE_ATTACK_START:
+        case STATE_ATTACK_END:
+        case REMOTE_MOVE_CALL:
+        case REMOTE_ATTACK_CALL:
+        case NONE:
+        case IN_GAME_NONE:
+        default:
+            result = "INVALID";
+            break;
+        }
+
         return result;
     }
 }

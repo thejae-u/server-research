@@ -3,9 +3,14 @@
 #include "Session.h"
 #include "Utility.h"
 
-LockstepGroup::LockstepGroup(const IoContext::strand& strand, const uuid groupId, const std::size_t groupNumber)
-    : _groupId(groupId), _groupNumber(groupNumber), _strand(strand), _timer(strand.context())
+LockstepGroup::LockstepGroup(const IoContext::strand& strand, const uuid groupId, const std::uint64_t groupRttKey, const std::size_t groupNumber)
+    : _groupId(groupId), _groupRttKey(groupRttKey), _groupNumber(groupNumber), _strand(strand), _timer(strand.context())
 {
+}
+
+void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallback)
+{
+    _notifyEmptyCallback = std::move(notifyEmptyCallback);
 }
 
 void LockstepGroup::Start()
@@ -34,6 +39,15 @@ void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
     
     std::lock_guard<std::mutex> lock(_memberMutex);
     _members.erase(session);
+
+    // Notify the group manager if the group is empty
+    if (!_members.empty())
+    {
+        return;
+    }
+    
+    assert(_notifyEmptyCallback, "NotifyEmptyCallback is not set");
+    _notifyEmptyCallback(shared_from_this());
 }
 
 void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcPacket>> rpcRequest)
@@ -43,7 +57,8 @@ void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcPac
     {
         auto key = SSessionKey{_currentBucket, guid};
         _inputBuffer[_currentBucket][key] = request;
-        std::cout << "CollectInput: " << to_string(guid) << ": " << request->method() << "\n";
+        
+        std::cout << _groupId << " CollectInput: " << to_string(guid) << ": " << Utility::MethodToString(request->method()) << "\n";
     }
 }
 
@@ -58,7 +73,6 @@ void LockstepGroup::ProcessStep()
         auto [frame, guid] = key;
         
         // Process each packet
-        //std::cout << /*uuids*/ to_string(guid) << ": "<< packet->method() << "\n";
         for (auto& member : _members)
         {
             if (member->GetSocket().is_open())

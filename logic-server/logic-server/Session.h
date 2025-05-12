@@ -26,7 +26,9 @@ public:
 	void RpcProcess(RpcPacket packet);
 	tcp::socket& GetSocket() const { return *_socketPtr; }
 	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
-	const boost::uuids::uuid& GetSessionUuid() const { return _sessionGuid; }
+	const boost::uuids::uuid& GetSessionUuid() const { return _sessionUuid; }
+	std::int64_t CheckAndGetRtt() const;
+	bool SendUuidToClient() const;
 	
 private:
 	std::shared_ptr<Server> _serverPtr;
@@ -37,7 +39,7 @@ private:
 	uint32_t _receiveNetSize;
 	uint32_t _receiveDataSize;
 
-	boost::uuids::uuid _sessionGuid;
+	boost::uuids::uuid _sessionUuid;
 	std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
 	
 	void AsyncReadSize();

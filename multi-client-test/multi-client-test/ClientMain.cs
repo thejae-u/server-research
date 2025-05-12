@@ -15,9 +15,8 @@ class ClientMain
         
         HashSet<Client> clients = [];
         var clientTasks = new List<Task>();
-
         
-        for (var i = 0; i < 3; ++i)
+        for (var i = 0; i < 5; ++i)
         {
             var client = new Client(ip, port);
 

@@ -1,0 +1,74 @@
+{
+    "name": "IA_Base",
+    "maps": [
+        {
+            "name": "Network",
+            "id": "21d6f454-180a-4690-9932-0993b0895be8",
+            "actions": [
+                {
+                    "name": "ConnectToServer",
+                    "type": "Button",
+                    "id": "349deb2b-db12-49f5-bde3-6000dc06b048",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "Disconnect",
+                    "type": "Button",
+                    "id": "5823f075-5197-4189-b710-8f44ec0e99e6",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "SendPacketToggle",
+                    "type": "Button",
+                    "id": "3d5c7944-3714-4566-839b-f9bc6509ca70",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "eecca1df-e3f7-49e9-8f80-e9ba167c36d8",
+                    "path": "<Keyboard>/f1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ConnectToServer",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "28f9ad0c-598c-4b01-ad11-8c90e7d4e573",
+                    "path": "<Keyboard>/f2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Disconnect",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "bdac7f5d-8952-4558-9e50-9976c54e249e",
+                    "path": "<Keyboard>/space",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "SendPacketToggle",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}

@@ -148,7 +148,7 @@ struct RpcPacketDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RpcPacketDefaultTypeInternal _RpcPacket_default_instance_;
 }  // namespace NetworkData
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_NetworkData_2eproto[4];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_NetworkData_2eproto[2];
 static constexpr const ::_pb::ServiceDescriptor**
     file_level_service_descriptors_NetworkData_2eproto = nullptr;
 const ::uint32_t
@@ -230,30 +230,18 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "(\002\022\n\n\002z2\030\006 \001(\002\"~\n\tRpcPacket\022\014\n\004uuid\030\001 \001("
     "\014\022&\n\006method\030\002 \001(\0162\026.NetworkData.RpcMetho"
     "d\022\014\n\004data\030\003 \001(\014\022-\n\ttimestamp\030\004 \001(\0132\032.goo"
-    "gle.protobuf.Timestamp*\345\002\n\tRpcMethod\022\010\n\004"
+    "gle.protobuf.Timestamp*\357\002\n\tRpcMethod\022\010\n\004"
     "NONE\020\000\022\t\n\005LOGIN\020\001\022\014\n\010REGISTER\020\002\022\014\n\010RETRI"
     "EVE\020\003\022\n\n\006ACCESS\020\004\022\n\n\006REJECT\020\005\022\n\n\006LOGOUT\020"
-    "\006\022\010\n\004PING\020\007\022\010\n\004PONG\020\010\022\020\n\014IN_GAME_NONE\020d\022"
-    "\010\n\004MOVE\020e\022\n\n\006ATTACK\020f\022\r\n\tDROP_ITEM\020g\022\014\n\010"
-    "USE_ITEM\020h\022\r\n\tUSE_SKILL\020i\022\017\n\nSTATE_NONE\020"
-    "\310\001\022\025\n\020STATE_MOVE_START\020\311\001\022\023\n\016STATE_MOVE_"
-    "END\020\312\001\022\027\n\022STATE_ATTACK_START\020\313\001\022\025\n\020STATE"
-    "_ATTACK_END\020\314\001\022\025\n\020REMOTE_MOVE_CALL\020\364\003\022\027\n"
-    "\022REMOTE_ATTACK_CALL\020\365\003*\250\002\n\021RpcResponseMe"
-    "thod\022\014\n\010RES_NONE\020\000\022\r\n\tRES_LOGIN\020\001\022\020\n\014RES"
-    "_REGISTER\020\002\022\020\n\014RES_RETRIEVE\020\003\022\016\n\nRES_ACC"
-    "ESS\020\004\022\016\n\nRES_REJECT\020\005\022\016\n\nRES_LOGOUT\020\006\022\024\n"
-    "\020RES_IN_GAME_NONE\020d\022\014\n\010RES_MOVE\020e\022\016\n\nRES"
-    "_ATTACK\020f\022\021\n\rRES_DROP_ITEM\020g\022\020\n\014RES_USE_"
-    "ITEM\020h\022\021\n\rRES_USE_SKILL\020i\022\031\n\024RES_REMOTE_"
-    "MOVE_CALL\020\364\003\022\033\n\026RES_REMOTE_ATTACK_CALL\020\365"
-    "\003*\234\001\n\016AdminRpcMethod\022\016\n\nADMIN_NONE\020\000\022\017\n\013"
-    "ADMIN_LOGIN\020\001\022\020\n\014ADMIN_LOGOUT\020\002\022\020\n\014ADMIN"
-    "_NOTIFY\020d\022\025\n\020ADMIN_SERVER_OFF\020\204\007\022\024\n\017ADMI"
-    "N_SERVER_ON\020\205\007\022\030\n\023ADMIN_SERVER_REBOOT\020\206\007"
-    "*H\n\013ELoginError\022\022\n\016USER_NOT_FOUND\020\000\022\026\n\022U"
-    "SER_ALREADY_EXIST\020\001\022\r\n\tINCORRECT\020\002b\006prot"
-    "o3"
+    "\006\022\010\n\004UUID\020\007\022\010\n\004PING\020\010\022\010\n\004PONG\020\t\022\020\n\014IN_GA"
+    "ME_NONE\020d\022\010\n\004MOVE\020e\022\n\n\006ATTACK\020f\022\r\n\tDROP_"
+    "ITEM\020g\022\014\n\010USE_ITEM\020h\022\r\n\tUSE_SKILL\020i\022\017\n\nS"
+    "TATE_NONE\020\310\001\022\025\n\020STATE_MOVE_START\020\311\001\022\023\n\016S"
+    "TATE_MOVE_END\020\312\001\022\027\n\022STATE_ATTACK_START\020\313"
+    "\001\022\025\n\020STATE_ATTACK_END\020\314\001\022\025\n\020REMOTE_MOVE_"
+    "CALL\020\364\003\022\027\n\022REMOTE_ATTACK_CALL\020\365\003*H\n\013ELog"
+    "inError\022\022\n\016USER_NOT_FOUND\020\000\022\026\n\022USER_ALRE"
+    "ADY_EXIST\020\001\022\r\n\tINCORRECT\020\002b\006proto3"
 };
 static const ::_pbi::DescriptorTable* const descriptor_table_NetworkData_2eproto_deps[1] =
     {
@@ -263,7 +251,7 @@ static ::absl::once_flag descriptor_table_NetworkData_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2eproto = {
     false,
     false,
-    1282,
+    834,
     descriptor_table_protodef_NetworkData_2eproto,
     "NetworkData.proto",
     &descriptor_table_NetworkData_2eproto_once,
@@ -282,31 +270,13 @@ const ::google::protobuf::EnumDescriptor* RpcMethod_descriptor() {
   return file_level_enum_descriptors_NetworkData_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t RpcMethod_internal_data_[] = {
-    589824u, 131296u, 0u, 0u, 4160749568u, 1u, 0u, 2147483648u, 15u, 501u, 500u, };
+    655360u, 131296u, 0u, 0u, 4227858432u, 0u, 0u, 3221225472u, 7u, 501u, 500u, };
 bool RpcMethod_IsValid(int value) {
   return ::_pbi::ValidateEnum(value, RpcMethod_internal_data_);
 }
-const ::google::protobuf::EnumDescriptor* RpcResponseMethod_descriptor() {
-  ::google::protobuf::internal::AssignDescriptors(&descriptor_table_NetworkData_2eproto);
-  return file_level_enum_descriptors_NetworkData_2eproto[1];
-}
-PROTOBUF_CONSTINIT const uint32_t RpcResponseMethod_internal_data_[] = {
-    458752u, 131200u, 0u, 0u, 3758096384u, 7u, 501u, 500u, };
-bool RpcResponseMethod_IsValid(int value) {
-  return ::_pbi::ValidateEnum(value, RpcResponseMethod_internal_data_);
-}
-const ::google::protobuf::EnumDescriptor* AdminRpcMethod_descriptor() {
-  ::google::protobuf::internal::AssignDescriptors(&descriptor_table_NetworkData_2eproto);
-  return file_level_enum_descriptors_NetworkData_2eproto[2];
-}
-PROTOBUF_CONSTINIT const uint32_t AdminRpcMethod_internal_data_[] = {
-    196608u, 262144u, 901u, 900u, 902u, 100u, };
-bool AdminRpcMethod_IsValid(int value) {
-  return ::_pbi::ValidateEnum(value, AdminRpcMethod_internal_data_);
-}
 const ::google::protobuf::EnumDescriptor* ELoginError_descriptor() {
   ::google::protobuf::internal::AssignDescriptors(&descriptor_table_NetworkData_2eproto);
-  return file_level_enum_descriptors_NetworkData_2eproto[3];
+  return file_level_enum_descriptors_NetworkData_2eproto[1];
 }
 PROTOBUF_CONSTINIT const uint32_t ELoginError_internal_data_[] = {
     196608u, 0u, };

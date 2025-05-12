@@ -5,33 +5,90 @@
 #include "LockstepGroup.h"
 #include "Utility.h"
 
+#define INVALID_RTT -1
+
 Session::Session(IoContext::strand& strand, std::shared_ptr<Server> serverPtr, boost::uuids::uuid guid)
 	: _serverPtr(std::move(serverPtr)), _strand(strand),
 		_socketPtr(std::make_shared<tcp::socket>(strand.context())), _receiveNetSize(0), _receiveDataSize(0),
-		_sessionGuid(guid)
+		_sessionUuid(guid)
 {
 }
 
 void Session::Start()
 {
-	//std::cout << "Session Started: " << _socketPtr->remote_endpoint().address() << "\n";
-	// Send guid to client
+	std::cout << "Session " << _sessionUuid << " started\n";
+	// Start reading data
+	boost::asio::post(_strand.wrap([this]() { AsyncReadSize(); }));
+}
+
+std::int64_t Session::CheckAndGetRtt() const
+{
 	RpcPacket packet;
-	packet.set_uuid(Utility::GuidToBytes(_sessionGuid));
-	packet.set_method(NONE);
+	packet.set_method(PING);
+
+	auto serializeRttPacket = packet.SerializeAsString();
+	const uint32_t sendDataSize =  static_cast<uint32_t>(serializeRttPacket.size());
+	const uint32_t sendNetSize = htonl(sendDataSize);
+	uint32_t receiveNetSize = 0;
+	std::int64_t rtt = INVALID_RTT;
+
+	try
+	{
+		auto stopwatch = Utility::StartStopwatch();
+		boost::asio::write(*_socketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)));
+		boost::asio::write(*_socketPtr, boost::asio::buffer(serializeRttPacket));
+		
+		boost::asio::read(*_socketPtr, boost::asio::buffer(&receiveNetSize, sizeof(receiveNetSize)));
+		const auto receiveDataSize = ntohl(receiveNetSize);
+		std::vector<char> receiveBuffer(receiveDataSize, 0);
+		boost::asio::read(*_socketPtr, boost::asio::buffer(receiveBuffer));
+		rtt = Utility::StopStopwatch(stopwatch);
+		
+		RpcPacket deserializeRpcPacket;
+		if (!deserializeRpcPacket.ParseFromArray(receiveBuffer.data(), static_cast<int>(receiveDataSize)))
+		{
+			std::cerr << "failed to parse rtt packet\n";
+			rtt = INVALID_RTT;
+		}
+
+		if (deserializeRpcPacket.method() != PONG)
+		{
+			std::cerr << "Invalid packet type: " << Utility::MethodToString(deserializeRpcPacket.method()) << "\n";
+			rtt = INVALID_RTT;
+		}
+	}
+	catch (std::exception& e)
+	{
+		std::cerr << "RTT get error: " << e.what() << "\n";
+	}
+
+	return rtt;
+}
+
+bool Session::SendUuidToClient() const
+{
+	// Send uuid to client
+	RpcPacket packet;
+	packet.set_uuid(Utility::GuidToBytes(_sessionUuid));
+	packet.set_method(UUID);
 	packet.set_data("");
 
 	auto serializedGuid = packet.SerializeAsString();
 	const uint32_t sendNetSize =  static_cast<uint32_t>(serializedGuid.size());
 	const uint32_t sendDataSize = htonl(sendNetSize);
 
-	// Blocking write
-	boost::asio::write(*_socketPtr, boost::asio::buffer(&sendDataSize, sizeof(sendDataSize)));
-	boost::asio::write(*_socketPtr, boost::asio::buffer(serializedGuid));
-	// Blocking write end
+	try
+	{
+		boost::asio::write(*_socketPtr, boost::asio::buffer(&sendDataSize, sizeof(sendDataSize)));
+		boost::asio::write(*_socketPtr, boost::asio::buffer(serializedGuid));
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << "\n";
+		return false;
+	}
 
-	// Start reading data
-	boost::asio::post(_strand.wrap([this]() { AsyncReadSize(); }));
+	return true;
 }
 
 void Session::Stop()
@@ -143,7 +200,7 @@ void Session::AsyncReadData()
 			// Process the RPC request
 			if (_lockstepGroupPtr)
 			{
-				_lockstepGroupPtr->CollectInput({{_sessionGuid, std::make_shared<RpcPacket>(request)}});
+				_lockstepGroupPtr->CollectInput({{_sessionUuid, std::make_shared<RpcPacket>(request)}});
 			}
 
 			_receiveBuffer.clear();

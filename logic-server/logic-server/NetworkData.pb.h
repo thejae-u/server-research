@@ -81,8 +81,9 @@ enum RpcMethod : int {
   ACCESS = 4,
   REJECT = 5,
   LOGOUT = 6,
-  PING = 7,
-  PONG = 8,
+  UUID = 7,
+  PING = 8,
+  PONG = 9,
   IN_GAME_NONE = 100,
   MOVE = 101,
   ATTACK = 102,
@@ -119,78 +120,6 @@ const std::string& RpcMethod_Name(T value) {
 inline bool RpcMethod_Parse(absl::string_view name, RpcMethod* value) {
   return ::google::protobuf::internal::ParseNamedEnum<RpcMethod>(
       RpcMethod_descriptor(), name, value);
-}
-enum RpcResponseMethod : int {
-  RES_NONE = 0,
-  RES_LOGIN = 1,
-  RES_REGISTER = 2,
-  RES_RETRIEVE = 3,
-  RES_ACCESS = 4,
-  RES_REJECT = 5,
-  RES_LOGOUT = 6,
-  RES_IN_GAME_NONE = 100,
-  RES_MOVE = 101,
-  RES_ATTACK = 102,
-  RES_DROP_ITEM = 103,
-  RES_USE_ITEM = 104,
-  RES_USE_SKILL = 105,
-  RES_REMOTE_MOVE_CALL = 500,
-  RES_REMOTE_ATTACK_CALL = 501,
-  RpcResponseMethod_INT_MIN_SENTINEL_DO_NOT_USE_ =
-      std::numeric_limits<::int32_t>::min(),
-  RpcResponseMethod_INT_MAX_SENTINEL_DO_NOT_USE_ =
-      std::numeric_limits<::int32_t>::max(),
-};
-
-bool RpcResponseMethod_IsValid(int value);
-extern const uint32_t RpcResponseMethod_internal_data_[];
-constexpr RpcResponseMethod RpcResponseMethod_MIN = static_cast<RpcResponseMethod>(0);
-constexpr RpcResponseMethod RpcResponseMethod_MAX = static_cast<RpcResponseMethod>(501);
-constexpr int RpcResponseMethod_ARRAYSIZE = 501 + 1;
-const ::google::protobuf::EnumDescriptor*
-RpcResponseMethod_descriptor();
-template <typename T>
-const std::string& RpcResponseMethod_Name(T value) {
-  static_assert(std::is_same<T, RpcResponseMethod>::value ||
-                    std::is_integral<T>::value,
-                "Incorrect type passed to RpcResponseMethod_Name().");
-  return ::google::protobuf::internal::NameOfEnum(RpcResponseMethod_descriptor(), value);
-}
-inline bool RpcResponseMethod_Parse(absl::string_view name, RpcResponseMethod* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<RpcResponseMethod>(
-      RpcResponseMethod_descriptor(), name, value);
-}
-enum AdminRpcMethod : int {
-  ADMIN_NONE = 0,
-  ADMIN_LOGIN = 1,
-  ADMIN_LOGOUT = 2,
-  ADMIN_NOTIFY = 100,
-  ADMIN_SERVER_OFF = 900,
-  ADMIN_SERVER_ON = 901,
-  ADMIN_SERVER_REBOOT = 902,
-  AdminRpcMethod_INT_MIN_SENTINEL_DO_NOT_USE_ =
-      std::numeric_limits<::int32_t>::min(),
-  AdminRpcMethod_INT_MAX_SENTINEL_DO_NOT_USE_ =
-      std::numeric_limits<::int32_t>::max(),
-};
-
-bool AdminRpcMethod_IsValid(int value);
-extern const uint32_t AdminRpcMethod_internal_data_[];
-constexpr AdminRpcMethod AdminRpcMethod_MIN = static_cast<AdminRpcMethod>(0);
-constexpr AdminRpcMethod AdminRpcMethod_MAX = static_cast<AdminRpcMethod>(902);
-constexpr int AdminRpcMethod_ARRAYSIZE = 902 + 1;
-const ::google::protobuf::EnumDescriptor*
-AdminRpcMethod_descriptor();
-template <typename T>
-const std::string& AdminRpcMethod_Name(T value) {
-  static_assert(std::is_same<T, AdminRpcMethod>::value ||
-                    std::is_integral<T>::value,
-                "Incorrect type passed to AdminRpcMethod_Name().");
-  return ::google::protobuf::internal::NameOfEnum(AdminRpcMethod_descriptor(), value);
-}
-inline bool AdminRpcMethod_Parse(absl::string_view name, AdminRpcMethod* value) {
-  return ::google::protobuf::internal::ParseNamedEnum<AdminRpcMethod>(
-      AdminRpcMethod_descriptor(), name, value);
 }
 enum ELoginError : int {
   USER_NOT_FOUND = 0,
@@ -1730,18 +1659,6 @@ struct is_proto_enum<::NetworkData::RpcMethod> : std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor<::NetworkData::RpcMethod>() {
   return ::NetworkData::RpcMethod_descriptor();
-}
-template <>
-struct is_proto_enum<::NetworkData::RpcResponseMethod> : std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor<::NetworkData::RpcResponseMethod>() {
-  return ::NetworkData::RpcResponseMethod_descriptor();
-}
-template <>
-struct is_proto_enum<::NetworkData::AdminRpcMethod> : std::true_type {};
-template <>
-inline const EnumDescriptor* GetEnumDescriptor<::NetworkData::AdminRpcMethod>() {
-  return ::NetworkData::AdminRpcMethod_descriptor();
 }
 template <>
 struct is_proto_enum<::NetworkData::ELoginError> : std::true_type {};
