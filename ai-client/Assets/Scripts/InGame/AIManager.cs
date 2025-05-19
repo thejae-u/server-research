@@ -17,4 +17,10 @@ public class AIManager : MonoBehaviour
     {
         _networkManager = NetworkManager.Instance;
     }
+    
+    public void MoveTo(Vector3 targetPosition)
+    {
+        Vector3 startPosition = transform.position;
+        transform.position = Vector3.Lerp(startPosition, targetPosition, 0.1f);
+    }
 }

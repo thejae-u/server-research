@@ -32,17 +32,17 @@ namespace NetworkData {
             "BCABKAISCgoCeTIYBSABKAISCgoCejIYBiABKAIifgoJUnBjUGFja2V0EgwK",
             "BHV1aWQYASABKAwSJgoGbWV0aG9kGAIgASgOMhYuTmV0d29ya0RhdGEuUnBj",
             "TWV0aG9kEgwKBGRhdGEYAyABKAwSLQoJdGltZXN0YW1wGAQgASgLMhouZ29v",
-            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcCrvAgoJUnBjTWV0aG9kEggKBE5PTkUQ",
+            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcCrkAgoJUnBjTWV0aG9kEggKBE5PTkUQ",
             "ABIJCgVMT0dJThABEgwKCFJFR0lTVEVSEAISDAoIUkVUUklFVkUQAxIKCgZB",
-            "Q0NFU1MQBBIKCgZSRUpFQ1QQBRIKCgZMT0dPVVQQBhIICgRVVUlEEAcSCAoE",
-            "UElORxAIEggKBFBPTkcQCRIQCgxJTl9HQU1FX05PTkUQZBIICgRNT1ZFEGUS",
-            "CgoGQVRUQUNLEGYSDQoJRFJPUF9JVEVNEGcSDAoIVVNFX0lURU0QaBINCglV",
-            "U0VfU0tJTEwQaRIPCgpTVEFURV9OT05FEMgBEhUKEFNUQVRFX01PVkVfU1RB",
-            "UlQQyQESEwoOU1RBVEVfTU9WRV9FTkQQygESFwoSU1RBVEVfQVRUQUNLX1NU",
-            "QVJUEMsBEhUKEFNUQVRFX0FUVEFDS19FTkQQzAESFQoQUkVNT1RFX01PVkVf",
-            "Q0FMTBD0AxIXChJSRU1PVEVfQVRUQUNLX0NBTEwQ9QMqSAoLRUxvZ2luRXJy",
-            "b3ISEgoOVVNFUl9OT1RfRk9VTkQQABIWChJVU0VSX0FMUkVBRFlfRVhJU1QQ",
-            "ARINCglJTkNPUlJFQ1QQAmIGcHJvdG8z"));
+            "Q0NFU1MQBBIKCgZSRUpFQ1QQBRIKCgZMT0dPVVQQBhIQCgxJTl9HQU1FX05P",
+            "TkUQZBIICgRNT1ZFEGUSCgoGQVRUQUNLEGYSDQoJRFJPUF9JVEVNEGcSDAoI",
+            "VVNFX0lURU0QaBINCglVU0VfU0tJTEwQaRIPCgpTVEFURV9OT05FEMgBEhUK",
+            "EFNUQVRFX01PVkVfU1RBUlQQyQESEwoOU1RBVEVfTU9WRV9FTkQQygESFwoS",
+            "U1RBVEVfQVRUQUNLX1NUQVJUEMsBEhUKEFNUQVRFX0FUVEFDS19FTkQQzAES",
+            "EQoMTkVUV09SS19OT05FEPQDEg0KCFVEUF9QT1JUEPUDEgkKBFVVSUQQ9gMS",
+            "CQoEUElORxD3AxIJCgRQT05HEPgDKkgKC0VMb2dpbkVycm9yEhIKDlVTRVJf",
+            "Tk9UX0ZPVU5EEAASFgoSVVNFUl9BTFJFQURZX0VYSVNUEAESDQoJSU5DT1JS",
+            "RUNUEAJiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::NetworkData.RpcMethod), typeof(global::NetworkData.ELoginError), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -63,13 +63,10 @@ namespace NetworkData {
     [pbr::OriginalName("RETRIEVE")] Retrieve = 3,
     [pbr::OriginalName("ACCESS")] Access = 4,
     [pbr::OriginalName("REJECT")] Reject = 5,
-    [pbr::OriginalName("LOGOUT")] Logout = 6,
-    [pbr::OriginalName("UUID")] Uuid = 7,
-    [pbr::OriginalName("PING")] Ping = 8,
     /// <summary>
     /// Limit DB access to 99
     /// </summary>
-    [pbr::OriginalName("PONG")] Pong = 9,
+    [pbr::OriginalName("LOGOUT")] Logout = 6,
     [pbr::OriginalName("IN_GAME_NONE")] InGameNone = 100,
     [pbr::OriginalName("MOVE")] Move = 101,
     [pbr::OriginalName("ATTACK")] Attack = 102,
@@ -84,8 +81,14 @@ namespace NetworkData {
     [pbr::OriginalName("STATE_MOVE_END")] StateMoveEnd = 202,
     [pbr::OriginalName("STATE_ATTACK_START")] StateAttackStart = 203,
     [pbr::OriginalName("STATE_ATTACK_END")] StateAttackEnd = 204,
-    [pbr::OriginalName("REMOTE_MOVE_CALL")] RemoteMoveCall = 500,
-    [pbr::OriginalName("REMOTE_ATTACK_CALL")] RemoteAttackCall = 501,
+    /// <summary>
+    /// Network Settings
+    /// </summary>
+    [pbr::OriginalName("NETWORK_NONE")] NetworkNone = 500,
+    [pbr::OriginalName("UDP_PORT")] UdpPort = 501,
+    [pbr::OriginalName("UUID")] Uuid = 502,
+    [pbr::OriginalName("PING")] Ping = 503,
+    [pbr::OriginalName("PONG")] Pong = 504,
   }
 
   public enum ELoginError {

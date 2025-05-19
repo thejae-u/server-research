@@ -9,17 +9,20 @@ using Unity.Properties;
 using Random = UnityEngine.Random;
 
 [Serializable, GeneratePropertyBag]
-[NodeDescription(name: "SendPacket", story: "Notify to NetworkManager", category: "Action", id: "35c819287347764da93b47dfce107cbd")]
+[NodeDescription(name: "SendPacket", story: "Notify to NetworkManager And Move [AiManager]", category: "Action", id: "35c819287347764da93b47dfce107cbd")]
 public partial class SendPacketAction : Action
 {
+    [SerializeReference] public BlackboardVariable<AIManager> AiManager;
     private RpcPacket _sendPacket;
-        
+    private Vector3 _targetPosition;
+    
     protected override Status OnStart()
     {
-        var startPosition = 
-            new Vector3(Random.Range(-5, 6), 1, Random.Range(-5, 6)); // Replace with actual start position
+        var startPosition =
+            AiManager.Value.transform.position;
         var targetPosition =
             new Vector3(Random.Range(-5, 6), 1, Random.Range(-5, 6)); // Replace with actual target position
+        _targetPosition = targetPosition;
         
         var positionData = new PositionData
         {
@@ -38,14 +41,13 @@ public partial class SendPacketAction : Action
             Timestamp = Timestamp.FromDateTime(DateTime.UtcNow),
         };
         
-        Debug.Log($"Packet Ready");
         return Status.Running;
     }
 
     protected override Status OnUpdate()
     {
-        _ = NetworkManager.Instance.AsyncWriteRpcPacket(_sendPacket);
-        Debug.Log($"Send Packet");
+        AiManager.Value.MoveTo(_targetPosition);
+        _ = NetworkManager.Instance.AsyncWriteRpcPacket(NetworkManager.Instance.CToken, _sendPacket);
         return Status.Success;
     }
 

@@ -6,6 +6,9 @@ using Cysharp.Threading.Tasks;
 public class SyncManager : Singleton<SyncManager> 
 {
     [SerializeField] private GameObject _syncObjectPrefab;
+    [SerializeField] private GameObject _syncObjectNameTagPrefab;
+    [SerializeField] private Transform _syncObjectCanvas;
+    
     private Dictionary<Guid, GameObject> _syncObjects = new();
 
     private GameObject CreateSyncObject(Guid objectId, Vector3 position) 
@@ -15,6 +18,10 @@ public class SyncManager : Singleton<SyncManager>
         syncObject.transform.SetParent(transform); // Set parent to SyncManager (here)
         syncObject.name = objectId.ToString(); // Set the name to the objectId
         syncObject.GetComponent<SyncObject>().Init(objectId); // Initialize SyncObject
+        
+        // Create the name tag
+        GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
+        nameTag.GetComponent<NameTagController>().Init(objectId, syncObject);
         
         _syncObjects.Add(objectId, syncObject); // Add to dict
 
@@ -31,6 +38,6 @@ public class SyncManager : Singleton<SyncManager>
         
         var syncObjectComponent = syncObject.GetComponent<SyncObject>();
         // Sync position
-        syncObjectComponent.SyncPosition(objectId, startPosition, targetPosition);
+        syncObjectComponent.SyncPosition(objectId, startPosition, targetPosition).Forget();
     }
 }
