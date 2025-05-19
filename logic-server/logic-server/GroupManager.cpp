@@ -12,6 +12,13 @@ GroupManager::GroupManager(const IoContext::strand& strand): _strand(strand)
 
 void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
 {
+    // Send UDP Port
+    if (!newSession->SendUdpPort())
+    {
+        std::cerr << "error: failed to send udp port\n";
+        return;
+    }
+    
     // RTT Check
     const auto rtt = newSession->CheckAndGetRtt();
     if (rtt == INVALID_RTT)
@@ -25,13 +32,13 @@ void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
     // Send Session UUID
     if (!newSession->SendUuidToClient())
     {
-        std::cerr << "failed to send uuid to client\n";
+        std::cerr << "error: failed to send uuid to client\n";
         return;
     }
 
     if (!InsertSessionToGroup(newSession, rtt))
     {
-        std::cerr << "failed to allocate session\n";
+        std::cerr << "error: failed to allocate session\n";
         return;
     }
     
@@ -68,7 +75,7 @@ bool GroupManager::InsertSessionToGroup(const std::shared_ptr<Session>& session,
 
     if (enterGroup == nullptr)
     {
-        std::cerr << "fatal error: enterGroup is nullptr\n";
+        std::cerr << "error: enterGroup is nullptr (rtt " << rtt <<  ")\n";
     }
 
     enterGroup->AddMember(session);
@@ -107,7 +114,6 @@ std::shared_ptr<LockstepGroup> GroupManager::FindGroupByGroupKey(const std::uint
 
 std::shared_ptr<LockstepGroup> GroupManager::CreateNewKeyGroup(const std::uint64_t& groupKey)
 {
-    // Group Key == 0
     _groups[groupKey] = std::map<std::size_t, std::shared_ptr<LockstepGroup>>();
     
     const auto newGroup = std::make_shared<LockstepGroup>(_strand, _uuidGenerator(), groupKey, 0);
