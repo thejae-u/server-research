@@ -81,9 +81,6 @@ enum RpcMethod : int {
   ACCESS = 4,
   REJECT = 5,
   LOGOUT = 6,
-  UUID = 7,
-  PING = 8,
-  PONG = 9,
   IN_GAME_NONE = 100,
   MOVE = 101,
   ATTACK = 102,
@@ -95,8 +92,11 @@ enum RpcMethod : int {
   STATE_MOVE_END = 202,
   STATE_ATTACK_START = 203,
   STATE_ATTACK_END = 204,
-  REMOTE_MOVE_CALL = 500,
-  REMOTE_ATTACK_CALL = 501,
+  NETWORK_NONE = 500,
+  UDP_PORT = 501,
+  UUID = 502,
+  PING = 503,
+  PONG = 504,
   RpcMethod_INT_MIN_SENTINEL_DO_NOT_USE_ =
       std::numeric_limits<::int32_t>::min(),
   RpcMethod_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -106,8 +106,8 @@ enum RpcMethod : int {
 bool RpcMethod_IsValid(int value);
 extern const uint32_t RpcMethod_internal_data_[];
 constexpr RpcMethod RpcMethod_MIN = static_cast<RpcMethod>(0);
-constexpr RpcMethod RpcMethod_MAX = static_cast<RpcMethod>(501);
-constexpr int RpcMethod_ARRAYSIZE = 501 + 1;
+constexpr RpcMethod RpcMethod_MAX = static_cast<RpcMethod>(504);
+constexpr int RpcMethod_ARRAYSIZE = 504 + 1;
 const ::google::protobuf::EnumDescriptor*
 RpcMethod_descriptor();
 template <typename T>

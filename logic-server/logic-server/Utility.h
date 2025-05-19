@@ -54,7 +54,6 @@ namespace Utility
 
     static std::int64_t StopStopwatch(const std::chrono::high_resolution_clock::time_point startTime)
     {
-        std::cout << "RTT Check end\n";
         auto endTime = std::chrono::high_resolution_clock::now();
         return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
     }
@@ -95,8 +94,6 @@ namespace Utility
         case STATE_MOVE_END:
         case STATE_ATTACK_START:
         case STATE_ATTACK_END:
-        case REMOTE_MOVE_CALL:
-        case REMOTE_ATTACK_CALL:
         case NONE:
         case IN_GAME_NONE:
         default:

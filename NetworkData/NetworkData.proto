@@ -44,9 +44,6 @@ enum RpcMethod
   ACCESS = 4;
   REJECT = 5;
   LOGOUT = 6;
-  UUID = 7;
-  PING = 8;
-  PONG = 9;
   // Limit DB access to 99
 
   IN_GAME_NONE = 100;
@@ -63,8 +60,12 @@ enum RpcMethod
   STATE_ATTACK_START = 203;
   STATE_ATTACK_END = 204;
   
-  REMOTE_MOVE_CALL = 500;
-  REMOTE_ATTACK_CALL = 501;
+  // Network Settings
+  NETWORK_NONE = 500;
+  UDP_PORT = 501;
+  UUID = 502;
+  PING = 503;
+  PONG = 504;
 }
 
 enum ELoginError 
