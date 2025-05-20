@@ -131,8 +131,7 @@ bool Session::SendUuidToClient() const
 void Session::Stop()
 {
 	std::cout << to_string(_sessionUuid) << " session stopped\n";
-	_lockstepGroupPtr->RemoveMember(shared_from_this());
-	std::cout << "called end\n";
+	_onStopCallback(shared_from_this());
 }
 
 void Session::SetStopCallback(StopCallback stopCallback)

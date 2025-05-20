@@ -89,6 +89,7 @@ private:
 
     // input buffer by bucket frame
     std::unordered_map<std::size_t, std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>>> _inputBuffer;
+    std::size_t _inputIdCounter = 0;
     
     std::mutex _bufferMutex;
 

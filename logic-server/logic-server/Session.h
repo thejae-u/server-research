@@ -57,6 +57,7 @@ private:
 	boost::asio::steady_timer _pingTimer;
 
 	StopCallback _onStopCallback;
+	
 
 	void SchedulePingTimer();
 	void AsyncSendPingPacket();

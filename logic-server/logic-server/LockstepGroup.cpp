@@ -45,8 +45,6 @@ void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
     std::lock_guard<std::mutex> lock(_memberMutex);
     _members.erase(session);
 
-    std::cout << "remove Complete\n";
-
     // Notify the group manager if the group is empty
     boost::asio::post(_strand.wrap([this]()
     {
@@ -64,10 +62,10 @@ void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcPac
     std::lock_guard<std::mutex> lock(_bufferMutex);
     for (auto& [guid, request] : rpcRequest)
     {
-        auto key = SSessionKey{_currentBucket, guid};
+        auto key = SSessionKey{_inputIdCounter++, guid};
         _inputBuffer[_currentBucket][key] = request;
         
-        std::cout << _groupId << " CollectInput: " << to_string(guid) << ": " << Utility::MethodToString(request->method()) << "\n";
+        std::cout << _groupId << " CollectInput: Session " << to_string(guid) << " - " << Utility::MethodToString(request->method()) << "\n";
     }
 }
 
@@ -113,6 +111,7 @@ void LockstepGroup::Tick()
         ProcessStep();
 
         _currentBucket++;
+        _inputIdCounter = 0;
         
         // Calculate the bucket count
         _inputBuffer.erase(_currentBucket - 1);
