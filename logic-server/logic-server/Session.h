@@ -22,11 +22,14 @@ class Session : public std::enable_shared_from_this<Session>
 {
 public:
 	
-	Session(const IoContext::strand& strand, std::shared_ptr<Server> serverPtr, uuid guid);
+	Session(const IoContext::strand& strand, uuid guid);
 	~Session() = default;
 
 	void Start();
 	void Stop();
+
+	using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
+	void SetStopCallback(StopCallback stopCallback);
 
 	void RpcProcess(RpcPacket packet);
 	tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
@@ -40,10 +43,8 @@ private:
 	using TcpSocket = tcp::socket;
 	using UdpSocket = udp::socket;
 
-	bool _isStopped = false;
 	std::mutex _stopMutex;
 	
-	std::shared_ptr<Server> _serverPtr;
 	IoContext::strand _strand;
 	std::shared_ptr<TcpSocket> _tcpSocketPtr;
 	std::shared_ptr<UdpSocket> _udpSocketPtr;
@@ -54,6 +55,8 @@ private:
 	std::chrono::high_resolution_clock::time_point _lastSendTime;
 	std::uint64_t _lastRtt;
 	boost::asio::steady_timer _pingTimer;
+
+	StopCallback _onStopCallback;
 
 	void SchedulePingTimer();
 	void AsyncSendPingPacket();

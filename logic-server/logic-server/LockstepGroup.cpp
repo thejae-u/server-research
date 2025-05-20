@@ -30,6 +30,11 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
     }
 
     newSession->SetGroup(shared_from_this());
+    newSession->SetStopCallback([this](const std::shared_ptr<Session>& session)
+    {
+       RemoveMember(session); 
+    });
+    
     std::cout << _groupId << ": Added Member\n";
 }
 
@@ -40,14 +45,18 @@ void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
     std::lock_guard<std::mutex> lock(_memberMutex);
     _members.erase(session);
 
+    std::cout << "remove Complete\n";
+
     // Notify the group manager if the group is empty
-    if (!_members.empty())
+    boost::asio::post(_strand.wrap([this]()
     {
-        return;
-    }
+        if (!_members.empty())
+        {
+            return;
+        }
     
-    assert(_notifyEmptyCallback, "NotifyEmptyCallback is not set");
-    _notifyEmptyCallback(shared_from_this());
+        _notifyEmptyCallback(shared_from_this());    
+    }));
 }
 
 void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcPacket>> rpcRequest)
@@ -75,7 +84,6 @@ void LockstepGroup::ProcessStep()
         // Process each packet
         for (auto& member : _members)
         {
-            std::cout << "ProcessStep: " << to_string(guid) << ": " << Utility::MethodToString(packet->method()) << "\n";
             if (member->GetSocket().is_open())
             {
                 if (guid == member->GetSessionUuid())

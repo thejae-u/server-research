@@ -5,9 +5,8 @@
 #include "LockstepGroup.h"
 #include "Utility.h"
 
-Session::Session(const IoContext::strand& strand, std::shared_ptr<Server> serverPtr, const uuid guid)
-	: _serverPtr(std::move(serverPtr)),
-	  _strand(strand),
+Session::Session(const IoContext::strand& strand, const uuid guid)
+	: _strand(strand),
 	  _tcpSocketPtr(std::make_shared<TcpSocket>(strand.context())),
 	  _udpSocketPtr(std::make_shared<UdpSocket>(strand.context(), udp::endpoint(udp::v4(), 0))),
 	  _sessionUuid(guid),
@@ -131,15 +130,14 @@ bool Session::SendUuidToClient() const
 
 void Session::Stop()
 {
-	_isStopped = true;
-
-	_tcpSocketPtr->close();
-	_tcpSocketPtr = nullptr;
-	
-	_udpSocketPtr->close();
-	_udpSocketPtr = nullptr;
-	
 	std::cout << to_string(_sessionUuid) << " session stopped\n";
+	_lockstepGroupPtr->RemoveMember(shared_from_this());
+	std::cout << "called end\n";
+}
+
+void Session::SetStopCallback(StopCallback stopCallback)
+{
+	_onStopCallback = std::move(stopCallback);
 }
 
 void Session::RpcProcess(RpcPacket packet)
@@ -196,8 +194,11 @@ void Session::SchedulePingTimer()
 
 void Session::AsyncSendPingPacket()
 {
-	if (_tcpSocketPtr == nullptr)
-		return;
+	{
+		std::lock_guard<std::mutex> lock(_stopMutex);
+		if (_onStopCallback == nullptr)
+			return;
+	}
 
 	RpcPacket packet;
 	packet.set_method(PING);
@@ -244,24 +245,18 @@ void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet)
 
 void Session::TcpAsyncReadSize()
 {
-	if (_tcpSocketPtr == nullptr)
-		return;
-	
 	std::uint32_t netSize = 0;
 	boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(&netSize, sizeof(netSize)),
 		_strand.wrap([this, netSize](const boost::system::error_code& sizeEc, std::size_t)
 		{
 			if (sizeEc)
 			{
-				if (sizeEc == boost::asio::error::eof || sizeEc == boost::asio::error::connection_reset)
+				if (sizeEc != boost::asio::error::eof && sizeEc != boost::asio::error::connection_reset)
 				{
-					if (!_isStopped)
-						Stop();
-					return;
+					std::cerr << "TCP error Receiving Size: " << sizeEc.message() << "\n";
 				}
 				
-				std::cerr << "error Receiving Size: " << sizeEc.message() << "\n";
-				TcpAsyncReadSize();
+				Stop();
 				return;
 			}
 
@@ -275,9 +270,6 @@ void Session::TcpAsyncReadSize()
 
 void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer)
 {
-	if (_tcpSocketPtr == nullptr)
-		return;
-	
 	boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(*dataBuffer),
 		_strand.wrap([this, dataBuffer](const boost::system::error_code& dataEc, std::size_t)
 		{
@@ -285,14 +277,12 @@ void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuf
 			{
 				if (dataEc == boost::asio::error::eof || dataEc == boost::asio::error::connection_reset)
 				{
-					if (!_isStopped)
-						Stop();
+					Stop();
 					return;
 				}
 
-				std::cerr << "error Receiving Data: " << dataEc.message() << "\n";
+				std::cerr << "TCP error Receiving Data: " << dataEc.message() << "\n";
 				TcpAsyncReadSize();
-
 				return;
 			}
 
@@ -313,24 +303,12 @@ void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuf
 
 void Session::UdpAsyncReadBufferHeader()
 {
-    if (_udpSocketPtr == nullptr)
-        return;
-
     auto headerBuffer = std::make_shared<std::array<char, sizeof(std::uint32_t)>>();
     _udpSocketPtr->async_receive(boost::asio::buffer(*headerBuffer),
         _strand.wrap([this, headerBuffer](const boost::system::error_code& ec, const std::size_t bytesTransferred)
         {
             if (ec)
             {
-                if (ec == boost::asio::error::eof || ec == boost::asio::error::connection_reset)
-                {
-                    if (!_isStopped)
-                        Stop();
-                    return;
-                }
-
-                std::cerr << "Error receiving size: " << ec.message() << "\n";
-                UdpAsyncReadBufferHeader();
                 return;
             }
 
@@ -349,16 +327,13 @@ void Session::UdpAsyncReadBufferHeader()
                 return;
             }
 
-            auto dataBuffer = std::make_shared<std::vector<char>>(dataSize);
+            const auto dataBuffer = std::make_shared<std::vector<char>>(dataSize);
             UdpAsyncReadData(dataBuffer);
         }));
 }
 
 void Session::UdpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer)
 {
-    if (_udpSocketPtr == nullptr)
-        return;
-
     _udpSocketPtr->async_receive(boost::asio::buffer(*dataBuffer),
         _strand.wrap([this, dataBuffer](const boost::system::error_code& ec, const std::size_t bytesTransferred)
         {
@@ -366,12 +341,9 @@ void Session::UdpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuf
             {
                 if (ec == boost::asio::error::eof || ec == boost::asio::error::connection_reset)
                 {
-                    if (!_isStopped)
-                        Stop();
                     return;
                 }
 
-                std::cerr << "Error receiving data: " << ec.message() << "\n";
                 UdpAsyncReadBufferHeader();
                 return;
             }

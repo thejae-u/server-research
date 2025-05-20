@@ -12,7 +12,7 @@ Server::Server(const IoContext::strand& strand, tcp::acceptor& acceptor) : _stra
 void Server::AcceptClientAsync()
 {
 	auto self(shared_from_this());
-	auto newSession = std::make_shared<Session>(_strand, self, _sessionUuidGenerator());
+	auto newSession = std::make_shared<Session>(_strand, _sessionUuidGenerator());
 
 	_acceptor.async_accept(newSession->GetSocket(), _strand.wrap([this, newSession](const boost::system::error_code& ec)
 	{
