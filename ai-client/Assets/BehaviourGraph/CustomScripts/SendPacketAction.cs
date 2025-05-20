@@ -15,9 +15,12 @@ public partial class SendPacketAction : Action
     [SerializeReference] public BlackboardVariable<AIManager> AiManager;
     private RpcPacket _sendPacket;
     private Vector3 _targetPosition;
+    private NetworkManager _networkManager;
     
     protected override Status OnStart()
     {
+        _networkManager = NetworkManager.Instance;
+        
         var startPosition =
             AiManager.Value.transform.position;
         var targetPosition =
@@ -47,7 +50,7 @@ public partial class SendPacketAction : Action
     protected override Status OnUpdate()
     {
         AiManager.Value.MoveTo(_targetPosition);
-        _ = NetworkManager.Instance.AsyncWriteRpcPacket(NetworkManager.Instance.CToken, _sendPacket);
+        _ = NetworkManager.Instance.AsyncWriteRpcPacket(_sendPacket);
         return Status.Success;
     }
 

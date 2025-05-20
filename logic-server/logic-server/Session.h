@@ -2,9 +2,8 @@
 
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/random_generator.hpp>
 #include <memory>
+
 #include "NetworkData.pb.h"
 
 using namespace NetworkData;
@@ -22,7 +21,8 @@ constexpr std::size_t MAX_PACKET_SIZE = 128;
 class Session : public std::enable_shared_from_this<Session>
 {
 public:
-	Session(IoContext::strand& strand, std::shared_ptr<Server> serverPtr, uuid guid);
+	
+	Session(const IoContext::strand& strand, std::shared_ptr<Server> serverPtr, uuid guid);
 	~Session() = default;
 
 	void Start();
@@ -39,22 +39,30 @@ public:
 private:
 	using TcpSocket = tcp::socket;
 	using UdpSocket = udp::socket;
+
+	bool _isStopped = false;
+	std::mutex _stopMutex;
 	
 	std::shared_ptr<Server> _serverPtr;
 	IoContext::strand _strand;
 	std::shared_ptr<TcpSocket> _tcpSocketPtr;
 	std::shared_ptr<UdpSocket> _udpSocketPtr;
 
-	std::vector<char> _receiveBuffer;
-	uint32_t _receiveNetSize;
-	uint32_t _receiveDataSize;
-
 	uuid _sessionUuid;
 	std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
+
+	std::chrono::high_resolution_clock::time_point _lastSendTime;
+	std::uint64_t _lastRtt;
+	boost::asio::steady_timer _pingTimer;
+
+	void SchedulePingTimer();
+	void AsyncSendPingPacket();
+	
+	void ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet);
 	
 	void TcpAsyncReadSize();
-	void TcpAsyncReadData();
+	void TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer);
 
-	void UdpAsyncReadSize();
-	void UdpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer);
+	void UdpAsyncReadBufferHeader();
+	void UdpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer);
 };

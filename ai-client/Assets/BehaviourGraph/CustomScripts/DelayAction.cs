@@ -31,7 +31,7 @@ public partial class DelayAction : Action
 
     protected override Status OnUpdate()
     {
-        if (!_networkManager.IsSendPacketOn)
+        if (!_networkManager.IsSendPacketOn || !_networkManager.IsOnline)
         {
             return Status.Running;
         }
@@ -42,7 +42,6 @@ public partial class DelayAction : Action
             return Status.Running;
         }
         
-        Debug.Log($"Delay Action ended");
         return Status.Success;
     }
 

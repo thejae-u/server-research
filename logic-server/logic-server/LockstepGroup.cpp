@@ -75,6 +75,7 @@ void LockstepGroup::ProcessStep()
         // Process each packet
         for (auto& member : _members)
         {
+            std::cout << "ProcessStep: " << to_string(guid) << ": " << Utility::MethodToString(packet->method()) << "\n";
             if (member->GetSocket().is_open())
             {
                 if (guid == member->GetSessionUuid())
@@ -115,15 +116,17 @@ void LockstepGroup::Tick()
 
 void LockstepGroup::ScheduleNextTick()
 {
-    auto self(shared_from_this());
-    
     // Set the timer for the next tick (input delay)
+    auto self(shared_from_this());
     _timer.expires_after(std::chrono::milliseconds(_fixedDeltaMs));
     _timer.async_wait([self](const boost::system::error_code& ec)
         {
-            if (!ec)
+            if (ec)
             {
-                self->Tick();
+                std::cerr << "ScheduleNextTick failed: " << ec.message() << "\n";
+                return;
             }
+        
+            self->Tick();
         }); 
 }

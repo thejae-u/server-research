@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using UnityEngine;
 using System.Net.Sockets;
 using System.Threading;
@@ -9,15 +10,17 @@ using Google.Protobuf.WellKnownTypes;
 using UnityEditor;
 using Utility;
 
-public class NetworkManager : Singleton<NetworkManager> 
+public class NetworkManager : Singleton<NetworkManager>
 {
+    [SerializeField] private string _serverIp = "127.0.0.1";
     [SerializeField] private NetworkInputAction _inputAction;
     public Guid ConnectedUuid { get; private set; }
     
     private TcpClient _tcpClient;
     private UdpClient _udpClient;
-    private NetworkStream _stream;
-    private int _maxRetries = 3;
+    private IPEndPoint _udpEndPoint;
+    private NetworkStream _tcpStream;
+    private int _maxRetries = 5;
 
     private uint _netSize;
 
@@ -72,10 +75,10 @@ public class NetworkManager : Singleton<NetworkManager>
             return;
         
         Debug.Log($"NetworkManager TryConnectToServer");
-        ConnectToServer(CToken).Forget();
+        ConnectToServer().Forget();
     }
 
-    private async UniTask ConnectToServer(CancellationToken token)
+    private async UniTask ConnectToServer()
     {
         if (IsOnline)
             return;
@@ -89,17 +92,17 @@ public class NetworkManager : Singleton<NetworkManager>
             // RTT packet pre-allocation
             
             
-            await _tcpClient.ConnectAsync("127.0.0.1", 53200);
-            _stream = _tcpClient.GetStream();
+            await _tcpClient.ConnectAsync(_serverIp, 53200);
+            _tcpStream = _tcpClient.GetStream();
             
             // Get Udp Port
-            await AsyncReceiveUdpPort(CToken);
+            await AsyncReceiveUdpPort();
             
             // RTT Check
-            await AsyncPing(CToken);
+            await AsyncPing();
             
             // Receive UUID
-            await AsyncReceiveUuid(CToken);
+            await AsyncReceiveUuid();
             
             IsOnline = true;
         }
@@ -111,7 +114,7 @@ public class NetworkManager : Singleton<NetworkManager>
                     ? $"Retrying connection to server... {_maxRetries} tries left" 
                     : $"Last retrying connection to server...");
                 
-                ConnectToServer(CToken).Forget();
+                ConnectToServer().Forget();
                 return;
             }
             
@@ -123,18 +126,18 @@ public class NetworkManager : Singleton<NetworkManager>
 
         await UniTask.Yield();
 
-        AsyncReadSizeForInGameRpc(CToken).Forget();
+        AsyncReadSizeForInGameRpc().Forget();
         IsTryingToConnect = false;
     }
 
-    private async UniTask AsyncReceiveUdpPort(CancellationToken token)
+    private async UniTask AsyncReceiveUdpPort()
     {
         try
         {
             var udpPortPacketSize = new byte[4];
 
             // Read the size of the incoming data
-            int bytesRead = await _stream.ReadAsync(udpPortPacketSize, 0, udpPortPacketSize.Length, token);
+            int bytesRead = await _tcpStream.ReadAsync(udpPortPacketSize, 0, udpPortPacketSize.Length, CToken);
             if (bytesRead == 0) // EOF connection closed
                 DisconnectFromServer();
 
@@ -146,17 +149,18 @@ public class NetworkManager : Singleton<NetworkManager>
             var dataBuffer = new byte[dataSize];
 
             // Read the rest of the data
-            bytesRead = await _stream.ReadAsync(dataBuffer, 0, dataBuffer.Length, token);
+            bytesRead = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, CToken);
             if (bytesRead == 0) // EOF connection closed
                 DisconnectFromServer();
 
             // Deserialize the data
             RpcPacket udpPortData = ProtoSerializer.DeserializeNetworkData(dataBuffer);
-            var udpPort = BitConverter.ToUInt16(udpPortData.Data.ToByteArray(), 0); // 2 bytes
+            ushort udpPort = Util.ConvertByteStringToUShort(udpPortData.Data);
             Debug.Log($"UDP Port: {udpPort}");
 
-            _udpClient = new UdpClient(udpPort);
-            Debug.Log($"UDP Client Created");
+            _udpClient = new UdpClient();
+            _udpEndPoint = new IPEndPoint(IPAddress.Parse(_serverIp), udpPort);
+            Debug.Log($"Udp Client Created - {_udpEndPoint.Address}:{_udpEndPoint.Port}");
         }
         catch (Exception ex)
         {
@@ -166,14 +170,14 @@ public class NetworkManager : Singleton<NetworkManager>
         await UniTask.Yield();
     }
 
-    private async UniTask AsyncPing(CancellationToken token)
+    private async UniTask AsyncPing()
     {
         try
         {
             var pingPacketSize = new byte[4];
             
             Util.StartStopwatch();
-            int readSize = await _stream.ReadAsync(pingPacketSize, 0, pingPacketSize.Length, token);
+            int readSize = await _tcpStream.ReadAsync(pingPacketSize, 0, pingPacketSize.Length, CToken);
             if (readSize == 0)
             {
                 Debug.Log($"Ping Packet Size is Empty");
@@ -187,7 +191,7 @@ public class NetworkManager : Singleton<NetworkManager>
             
             var dataBuffer = new byte[dataSize];
             // Read the rest of the data
-            readSize = await _stream.ReadAsync(dataBuffer, 0, dataBuffer.Length, token);
+            readSize = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, CToken);
             
             if (readSize == 0) // EOF connection closed
             {
@@ -208,8 +212,8 @@ public class NetworkManager : Singleton<NetworkManager>
                 Array.Reverse(pongSize);
             
             // Send ping packet
-            _stream.Write(pongSize, 0, pongSize.Length);
-            _stream.Write(sendPongPacket, 0, sendPongPacket.Length);
+            await _tcpStream.WriteAsync(pongSize, 0, pongSize.Length);
+            await _tcpStream.WriteAsync(sendPongPacket, 0, sendPongPacket.Length);
             Debug.Log($"Ping RTT checked by client: {Util.EndStopwatch()} ms");
         }
         catch (Exception ex)
@@ -219,14 +223,14 @@ public class NetworkManager : Singleton<NetworkManager>
         }
     }
 
-    private async UniTask AsyncReceiveUuid(CancellationToken token)
+    private async UniTask AsyncReceiveUuid()
     {
         try
         {
             var sizeBuffer = new byte[sizeof(uint)];
 
             // Read the size of the incoming data
-            int bytesRead = await _stream.ReadAsync(sizeBuffer, 0, sizeBuffer.Length, token);
+            int bytesRead = await _tcpStream.ReadAsync(sizeBuffer, 0, sizeBuffer.Length, CToken);
             if (bytesRead == 0) // EOF connection closed
                 DisconnectFromServer();
 
@@ -237,11 +241,11 @@ public class NetworkManager : Singleton<NetworkManager>
             _netSize = BitConverter.ToUInt32(sizeBuffer, 0);
             var dataBuffer = new byte[_netSize];
             
-            bytesRead = await _stream.ReadAsync(dataBuffer, 0, dataBuffer.Length, token);
+            bytesRead = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, CToken);
             if (bytesRead == 0) // EOF connection closed
                 DisconnectFromServer();
             
-            AsyncProcessRpc(CToken, ProtoSerializer.DeserializeNetworkData(dataBuffer)).Forget(); // Process the data asynchronously
+            AsyncProcessRpc(ProtoSerializer.DeserializeNetworkData(dataBuffer)).Forget(); // Process the data asynchronously
         }
         catch (Exception ex)
         {
@@ -258,7 +262,7 @@ public class NetworkManager : Singleton<NetworkManager>
         if (!IsOnline)
             return;
 
-        _stream?.Close();
+        _tcpStream?.Close();
         _tcpClient?.Close();
         IsOnline = false;
         IsSendPacketOn = false;
@@ -266,7 +270,7 @@ public class NetworkManager : Singleton<NetworkManager>
         Debug.Log("disconnected.");
     }
     
-    public async UniTask AsyncWriteRpcPacket(CancellationToken token, RpcPacket data)
+    public async UniTask AsyncWriteRpcPacket(RpcPacket data)
     {
         if (!IsOnline)
             return;
@@ -287,10 +291,10 @@ public class NetworkManager : Singleton<NetworkManager>
                 Array.Reverse(sizeBytes);
 
             // Send size
-            await _stream.WriteAsync(sizeBytes, 0, sizeBytes.Length, token);
+            await _udpClient.SendAsync(sizeBytes, sizeBytes.Length, _udpEndPoint);
 
             // Send data
-            await _stream.WriteAsync(sendData, 0, sendData.Length, token);
+            await _udpClient.SendAsync(sendData, sendData.Length, _udpEndPoint);
             
             Debug.Log($"Sent Rpc Packet To Server {ProtoSerializer.ConvertTimestampToString(data.Timestamp)}" +
                       $" {ProtoSerializer.ConvertUuidToGuid(data.Uuid).ToString()} {data.Method}");
@@ -302,7 +306,7 @@ public class NetworkManager : Singleton<NetworkManager>
     }
 
 
-    private async UniTask AsyncReadSizeForInGameRpc(CancellationToken token)
+    private async UniTask AsyncReadSizeForInGameRpc()
     {
         if (!IsOnline)
             return;
@@ -312,7 +316,8 @@ public class NetworkManager : Singleton<NetworkManager>
             var sizeBuffer = new byte[sizeof(uint)];
 
             // Read the size of the incoming data
-            int bytesRead = await _stream.ReadAsync(sizeBuffer, 0, sizeBuffer.Length, token);
+            int bytesRead = await _tcpStream.ReadAsync(sizeBuffer, 0, sizeBuffer.Length, CToken);
+            
             if (bytesRead == 0) // EOF connection closed
                 DisconnectFromServer();
 
@@ -342,7 +347,7 @@ public class NetworkManager : Singleton<NetworkManager>
         try
         {
             // Read the data from the stream
-            int bytesRead = _stream.Read(dataBuffer, 0, dataBuffer.Length);
+            int bytesRead = _tcpStream.Read(dataBuffer, 0, dataBuffer.Length);
             if (bytesRead == 0) // EOF connection closed
             {
                 Debug.Log($"ReadDataForInGameRpc - EOF connection closed");
@@ -351,8 +356,8 @@ public class NetworkManager : Singleton<NetworkManager>
 
             // Deserialize the data
             RpcPacket data = ProtoSerializer.DeserializeNetworkData(dataBuffer);
-            AsyncProcessRpc(CToken, data).Forget(); // Process the data asynchronously
-            AsyncReadSizeForInGameRpc(CToken).Forget();
+            AsyncProcessRpc(data).Forget(); // Process the data asynchronously
+            AsyncReadSizeForInGameRpc().Forget();
         }
         catch (Exception ex)
         {
@@ -360,7 +365,7 @@ public class NetworkManager : Singleton<NetworkManager>
         }
     }
     
-    private async UniTask AsyncProcessRpc(CancellationToken token, RpcPacket data)
+    private async UniTask AsyncProcessRpc(RpcPacket data)
     {
         switch (data.Method)
         {

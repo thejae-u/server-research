@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using Google.Protobuf;
 
 namespace Utility
 {
@@ -23,6 +24,23 @@ namespace Utility
             _stopwatch.Stop();
             TimeSpan ts = _stopwatch.Elapsed;
             return _stopwatch.ElapsedMilliseconds.ToString();
+        }
+
+        public static ushort ConvertByteStringToUShort(ByteString byteString)
+        {
+            byte[] bytesArray = byteString.ToByteArray();
+            
+            if(!BitConverter.IsLittleEndian)
+                Array.Reverse(bytesArray);
+
+            string portString = System.Text.Encoding.ASCII.GetString(bytesArray);
+            
+            if (!ushort.TryParse(portString, out ushort port))
+            {
+                throw new InvalidOperationException("Invalid port format");
+            }
+
+            return port;
         }
     }
 }
