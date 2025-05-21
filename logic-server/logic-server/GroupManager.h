@@ -5,6 +5,8 @@
 #include <map>
 #include <set>
 #include <mutex>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -20,15 +22,17 @@ using namespace boost::uuids;
 class GroupManager
 {
 public:
-    explicit GroupManager(const IoContext::strand& strand);
+    GroupManager(const IoContext::strand& strand, const std::shared_ptr<random_generator>& uuidGenerator);
     void AddSession(const std::shared_ptr<Session>& newSession);
     void RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyGroup);
 
 private:
     IoContext::strand _strand;
-    random_generator _uuidGenerator;
+    std::shared_ptr<random_generator> _uuidGenerator;
 
-    std::map<std::uint64_t, std::map<std::size_t, std::shared_ptr<LockstepGroup>>> _groups;
+    const std::int64_t _invalidRtt = -1;
+
+    std::map<uuid, std::shared_ptr<LockstepGroup>> _groups;
     std::mutex _groupMutex;
     
     bool InsertSessionToGroup(const std::shared_ptr<Session>& session, const int64_t& rtt);

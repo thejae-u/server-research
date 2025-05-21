@@ -3,6 +3,8 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/random_generator.hpp>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 #include <mutex>
 #include <memory>
@@ -21,15 +23,18 @@ class LockstepGroup;
 class Server : public std::enable_shared_from_this<Server>
 {
 public:
-	Server(const IoContext::strand& strand, tcp::acceptor& acceptor);
+	Server(const IoContext::strand& strand, const IoContext::strand& rpcStrand, tcp::acceptor& acceptor);
 	~Server() = default;
 	
 	void AcceptClientAsync();
 
 private:
 	IoContext::strand _strand;
+	IoContext::strand _rpcStrand;
 	tcp::acceptor& _acceptor;
 
 	std::unique_ptr<GroupManager> _groupManager;
-	boost::uuids::random_generator_mt19937 _sessionUuidGenerator;
+	std::shared_ptr<random_generator> _uuidGenerator;
+
+	void InitSessionNetwork(const std::shared_ptr<Session>& newSession) const;
 };

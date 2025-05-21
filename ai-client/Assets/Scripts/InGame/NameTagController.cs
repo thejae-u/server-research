@@ -43,6 +43,11 @@ public class NameTagController : MonoBehaviour
 
     private bool IsVisible()
     {
+        if (!_syncObject)
+        {
+            Destroy(gameObject);
+        }
+        
         Vector3 viewportPoint = _camera.WorldToViewportPoint(_syncObjectTransform.position);
         
         return viewportPoint.x is > 0.0f and < 1.0f 

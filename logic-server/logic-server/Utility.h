@@ -6,16 +6,6 @@ using namespace NetworkData;
 
 namespace Utility
 {
-    static std::string PositionDataToString(const PositionData& positionData)
-    {
-        return std::to_string(positionData.x1()) + " "
-            + std::to_string(positionData.y1()) + " "
-            + std::to_string(positionData.z1()) + " "
-            + std::to_string(positionData.x2()) + " "
-            + std::to_string(positionData.y2()) + " "
-            + std::to_string(positionData.z2()) + " ";
-    }
-
     static std::string GuidToBytes(boost::uuids::uuid uuid)
     {
         std::string bytes(uuid.begin(), uuid.end());
@@ -77,6 +67,10 @@ namespace Utility
             
         case MOVE:
             result = "MOVE";
+            break;
+
+        case PACKET_COUNT:
+            result = "PACKET_COUNT";
             break;
         
         case LOGIN:

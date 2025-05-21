@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using NetworkData;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
@@ -13,7 +14,7 @@ public class ProtoSerializer
 
     public static RpcPacket DeserializeNetworkData(byte[] data)
     {
-        return RpcPacket.Parser.ParseFrom(data);
+        return data.TakeWhile(c => c == 0).Any() ? null : RpcPacket.Parser.ParseFrom(data);
     }
 
     public static Guid ConvertUuidToGuid(ByteString uuid)

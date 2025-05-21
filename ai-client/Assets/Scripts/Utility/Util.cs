@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Net;
 using Google.Protobuf;
 
 namespace Utility
@@ -41,6 +42,12 @@ namespace Utility
             }
 
             return port;
+        }
+        
+        public static ByteString ConvertUShortToByteString(ushort port)
+        {
+            byte[] bytesArray = BitConverter.GetBytes(port);
+            return ByteString.CopyFrom(bytesArray);
         }
     }
 }

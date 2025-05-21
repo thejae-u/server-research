@@ -1,11 +1,16 @@
 ﻿#include "LockstepGroup.h"
 
+#include <utility>
+
 #include "Session.h"
 #include "Utility.h"
+#include "Scheduler.h"
 
-LockstepGroup::LockstepGroup(const IoContext::strand& strand, const uuid groupId, const std::uint64_t groupRttKey, const std::size_t groupNumber)
-    : _groupId(groupId), _groupRttKey(groupRttKey), _groupNumber(groupNumber), _strand(strand), _timer(strand.context())
+LockstepGroup::LockstepGroup(const IoContext::strand& strand, const uuid groupId)
+    : _groupId(groupId), _strand(strand)
 {
+    _fixedDeltaMs = 33;
+    _tickTimer = std::make_unique<Scheduler>(_strand.context(), std::chrono::milliseconds(_fixedDeltaMs), [this]() { Tick(); });
 }
 
 void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallback)
@@ -16,7 +21,13 @@ void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallba
 void LockstepGroup::Start()
 {
     _isRunning = true;
-    Tick();
+    _tickTimer->Start();
+}
+
+void LockstepGroup::Stop()
+{
+    _tickTimer->Stop();
+    _notifyEmptyCallback(shared_from_this());
 }
 
 void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
@@ -25,7 +36,7 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
         std::lock_guard<std::mutex> lock(_memberMutex);
         if (const auto [it, success] = _members.insert(newSession); !success)
         {
-            std::cerr << "Failed to add member\n";
+            SPDLOG_ERROR("{} : Failed to add member to group {}", to_string(newSession->GetSessionUuid()), to_string(_groupId));
         }
     }
 
@@ -34,106 +45,109 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
     {
        RemoveMember(session); 
     });
+
+    newSession->SetCollectInputAction([this](const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest)
+    {
+        CollectInput(rpcRequest);
+    });
     
-    std::cout << _groupId << ": Added Member\n";
+    SPDLOG_INFO("{} : Added member {}", to_string(_groupId), to_string(newSession->GetSessionUuid()));
 }
 
 void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
-    std::cout << session->GetSessionUuid() << ": Removed from "<< _groupId << "\n";
-    
-    std::lock_guard<std::mutex> lock(_memberMutex);
-    _members.erase(session);
+    SPDLOG_INFO("{} : Removed from {}", to_string(session->GetSessionUuid()), to_string(_groupId));
 
-    // Notify the group manager if the group is empty
-    boost::asio::post(_strand.wrap([this]()
     {
+        std::lock_guard<std::mutex> lock(_memberMutex);
+        _members.erase(session);
+        
         if (!_members.empty())
         {
             return;
         }
-    
-        _notifyEmptyCallback(shared_from_this());    
-    }));
+
+        Stop();
+    }
 }
 
-void LockstepGroup::CollectInput(std::unordered_map<uuid, std::shared_ptr<RpcPacket>> rpcRequest)
+void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest)
 {
-    std::lock_guard<std::mutex> lock(_bufferMutex);
-    for (auto& [guid, request] : rpcRequest)
+    auto [guid, request] = *rpcRequest;
+
+    SSessionKey key;
     {
-        auto key = SSessionKey{_inputIdCounter++, guid};
-        _inputBuffer[_currentBucket][key] = request;
-        
-        std::cout << _groupId << " CollectInput: Session " << to_string(guid) << " - " << Utility::MethodToString(request->method()) << "\n";
+        std::lock_guard<std::mutex> inputCounterLock(_inputIdCounterMutex);
+        key = SSessionKey{_inputIdCounter++, guid};
     }
+
+    {
+        std::lock_guard<std::mutex> lock(_bufferMutex);
+        _inputBuffer[_currentBucket][key] = request;
+    }
+        
+    // SPDLOG_INFO("{} CollectInput: Session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::ProcessStep()
 {
     // _inputBuffer is must locked by Tick()
     // Process the input buffer for the current frame
-    auto& input = _inputBuffer[_currentBucket];
-
-    for (auto& [key, packet] : input)
+    std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> input;
+    
     {
-        auto [frame, guid] = key;
-        
-        // Process each packet
-        for (auto& member : _members)
-        {
-            if (member->GetSocket().is_open())
-            {
-                if (guid == member->GetSessionUuid())
-                    continue;
-                
-                member->RpcProcess(*packet);
-            }
-        }
+        std::lock_guard<std::mutex> lock(_bufferMutex);
+        input = _inputBuffer[_currentBucket];
     }
+
+    {
+        std::lock_guard<std::mutex> memberLock(_memberMutex);
+        for (auto& [key, packet] : input)
+        {
+            // Process each packet
+            for (auto& member : _members)
+            {
+                // Lockstep is all members must process the same input
+                if (member->GetSocket().is_open())
+                {
+                    member->ProcessRpc(packet);
+                }
+            }
+        }    
+    }
+    
 }
 
 void LockstepGroup::Tick()
 {
-    {
-        std::lock_guard<std::mutex> lock(_bufferMutex);
-        if (!_isRunning)
-            return;
+    if (!_isRunning)
+        return;
 
+    {
         std::lock_guard<std::mutex> memberLock(_memberMutex);
         if (_members.empty())
         {
-            ScheduleNextTick();
             return;
         }
+    }
     
-        // Process current frame
-        ProcessStep();
+    ProcessStep();
 
+    {
+        std::lock_guard<std::mutex> lock(_bucketMutex);
         _currentBucket++;
-        _inputIdCounter = 0;
-        
-        // Calculate the bucket count
-        _inputBuffer.erase(_currentBucket - 1);
     }
 
-    // Schedule the next tick
-    ScheduleNextTick();
-}
+    {
+        std::lock_guard<std::mutex> lock(_inputIdCounterMutex);
+        _inputIdCounter = 0;
+    }
 
-void LockstepGroup::ScheduleNextTick()
-{
-    // Set the timer for the next tick (input delay)
-    auto self(shared_from_this());
-    _timer.expires_after(std::chrono::milliseconds(_fixedDeltaMs));
-    _timer.async_wait([self](const boost::system::error_code& ec)
-        {
-            if (ec)
-            {
-                std::cerr << "ScheduleNextTick failed: " << ec.message() << "\n";
-                return;
-            }
-        
-            self->Tick();
-        }); 
+    {
+        std::lock_guard<std::mutex> lock(_bufferMutex);
+
+        // remain the 5 buckets of input buffer
+        if (const std::size_t clearBucket = _currentBucket - 6; _inputBuffer.find(clearBucket) != _inputBuffer.end())
+            _inputBuffer.erase(clearBucket);
+    }
 }

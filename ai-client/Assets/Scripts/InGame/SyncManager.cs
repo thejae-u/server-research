@@ -9,7 +9,32 @@ public class SyncManager : Singleton<SyncManager>
     [SerializeField] private GameObject _syncObjectNameTagPrefab;
     [SerializeField] private Transform _syncObjectCanvas;
     
+    private NetworkManager _networkManager;
+    
     private Dictionary<Guid, GameObject> _syncObjects = new();
+
+    private void OnEnable()
+    {
+        NetworkManager.Instance.disconnectAction += OnDisconnected;
+    }
+    
+    private void OnDisable()
+    {
+    }
+
+    private void Start()
+    {
+        _networkManager = NetworkManager.Instance;
+    }
+
+    private void OnDisconnected()
+    {
+        // all sync objects should be removed
+        foreach (GameObject syncObject in _syncObjects.Values)
+        {
+            Destroy(syncObject);
+        }
+    }
 
     private GameObject CreateSyncObject(Guid objectId, Vector3 position) 
     {
@@ -30,6 +55,10 @@ public class SyncManager : Singleton<SyncManager>
 
     public void SyncObjectPosition(Guid objectId, Vector3 startPosition, Vector3 targetPosition)
     {
+        // self packet check and return -> TODO : interporlation first move to sync with server
+        if (objectId == _networkManager.ConnectedUuid)
+            return;
+        
         if (!_syncObjects.TryGetValue(objectId, out GameObject syncObject))
         {
             // If the object doesn't exist, create it
