@@ -230,7 +230,7 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "(\002\022\n\n\002z2\030\006 \001(\002\"~\n\tRpcPacket\022\014\n\004uuid\030\001 \001("
     "\014\022&\n\006method\030\002 \001(\0162\026.NetworkData.RpcMetho"
     "d\022\014\n\004data\030\003 \001(\014\022-\n\ttimestamp\030\004 \001(\0132\032.goo"
-    "gle.protobuf.Timestamp*\344\002\n\tRpcMethod\022\010\n\004"
+    "gle.protobuf.Timestamp*\367\002\n\tRpcMethod\022\010\n\004"
     "NONE\020\000\022\t\n\005LOGIN\020\001\022\014\n\010REGISTER\020\002\022\014\n\010RETRI"
     "EVE\020\003\022\n\n\006ACCESS\020\004\022\n\n\006REJECT\020\005\022\n\n\006LOGOUT\020"
     "\006\022\020\n\014IN_GAME_NONE\020d\022\010\n\004MOVE\020e\022\n\n\006ATTACK\020"
@@ -239,9 +239,10 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "RT\020\311\001\022\023\n\016STATE_MOVE_END\020\312\001\022\027\n\022STATE_ATTA"
     "CK_START\020\313\001\022\025\n\020STATE_ATTACK_END\020\314\001\022\021\n\014NE"
     "TWORK_NONE\020\364\003\022\r\n\010UDP_PORT\020\365\003\022\t\n\004UUID\020\366\003\022"
-    "\t\n\004PING\020\367\003\022\t\n\004PONG\020\370\003*H\n\013ELoginError\022\022\n\016"
-    "USER_NOT_FOUND\020\000\022\026\n\022USER_ALREADY_EXIST\020\001"
-    "\022\r\n\tINCORRECT\020\002b\006proto3"
+    "\t\n\004PING\020\367\003\022\t\n\004PONG\020\370\003\022\021\n\014PACKET_COUNT\020\371\003"
+    "*H\n\013ELoginError\022\022\n\016USER_NOT_FOUND\020\000\022\026\n\022U"
+    "SER_ALREADY_EXIST\020\001\022\r\n\tINCORRECT\020\002b\006prot"
+    "o3"
 };
 static const ::_pbi::DescriptorTable* const descriptor_table_NetworkData_2eproto_deps[1] =
     {
@@ -251,7 +252,7 @@ static ::absl::once_flag descriptor_table_NetworkData_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2eproto = {
     false,
     false,
-    823,
+    842,
     descriptor_table_protodef_NetworkData_2eproto,
     "NetworkData.proto",
     &descriptor_table_NetworkData_2eproto_once,
@@ -270,7 +271,7 @@ const ::google::protobuf::EnumDescriptor* RpcMethod_descriptor() {
   return file_level_enum_descriptors_NetworkData_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t RpcMethod_internal_data_[] = {
-    458752u, 327904u, 0u, 0u, 3758096384u, 7u, 0u, 0u, 62u, 503u, 501u, 504u, 500u, 502u, };
+    458752u, 393440u, 0u, 0u, 3758096384u, 7u, 0u, 0u, 62u, 503u, 501u, 505u, 500u, 502u, 504u, };
 bool RpcMethod_IsValid(int value) {
   return ::_pbi::ValidateEnum(value, RpcMethod_internal_data_);
 }

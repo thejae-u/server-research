@@ -66,6 +66,7 @@ enum RpcMethod
   UUID = 502;
   PING = 503;
   PONG = 504;
+  PACKET_COUNT = 505;
 }
 
 enum ELoginError 

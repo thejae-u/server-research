@@ -32,7 +32,7 @@ namespace NetworkData {
             "BCABKAISCgoCeTIYBSABKAISCgoCejIYBiABKAIifgoJUnBjUGFja2V0EgwK",
             "BHV1aWQYASABKAwSJgoGbWV0aG9kGAIgASgOMhYuTmV0d29ya0RhdGEuUnBj",
             "TWV0aG9kEgwKBGRhdGEYAyABKAwSLQoJdGltZXN0YW1wGAQgASgLMhouZ29v",
-            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcCrkAgoJUnBjTWV0aG9kEggKBE5PTkUQ",
+            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcCr3AgoJUnBjTWV0aG9kEggKBE5PTkUQ",
             "ABIJCgVMT0dJThABEgwKCFJFR0lTVEVSEAISDAoIUkVUUklFVkUQAxIKCgZB",
             "Q0NFU1MQBBIKCgZSRUpFQ1QQBRIKCgZMT0dPVVQQBhIQCgxJTl9HQU1FX05P",
             "TkUQZBIICgRNT1ZFEGUSCgoGQVRUQUNLEGYSDQoJRFJPUF9JVEVNEGcSDAoI",
@@ -40,9 +40,9 @@ namespace NetworkData {
             "EFNUQVRFX01PVkVfU1RBUlQQyQESEwoOU1RBVEVfTU9WRV9FTkQQygESFwoS",
             "U1RBVEVfQVRUQUNLX1NUQVJUEMsBEhUKEFNUQVRFX0FUVEFDS19FTkQQzAES",
             "EQoMTkVUV09SS19OT05FEPQDEg0KCFVEUF9QT1JUEPUDEgkKBFVVSUQQ9gMS",
-            "CQoEUElORxD3AxIJCgRQT05HEPgDKkgKC0VMb2dpbkVycm9yEhIKDlVTRVJf",
-            "Tk9UX0ZPVU5EEAASFgoSVVNFUl9BTFJFQURZX0VYSVNUEAESDQoJSU5DT1JS",
-            "RUNUEAJiBnByb3RvMw=="));
+            "CQoEUElORxD3AxIJCgRQT05HEPgDEhEKDFBBQ0tFVF9DT1VOVBD5AypICgtF",
+            "TG9naW5FcnJvchISCg5VU0VSX05PVF9GT1VORBAAEhYKElVTRVJfQUxSRUFE",
+            "WV9FWElTVBABEg0KCUlOQ09SUkVDVBACYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::NetworkData.RpcMethod), typeof(global::NetworkData.ELoginError), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -89,6 +89,7 @@ namespace NetworkData {
     [pbr::OriginalName("UUID")] Uuid = 502,
     [pbr::OriginalName("PING")] Ping = 503,
     [pbr::OriginalName("PONG")] Pong = 504,
+    [pbr::OriginalName("PACKET_COUNT")] PacketCount = 505,
   }
 
   public enum ELoginError {
