@@ -107,9 +107,6 @@ public class NetworkManager : Singleton<NetworkManager>
             // Get Udp Port
             await AsyncExchangeUdpPort();
             
-            // RTT Check
-            await AsyncPing();
-            
             // Receive UUID
             await AsyncReceiveUuid();
             
@@ -211,59 +208,6 @@ public class NetworkManager : Singleton<NetworkManager>
         await UniTask.Yield();
     }
 
-    private async UniTask AsyncPing()
-    {
-        try
-        {
-            var pingPacketSize = new byte[4];
-            
-            Util.StartStopwatch();
-            int readSize = await _tcpStream.ReadAsync(pingPacketSize, 0, pingPacketSize.Length, CToken);
-            if (readSize == 0)
-            {
-                Debug.Log($"Ping Packet Size is Empty");
-                return;
-            }
-            
-            // Convert the size from bytes to uint
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(pingPacketSize);
-            var dataSize = BitConverter.ToUInt32(pingPacketSize, 0);
-            
-            var dataBuffer = new byte[dataSize];
-            // Read the rest of the data
-            readSize = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, CToken);
-            
-            if (readSize == 0) // EOF connection closed
-            {
-                Debug.Log($"Ping Packet is Empty");
-                return;
-            }
-            
-            var pongPacket = new RpcPacket
-            {
-                Method = RpcMethod.Pong,
-            };
-
-            byte[] sendPongPacket = pongPacket.ToByteArray();
-            byte[] pongSize = BitConverter.GetBytes(sendPongPacket.Length);
-            
-            // Convert to little-endian if necessary
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(pongSize);
-            
-            // Send ping packet
-            await _tcpStream.WriteAsync(pongSize, 0, pongSize.Length);
-            await _tcpStream.WriteAsync(sendPongPacket, 0, sendPongPacket.Length);
-            Debug.Log($"Ping RTT checked by client: {Util.EndStopwatch()} ms");
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Ping failed: {ex.Message}");
-            DisconnectFromServer();
-        }
-    }
-
     private async UniTask AsyncReceiveUuid()
     {
         try
@@ -285,8 +229,9 @@ public class NetworkManager : Singleton<NetworkManager>
             bytesRead = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, CToken);
             if (bytesRead == 0) // EOF connection closed
                 DisconnectFromServer();
-            
-            AsyncProcessRpc(ProtoSerializer.DeserializeNetworkData(dataBuffer)).Forget(); // Process the data asynchronously
+
+            await AsyncProcessRpc(ProtoSerializer.DeserializeNetworkData(dataBuffer));
+            Debug.Log($"Uuid received: {ConnectedUuid.ToString()}");
         }
         catch (Exception ex)
         {
@@ -365,8 +310,6 @@ public class NetworkManager : Singleton<NetworkManager>
             
             await _tcpStream.WriteAsync(packetSize, 0, packetSize.Length, CToken);
             await _tcpStream.WriteAsync(sendPacket, 0, sendPacket.Length, CToken);
-
-            Debug.Log($"Sent Tcp Packet to Server: {data.Method}");
         }
         catch (Exception e)
         {
@@ -374,19 +317,6 @@ public class NetworkManager : Singleton<NetworkManager>
         }
     }
     
-    /*private async UniTask<int> ReadExactAsync(NetworkStream stream, byte[] buffer, int offset, int count, CancellationToken token)
-    {
-        int totalRead = 0;
-        while (totalRead < count)
-        {
-            int read = await stream.ReadAsync(buffer, offset + totalRead, count - totalRead, token);
-            if (read == 0)
-                break;
-            totalRead += read;
-        }
-        return totalRead;
-    }*/
-
     private async UniTask TcpAsyncReadData()
     {
         try
@@ -395,7 +325,6 @@ public class NetworkManager : Singleton<NetworkManager>
             var sizeBuffer = new byte[sizeof(uint)]; // 4 bytes
             
             int bytesRead = await _tcpStream.ReadAsync(sizeBuffer, 0, sizeBuffer.Length, CToken);
-            Debug.Log($"TcpAsyncReadData - bytesRead: {bytesRead}");
             if (bytesRead == 0) // EOF connection closed
                 DisconnectFromServer();
             
@@ -408,28 +337,20 @@ public class NetworkManager : Singleton<NetworkManager>
             
             // Read the rest of the data
             bytesRead = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, CToken);
-            Debug.Log($"TcpAsyncReadData - netSize: {netSize}, bytesRead: {bytesRead}");
             
             if (bytesRead == 0) // EOF connection closed
                 DisconnectFromServer();
 
             if (netSize > 128)
             {
-                Debug.Log($"too large data received - netSize: {netSize}, bytesRead: {bytesRead}");
                 TcpAsyncReadData().Forget(); // Read the next data
                 return;
             }
             
-            Debug.Log($"TcpAsyncReadData - Read Data Size: {dataBuffer.Length}, Data: {BitConverter.ToString(dataBuffer)}");
-            
             // Deserialize the data
             RpcPacket data = ProtoSerializer.DeserializeNetworkData(dataBuffer);
 
-            if (data is not null)
-                AsyncProcessRpc(data).Forget(); // Process the data asynchronously
-            else
-                Debug.LogError($"TcpAsyncReadData - Received null data");
-            
+            AsyncProcessRpc(data).Forget(); // Process the data asynchronously
             TcpAsyncReadData().Forget(); // Read the next data
         }
         catch (Exception ex)
@@ -501,46 +422,6 @@ public class NetworkManager : Singleton<NetworkManager>
                 AsyncWriteByTcp(pongPacket).Forget();
                 break;
             
-            case RpcMethod.PacketCount:
-                // serialize the data and send it to the server
-                uint sentPacketCache;
-                uint receivedPacketCache;
-                
-                lock (_sentPacketLock)
-                {
-                    sentPacketCache = _sentPacketCount;
-                }
-
-                lock (_receivedPacketLock)
-                {
-                    receivedPacketCache = _receivedPacketCount;
-                }
-                
-                Debug.Log($"Packet Count - Sent: {sentPacketCache}, Received: {receivedPacketCache}");
-
-                byte[] sentCountData = BitConverter.GetBytes(sentPacketCache);
-                byte[] receivedCountData = BitConverter.GetBytes(receivedPacketCache);
-                
-                var packetCountDataBuffer = new byte[sentCountData.Length + receivedCountData.Length];
-                Buffer.BlockCopy(sentCountData, 0, packetCountDataBuffer, 0, sentCountData.Length);
-                Buffer.BlockCopy(receivedCountData, 0, packetCountDataBuffer, sentCountData.Length, receivedCountData.Length);
-                
-                Debug.Log($"Packet Count Data Before: {BitConverter.ToString(packetCountDataBuffer)}");
-                
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(packetCountDataBuffer);
-                
-                Debug.Log($"Packet Count Data After: {BitConverter.ToString(packetCountDataBuffer)}");
-                
-                var packetCountData = new RpcPacket 
-                {
-                    Method = RpcMethod.PacketCount,
-                    Uuid = ProtoSerializer.SerializeUuid(ConnectedUuid),
-                    Data = ByteString.CopyFrom(packetCountDataBuffer)
-                };
-                
-                AsyncWriteByTcp(packetCountData).Forget();
-                break;
             
             case RpcMethod.Move:
                 // Deserialize the data
@@ -553,6 +434,7 @@ public class NetworkManager : Singleton<NetworkManager>
                 SyncManager.Instance.SyncObjectPosition(ProtoSerializer.ConvertUuidToGuid(data.Uuid), startPosition, targetPosition);
                 break;
             
+            case RpcMethod.PacketCount:
             case RpcMethod.Attack:
             case RpcMethod.DropItem:
             case RpcMethod.UseItem:
