@@ -253,13 +253,15 @@ void Session::UdpAsyncRead()
 	auto self(shared_from_this());
 	
 	// max size buffer for udp packet
-    auto buffer = std::make_shared<std::vector<char>>(MAX_PACKET_SIZE, 0);
+	const auto buf = std::make_shared<std::string>();
+	buf->resize(MAX_PACKET_SIZE);
+	
     const auto senderEndpoint = std::make_shared<udp::endpoint>();
 	auto func = std::make_shared<std::string>(__func__);
 
     _udpSocketPtr->async_receive_from(
-        boost::asio::buffer(*buffer), *senderEndpoint,
-        _rpcStrand.wrap([self, buffer, func](const boost::system::error_code& ec, const std::size_t bytesRead)
+        boost::asio::buffer(*buf), *senderEndpoint,
+        _rpcStrand.wrap([self, buf, func](const boost::system::error_code& ec, const std::size_t bytesRead)
         {
             if (ec)
             {
@@ -270,8 +272,6 @@ void Session::UdpAsyncRead()
                 return;
             }
 
-        	SPDLOG_INFO("{} received bytes on buffer : {}", to_string(self->_sessionUuid), bytesRead);
-
             if (bytesRead < sizeof(std::uint16_t))
             {
             	SPDLOG_ERROR("{} {} : Invalid packet received (bytes read under 2bytes)", *func, to_string(self->_sessionUuid));
@@ -279,7 +279,7 @@ void Session::UdpAsyncRead()
                 return;
             }
 
-        	if (buffer->data() == nullptr)
+        	if (buf->data() == nullptr)
         	{
         		SPDLOG_ERROR("{} {} : Invalid packet received (buffer->data() is null)", *func, to_string(self->_sessionUuid));
         		self->UdpAsyncRead();
@@ -288,7 +288,7 @@ void Session::UdpAsyncRead()
 
             // payload size
             std::uint16_t payloadSize = 0;
-            std::memcpy(&payloadSize, buffer->data(), sizeof(std::uint16_t)); // Access Violation reading location exception 
+            std::memcpy(&payloadSize, buf->data(), sizeof(std::uint16_t)); // Access Violation reading location exception 
             payloadSize = ntohs(payloadSize);
 
             if (payloadSize == 0 || payloadSize + sizeof(std::uint16_t) > bytesRead)
@@ -299,7 +299,7 @@ void Session::UdpAsyncRead()
             }
 
             RpcPacket packet;
-            if (!packet.ParseFromArray(buffer->data() + sizeof(std::uint16_t), payloadSize))
+            if (!packet.ParseFromArray(buf->data() + sizeof(std::uint16_t), payloadSize))
             {
             	SPDLOG_ERROR("{} {} : Error Parsing RpcPacket", *func, to_string(self->_sessionUuid));
                 self->UdpAsyncRead();
