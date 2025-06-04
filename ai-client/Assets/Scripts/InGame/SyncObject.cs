@@ -8,10 +8,19 @@ public class SyncObject : MonoBehaviour
 {
     // Several Sync Data can be added to the SyncObject
     public Guid ObjectId { get; private set; }
+    private NetworkManager _networkManager;
+    private MeshRenderer _meshRenderer;
 
     public void Init(Guid objectId)
     {
         ObjectId = objectId;
+        _meshRenderer = GetComponent<MeshRenderer>();
+        _networkManager = NetworkManager.Instance;
+
+        if (ObjectId == _networkManager.ConnectedUuid)
+        {
+            _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
+        }
     }
 
     public async UniTask SyncPosition(Guid instanceGuid, MoveData moveData)

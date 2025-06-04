@@ -833,7 +833,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerMoveActions: {fileID: 11400000, guid: 0a64cd44c95d6de44ace875efaa6f8dc, type: 2}
-  _moveSpeed: 5
+  _moveSpeed: 10
   _movePacketSendInterval: 33
 --- !u!114 &1070463410
 MonoBehaviour:

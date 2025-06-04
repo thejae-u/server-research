@@ -47,6 +47,9 @@ public class NameTagController : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        if (ObjectId == NetworkManager.Instance.ConnectedUuid)
+            return false;
         
         Vector3 viewportPoint = _camera.WorldToViewportPoint(_syncObjectTransform.position);
         

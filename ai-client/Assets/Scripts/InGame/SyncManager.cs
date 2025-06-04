@@ -63,24 +63,6 @@ public class SyncManager : Singleton<SyncManager>
             return;
         }
 
-        if (objectId == _networkManager.ConnectedUuid)
-        {
-            // self packet check and return
-            if (Mathf.Approximately(moveData.X, transform.position.x) && 
-                Mathf.Approximately(moveData.Y, transform.position.y) && 
-                Mathf.Approximately(moveData.Z, transform.position.z))
-            {
-                Debug.Log($"Self packet position is same as current position. No need to sync.");
-            }
-            else
-            {
-                Debug.Log($"Self packet position is different. Syncing position needed.");
-                // Here you can handle self movement logic if needed
-            }
-            
-            return;
-        }
-
         var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
         
         if (!_syncObjects.TryGetValue(objectId, out GameObject syncObject))
