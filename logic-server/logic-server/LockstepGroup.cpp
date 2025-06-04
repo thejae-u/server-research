@@ -10,7 +10,6 @@ LockstepGroup::LockstepGroup(const IoContext::strand& strand, const uuid groupId
     : _groupId(groupId), _strand(strand)
 {
     _fixedDeltaMs = 33;
-    _tickTimer = std::make_unique<Scheduler>(_strand.context(), std::chrono::milliseconds(_fixedDeltaMs), [this]() { Tick(); });
 }
 
 void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallback)
@@ -21,6 +20,7 @@ void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallba
 void LockstepGroup::Start()
 {
     _isRunning = true;
+    _tickTimer = std::make_shared<Scheduler>(_strand, std::chrono::milliseconds(_fixedDeltaMs), [this]() { Tick(); });
     _tickTimer->Start();
 }
 
@@ -36,7 +36,7 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
         std::lock_guard<std::mutex> lock(_memberMutex);
         if (const auto [it, success] = _members.insert(newSession); !success)
         {
-            SPDLOG_ERROR("{} : Failed to add member to group {}", to_string(newSession->GetSessionUuid()), to_string(_groupId));
+            SPDLOG_ERROR("{} {} : Failed to add member to group {}", __func__, to_string(newSession->GetSessionUuid()), to_string(_groupId));
         }
     }
 
@@ -51,12 +51,12 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
         CollectInput(rpcRequest);
     });
     
-    SPDLOG_INFO("{} : Added member {}", to_string(_groupId), to_string(newSession->GetSessionUuid()));
+    SPDLOG_INFO("{} {} : Added member {}", __func__, to_string(_groupId), to_string(newSession->GetSessionUuid()));
 }
 
 void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
-    SPDLOG_INFO("{} : Removed from {}", to_string(session->GetSessionUuid()), to_string(_groupId));
+    SPDLOG_INFO("{} {} : Removed from {}", __func__, to_string(session->GetSessionUuid()), to_string(_groupId));
 
     {
         std::lock_guard<std::mutex> lock(_memberMutex);
@@ -86,13 +86,14 @@ void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shar
         _inputBuffer[_currentBucket][key] = request;
     }
         
-    // SPDLOG_INFO("{} CollectInput: Session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
+    SPDLOG_INFO("{} CollectInput: Session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::ProcessStep()
 {
     // _inputBuffer is must locked by Tick()
     // Process the input buffer for the current frame
+
     std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> input;
     
     {
@@ -100,22 +101,13 @@ void LockstepGroup::ProcessStep()
         input = _inputBuffer[_currentBucket];
     }
 
+    for (const auto& member : _members)
     {
-        std::lock_guard<std::mutex> memberLock(_memberMutex);
-        for (auto& [key, packet] : input)
+        if (member->IsValid())
         {
-            // Process each packet
-            for (auto& member : _members)
-            {
-                // Lockstep is all members must process the same input
-                if (member->GetSocket().is_open())
-                {
-                    member->ProcessRpc(packet);
-                }
-            }
-        }    
+            member->ProcessRpc(input);
+        }
     }
-    
 }
 
 void LockstepGroup::Tick()
@@ -123,15 +115,13 @@ void LockstepGroup::Tick()
     if (!_isRunning)
         return;
 
+    std::lock_guard<std::mutex> memberLock(_memberMutex);
+    if (_members.empty())
     {
-        std::lock_guard<std::mutex> memberLock(_memberMutex);
-        if (_members.empty())
-        {
-            return;
-        }
+        return;
     }
-    
     ProcessStep();
+    
 
     {
         std::lock_guard<std::mutex> lock(_bucketMutex);
@@ -147,7 +137,7 @@ void LockstepGroup::Tick()
         std::lock_guard<std::mutex> lock(_bufferMutex);
 
         // remain the 5 buckets of input buffer
-        if (const std::size_t clearBucket = _currentBucket - 6; _inputBuffer.find(clearBucket) != _inputBuffer.end())
-            _inputBuffer.erase(clearBucket);
+        //if (const std::size_t clearBucket = _currentBucket - 6; _inputBuffer.find(clearBucket) != _inputBuffer.end())
+            //_inputBuffer.erase(clearBucket);
     }
 }

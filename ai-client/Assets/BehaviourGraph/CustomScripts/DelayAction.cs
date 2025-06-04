@@ -21,6 +21,9 @@ public partial class DelayAction : Action
     {
         _networkManager = NetworkManager.Instance;
         
+        if(_networkManager.IsManualMode)
+            return Status.Failure;
+        
         int min = IncludeA.Value;
         int max = IncludeB.Value;
         _delayTime = (float)Random.Range(min, max + 1) / 100;
@@ -37,12 +40,7 @@ public partial class DelayAction : Action
         }
         
         _elapsedTime += Time.deltaTime;
-        if (_elapsedTime < _delayTime)
-        {
-            return Status.Running;
-        }
-        
-        return Status.Success;
+        return _elapsedTime < _delayTime ? Status.Running : Status.Success;
     }
 
     protected override void OnEnd()

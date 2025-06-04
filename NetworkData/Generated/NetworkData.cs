@@ -27,28 +27,25 @@ namespace NetworkData {
             "ChFOZXR3b3JrRGF0YS5wcm90bxILTmV0d29ya0RhdGEaH2dvb2dsZS9wcm90",
             "b2J1Zi90aW1lc3RhbXAucHJvdG8iLwoJTG9naW5EYXRhEhAKCHVzZXJuYW1l",
             "GAEgASgJEhAKCHBhc3N3b3JkGAIgASgJIjIKDFJlZ2lzdGVyRGF0YRIQCgh1",
-            "c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJWCgxQb3NpdGlvbkRh",
-            "dGESCgoCeDEYASABKAISCgoCeTEYAiABKAISCgoCejEYAyABKAISCgoCeDIY",
-            "BCABKAISCgoCeTIYBSABKAISCgoCejIYBiABKAIifgoJUnBjUGFja2V0EgwK",
-            "BHV1aWQYASABKAwSJgoGbWV0aG9kGAIgASgOMhYuTmV0d29ya0RhdGEuUnBj",
-            "TWV0aG9kEgwKBGRhdGEYAyABKAwSLQoJdGltZXN0YW1wGAQgASgLMhouZ29v",
-            "Z2xlLnByb3RvYnVmLlRpbWVzdGFtcCr3AgoJUnBjTWV0aG9kEggKBE5PTkUQ",
-            "ABIJCgVMT0dJThABEgwKCFJFR0lTVEVSEAISDAoIUkVUUklFVkUQAxIKCgZB",
-            "Q0NFU1MQBBIKCgZSRUpFQ1QQBRIKCgZMT0dPVVQQBhIQCgxJTl9HQU1FX05P",
-            "TkUQZBIICgRNT1ZFEGUSCgoGQVRUQUNLEGYSDQoJRFJPUF9JVEVNEGcSDAoI",
-            "VVNFX0lURU0QaBINCglVU0VfU0tJTEwQaRIPCgpTVEFURV9OT05FEMgBEhUK",
-            "EFNUQVRFX01PVkVfU1RBUlQQyQESEwoOU1RBVEVfTU9WRV9FTkQQygESFwoS",
-            "U1RBVEVfQVRUQUNLX1NUQVJUEMsBEhUKEFNUQVRFX0FUVEFDS19FTkQQzAES",
-            "EQoMTkVUV09SS19OT05FEPQDEg0KCFVEUF9QT1JUEPUDEgkKBFVVSUQQ9gMS",
-            "CQoEUElORxD3AxIJCgRQT05HEPgDEhEKDFBBQ0tFVF9DT1VOVBD5AypICgtF",
-            "TG9naW5FcnJvchISCg5VU0VSX05PVF9GT1VORBAAEhYKElVTRVJfQUxSRUFE",
-            "WV9FWElTVBABEg0KCUlOQ09SUkVDVBACYgZwcm90bzM="));
+            "c2VybmFtZRgBIAEoCRIQCghwYXNzd29yZBgCIAEoCSJgCghNb3ZlRGF0YRIJ",
+            "CgF4GAEgASgCEgkKAXkYAiABKAISCQoBehgDIAEoAhIQCgh2ZXJ0aWNhbBgE",
+            "IAEoAhISCgpob3Jpem9udGFsGAUgASgCEg0KBXNwZWVkGAYgASgCIn4KCVJw",
+            "Y1BhY2tldBIMCgR1dWlkGAEgASgMEiYKBm1ldGhvZBgCIAEoDjIWLk5ldHdv",
+            "cmtEYXRhLlJwY01ldGhvZBIMCgRkYXRhGAMgASgMEi0KCXRpbWVzdGFtcBgE",
+            "IAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAq7wEKCVJwY01ldGhv",
+            "ZBIICgROT05FEAASCQoFTE9HSU4QARIMCghSRUdJU1RFUhACEgwKCFJFVFJJ",
+            "RVZFEAMSCgoGQUNDRVNTEAQSCgoGUkVKRUNUEAUSCgoGTE9HT1VUEAYSEAoM",
+            "SU5fR0FNRV9OT05FEGQSCAoETU9WRRBlEg0KCU1vdmVTdGFydBBmEgwKCE1v",
+            "dmVTdG9wEGcSEQoMTkVUV09SS19OT05FEPQDEg0KCFVEUF9QT1JUEPUDEgkK",
+            "BFVVSUQQ9gMSCQoEUElORxD3AxIJCgRQT05HEPgDEhEKDFBBQ0tFVF9DT1VO",
+            "VBD5AypICgtFTG9naW5FcnJvchISCg5VU0VSX05PVF9GT1VORBAAEhYKElVT",
+            "RVJfQUxSRUFEWV9FWElTVBABEg0KCUlOQ09SUkVDVBACYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::NetworkData.RpcMethod), typeof(global::NetworkData.ELoginError), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.LoginData), global::NetworkData.LoginData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RegisterData), global::NetworkData.RegisterData.Parser, new[]{ "Username", "Password" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.PositionData), global::NetworkData.PositionData.Parser, new[]{ "X1", "Y1", "Z1", "X2", "Y2", "Z2" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.MoveData), global::NetworkData.MoveData.Parser, new[]{ "X", "Y", "Z", "Vertical", "Horizontal", "Speed" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::NetworkData.RpcPacket), global::NetworkData.RpcPacket.Parser, new[]{ "Uuid", "Method", "Data", "Timestamp" }, null, null, null, null)
           }));
     }
@@ -57,6 +54,9 @@ namespace NetworkData {
   }
   #region Enums
   public enum RpcMethod {
+    /// <summary>
+    /// Login or DB methods
+    /// </summary>
     [pbr::OriginalName("NONE")] None = 0,
     [pbr::OriginalName("LOGIN")] Login = 1,
     [pbr::OriginalName("REGISTER")] Register = 2,
@@ -69,18 +69,8 @@ namespace NetworkData {
     [pbr::OriginalName("LOGOUT")] Logout = 6,
     [pbr::OriginalName("IN_GAME_NONE")] InGameNone = 100,
     [pbr::OriginalName("MOVE")] Move = 101,
-    [pbr::OriginalName("ATTACK")] Attack = 102,
-    [pbr::OriginalName("DROP_ITEM")] DropItem = 103,
-    [pbr::OriginalName("USE_ITEM")] UseItem = 104,
-    [pbr::OriginalName("USE_SKILL")] UseSkill = 105,
-    /// <summary>
-    /// State Calls
-    /// </summary>
-    [pbr::OriginalName("STATE_NONE")] StateNone = 200,
-    [pbr::OriginalName("STATE_MOVE_START")] StateMoveStart = 201,
-    [pbr::OriginalName("STATE_MOVE_END")] StateMoveEnd = 202,
-    [pbr::OriginalName("STATE_ATTACK_START")] StateAttackStart = 203,
-    [pbr::OriginalName("STATE_ATTACK_END")] StateAttackEnd = 204,
+    [pbr::OriginalName("MoveStart")] MoveStart = 102,
+    [pbr::OriginalName("MoveStop")] MoveStop = 103,
     /// <summary>
     /// Network Settings
     /// </summary>
@@ -572,16 +562,16 @@ namespace NetworkData {
   }
 
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
-  public sealed partial class PositionData : pb::IMessage<PositionData>
+  public sealed partial class MoveData : pb::IMessage<MoveData>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<PositionData> _parser = new pb::MessageParser<PositionData>(() => new PositionData());
+    private static readonly pb::MessageParser<MoveData> _parser = new pb::MessageParser<MoveData>(() => new MoveData());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<PositionData> Parser { get { return _parser; } }
+    public static pb::MessageParser<MoveData> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -597,7 +587,7 @@ namespace NetworkData {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public PositionData() {
+    public MoveData() {
       OnConstruction();
     }
 
@@ -605,121 +595,127 @@ namespace NetworkData {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public PositionData(PositionData other) : this() {
-      x1_ = other.x1_;
-      y1_ = other.y1_;
-      z1_ = other.z1_;
-      x2_ = other.x2_;
-      y2_ = other.y2_;
-      z2_ = other.z2_;
+    public MoveData(MoveData other) : this() {
+      x_ = other.x_;
+      y_ = other.y_;
+      z_ = other.z_;
+      vertical_ = other.vertical_;
+      horizontal_ = other.horizontal_;
+      speed_ = other.speed_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public PositionData Clone() {
-      return new PositionData(this);
+    public MoveData Clone() {
+      return new MoveData(this);
     }
 
-    /// <summary>Field number for the "x1" field.</summary>
-    public const int X1FieldNumber = 1;
-    private float x1_;
+    /// <summary>Field number for the "x" field.</summary>
+    public const int XFieldNumber = 1;
+    private float x_;
     /// <summary>
-    /// start position
+    /// Current Position
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float X1 {
-      get { return x1_; }
+    public float X {
+      get { return x_; }
       set {
-        x1_ = value;
+        x_ = value;
       }
     }
 
-    /// <summary>Field number for the "y1" field.</summary>
-    public const int Y1FieldNumber = 2;
-    private float y1_;
+    /// <summary>Field number for the "y" field.</summary>
+    public const int YFieldNumber = 2;
+    private float y_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Y1 {
-      get { return y1_; }
+    public float Y {
+      get { return y_; }
       set {
-        y1_ = value;
+        y_ = value;
       }
     }
 
-    /// <summary>Field number for the "z1" field.</summary>
-    public const int Z1FieldNumber = 3;
-    private float z1_;
+    /// <summary>Field number for the "z" field.</summary>
+    public const int ZFieldNumber = 3;
+    private float z_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Z1 {
-      get { return z1_; }
+    public float Z {
+      get { return z_; }
       set {
-        z1_ = value;
+        z_ = value;
       }
     }
 
-    /// <summary>Field number for the "x2" field.</summary>
-    public const int X2FieldNumber = 4;
-    private float x2_;
+    /// <summary>Field number for the "vertical" field.</summary>
+    public const int VerticalFieldNumber = 4;
+    private float vertical_;
     /// <summary>
-    /// end position
+    /// -1.0 to 1.0
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float X2 {
-      get { return x2_; }
+    public float Vertical {
+      get { return vertical_; }
       set {
-        x2_ = value;
+        vertical_ = value;
       }
     }
 
-    /// <summary>Field number for the "y2" field.</summary>
-    public const int Y2FieldNumber = 5;
-    private float y2_;
+    /// <summary>Field number for the "horizontal" field.</summary>
+    public const int HorizontalFieldNumber = 5;
+    private float horizontal_;
+    /// <summary>
+    /// -1.0 to 1.0
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Y2 {
-      get { return y2_; }
+    public float Horizontal {
+      get { return horizontal_; }
       set {
-        y2_ = value;
+        horizontal_ = value;
       }
     }
 
-    /// <summary>Field number for the "z2" field.</summary>
-    public const int Z2FieldNumber = 6;
-    private float z2_;
+    /// <summary>Field number for the "speed" field.</summary>
+    public const int SpeedFieldNumber = 6;
+    private float speed_;
+    /// <summary>
+    /// Speed of the movement
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float Z2 {
-      get { return z2_; }
+    public float Speed {
+      get { return speed_; }
       set {
-        z2_ = value;
+        speed_ = value;
       }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
-      return Equals(other as PositionData);
+      return Equals(other as MoveData);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(PositionData other) {
+    public bool Equals(MoveData other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(X1, other.X1)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Y1, other.Y1)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Z1, other.Z1)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(X2, other.X2)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Y2, other.Y2)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Z2, other.Z2)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(X, other.X)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Y, other.Y)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Z, other.Z)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Vertical, other.Vertical)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Horizontal, other.Horizontal)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Speed, other.Speed)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -727,12 +723,12 @@ namespace NetworkData {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (X1 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(X1);
-      if (Y1 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Y1);
-      if (Z1 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Z1);
-      if (X2 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(X2);
-      if (Y2 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Y2);
-      if (Z2 != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Z2);
+      if (X != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(X);
+      if (Y != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Y);
+      if (Z != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Z);
+      if (Vertical != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Vertical);
+      if (Horizontal != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Horizontal);
+      if (Speed != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Speed);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -751,29 +747,29 @@ namespace NetworkData {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (X1 != 0F) {
+      if (X != 0F) {
         output.WriteRawTag(13);
-        output.WriteFloat(X1);
+        output.WriteFloat(X);
       }
-      if (Y1 != 0F) {
+      if (Y != 0F) {
         output.WriteRawTag(21);
-        output.WriteFloat(Y1);
+        output.WriteFloat(Y);
       }
-      if (Z1 != 0F) {
+      if (Z != 0F) {
         output.WriteRawTag(29);
-        output.WriteFloat(Z1);
+        output.WriteFloat(Z);
       }
-      if (X2 != 0F) {
+      if (Vertical != 0F) {
         output.WriteRawTag(37);
-        output.WriteFloat(X2);
+        output.WriteFloat(Vertical);
       }
-      if (Y2 != 0F) {
+      if (Horizontal != 0F) {
         output.WriteRawTag(45);
-        output.WriteFloat(Y2);
+        output.WriteFloat(Horizontal);
       }
-      if (Z2 != 0F) {
+      if (Speed != 0F) {
         output.WriteRawTag(53);
-        output.WriteFloat(Z2);
+        output.WriteFloat(Speed);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -785,29 +781,29 @@ namespace NetworkData {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (X1 != 0F) {
+      if (X != 0F) {
         output.WriteRawTag(13);
-        output.WriteFloat(X1);
+        output.WriteFloat(X);
       }
-      if (Y1 != 0F) {
+      if (Y != 0F) {
         output.WriteRawTag(21);
-        output.WriteFloat(Y1);
+        output.WriteFloat(Y);
       }
-      if (Z1 != 0F) {
+      if (Z != 0F) {
         output.WriteRawTag(29);
-        output.WriteFloat(Z1);
+        output.WriteFloat(Z);
       }
-      if (X2 != 0F) {
+      if (Vertical != 0F) {
         output.WriteRawTag(37);
-        output.WriteFloat(X2);
+        output.WriteFloat(Vertical);
       }
-      if (Y2 != 0F) {
+      if (Horizontal != 0F) {
         output.WriteRawTag(45);
-        output.WriteFloat(Y2);
+        output.WriteFloat(Horizontal);
       }
-      if (Z2 != 0F) {
+      if (Speed != 0F) {
         output.WriteRawTag(53);
-        output.WriteFloat(Z2);
+        output.WriteFloat(Speed);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -819,22 +815,22 @@ namespace NetworkData {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (X1 != 0F) {
+      if (X != 0F) {
         size += 1 + 4;
       }
-      if (Y1 != 0F) {
+      if (Y != 0F) {
         size += 1 + 4;
       }
-      if (Z1 != 0F) {
+      if (Z != 0F) {
         size += 1 + 4;
       }
-      if (X2 != 0F) {
+      if (Vertical != 0F) {
         size += 1 + 4;
       }
-      if (Y2 != 0F) {
+      if (Horizontal != 0F) {
         size += 1 + 4;
       }
-      if (Z2 != 0F) {
+      if (Speed != 0F) {
         size += 1 + 4;
       }
       if (_unknownFields != null) {
@@ -845,27 +841,27 @@ namespace NetworkData {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(PositionData other) {
+    public void MergeFrom(MoveData other) {
       if (other == null) {
         return;
       }
-      if (other.X1 != 0F) {
-        X1 = other.X1;
+      if (other.X != 0F) {
+        X = other.X;
       }
-      if (other.Y1 != 0F) {
-        Y1 = other.Y1;
+      if (other.Y != 0F) {
+        Y = other.Y;
       }
-      if (other.Z1 != 0F) {
-        Z1 = other.Z1;
+      if (other.Z != 0F) {
+        Z = other.Z;
       }
-      if (other.X2 != 0F) {
-        X2 = other.X2;
+      if (other.Vertical != 0F) {
+        Vertical = other.Vertical;
       }
-      if (other.Y2 != 0F) {
-        Y2 = other.Y2;
+      if (other.Horizontal != 0F) {
+        Horizontal = other.Horizontal;
       }
-      if (other.Z2 != 0F) {
-        Z2 = other.Z2;
+      if (other.Speed != 0F) {
+        Speed = other.Speed;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -887,27 +883,27 @@ namespace NetworkData {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 13: {
-            X1 = input.ReadFloat();
+            X = input.ReadFloat();
             break;
           }
           case 21: {
-            Y1 = input.ReadFloat();
+            Y = input.ReadFloat();
             break;
           }
           case 29: {
-            Z1 = input.ReadFloat();
+            Z = input.ReadFloat();
             break;
           }
           case 37: {
-            X2 = input.ReadFloat();
+            Vertical = input.ReadFloat();
             break;
           }
           case 45: {
-            Y2 = input.ReadFloat();
+            Horizontal = input.ReadFloat();
             break;
           }
           case 53: {
-            Z2 = input.ReadFloat();
+            Speed = input.ReadFloat();
             break;
           }
         }
@@ -930,27 +926,27 @@ namespace NetworkData {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 13: {
-            X1 = input.ReadFloat();
+            X = input.ReadFloat();
             break;
           }
           case 21: {
-            Y1 = input.ReadFloat();
+            Y = input.ReadFloat();
             break;
           }
           case 29: {
-            Z1 = input.ReadFloat();
+            Z = input.ReadFloat();
             break;
           }
           case 37: {
-            X2 = input.ReadFloat();
+            Vertical = input.ReadFloat();
             break;
           }
           case 45: {
-            Y2 = input.ReadFloat();
+            Horizontal = input.ReadFloat();
             break;
           }
           case 53: {
-            Z2 = input.ReadFloat();
+            Speed = input.ReadFloat();
             break;
           }
         }

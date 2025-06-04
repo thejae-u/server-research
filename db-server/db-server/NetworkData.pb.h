@@ -57,9 +57,9 @@ namespace NetworkData {
 class LoginData;
 struct LoginDataDefaultTypeInternal;
 extern LoginDataDefaultTypeInternal _LoginData_default_instance_;
-class PositionData;
-struct PositionDataDefaultTypeInternal;
-extern PositionDataDefaultTypeInternal _PositionData_default_instance_;
+class MoveData;
+struct MoveDataDefaultTypeInternal;
+extern MoveDataDefaultTypeInternal _MoveData_default_instance_;
 class RegisterData;
 struct RegisterDataDefaultTypeInternal;
 extern RegisterDataDefaultTypeInternal _RegisterData_default_instance_;
@@ -83,15 +83,8 @@ enum RpcMethod : int {
   LOGOUT = 6,
   IN_GAME_NONE = 100,
   MOVE = 101,
-  ATTACK = 102,
-  DROP_ITEM = 103,
-  USE_ITEM = 104,
-  USE_SKILL = 105,
-  STATE_NONE = 200,
-  STATE_MOVE_START = 201,
-  STATE_MOVE_END = 202,
-  STATE_ATTACK_START = 203,
-  STATE_ATTACK_END = 204,
+  MoveStart = 102,
+  MoveStop = 103,
   NETWORK_NONE = 500,
   UDP_PORT = 501,
   UUID = 502,
@@ -376,31 +369,31 @@ class RegisterData final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
-class PositionData final : public ::google::protobuf::Message
-/* @@protoc_insertion_point(class_definition:NetworkData.PositionData) */ {
+class MoveData final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:NetworkData.MoveData) */ {
  public:
-  inline PositionData() : PositionData(nullptr) {}
-  ~PositionData() PROTOBUF_FINAL;
+  inline MoveData() : MoveData(nullptr) {}
+  ~MoveData() PROTOBUF_FINAL;
 
 #if defined(PROTOBUF_CUSTOM_VTABLE)
-  void operator delete(PositionData* msg, std::destroying_delete_t) {
+  void operator delete(MoveData* msg, std::destroying_delete_t) {
     SharedDtor(*msg);
-    ::google::protobuf::internal::SizedDelete(msg, sizeof(PositionData));
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(MoveData));
   }
 #endif
 
   template <typename = void>
-  explicit PROTOBUF_CONSTEXPR PositionData(
+  explicit PROTOBUF_CONSTEXPR MoveData(
       ::google::protobuf::internal::ConstantInitialized);
 
-  inline PositionData(const PositionData& from) : PositionData(nullptr, from) {}
-  inline PositionData(PositionData&& from) noexcept
-      : PositionData(nullptr, std::move(from)) {}
-  inline PositionData& operator=(const PositionData& from) {
+  inline MoveData(const MoveData& from) : MoveData(nullptr, from) {}
+  inline MoveData(MoveData&& from) noexcept
+      : MoveData(nullptr, std::move(from)) {}
+  inline MoveData& operator=(const MoveData& from) {
     CopyFrom(from);
     return *this;
   }
-  inline PositionData& operator=(PositionData&& from) noexcept {
+  inline MoveData& operator=(MoveData&& from) noexcept {
     if (this == &from) return *this;
     if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
       InternalSwap(&from);
@@ -428,16 +421,16 @@ class PositionData final : public ::google::protobuf::Message
   static const ::google::protobuf::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const PositionData& default_instance() {
+  static const MoveData& default_instance() {
     return *internal_default_instance();
   }
-  static inline const PositionData* internal_default_instance() {
-    return reinterpret_cast<const PositionData*>(
-        &_PositionData_default_instance_);
+  static inline const MoveData* internal_default_instance() {
+    return reinterpret_cast<const MoveData*>(
+        &_MoveData_default_instance_);
   }
   static constexpr int kIndexInFileMessages = 2;
-  friend void swap(PositionData& a, PositionData& b) { a.Swap(&b); }
-  inline void Swap(PositionData* other) {
+  friend void swap(MoveData& a, MoveData& b) { a.Swap(&b); }
+  inline void Swap(MoveData* other) {
     if (other == this) return;
     if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
       InternalSwap(other);
@@ -445,7 +438,7 @@ class PositionData final : public ::google::protobuf::Message
       ::google::protobuf::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(PositionData* other) {
+  void UnsafeArenaSwap(MoveData* other) {
     if (other == this) return;
     ABSL_DCHECK(GetArena() == other->GetArena());
     InternalSwap(other);
@@ -453,13 +446,13 @@ class PositionData final : public ::google::protobuf::Message
 
   // implements Message ----------------------------------------------
 
-  PositionData* New(::google::protobuf::Arena* arena = nullptr) const {
-    return ::google::protobuf::Message::DefaultConstruct<PositionData>(arena);
+  MoveData* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<MoveData>(arena);
   }
   using ::google::protobuf::Message::CopyFrom;
-  void CopyFrom(const PositionData& from);
+  void CopyFrom(const MoveData& from);
   using ::google::protobuf::Message::MergeFrom;
-  void MergeFrom(const PositionData& from) { PositionData::MergeImpl(*this, from); }
+  void MergeFrom(const MoveData& from) { MoveData::MergeImpl(*this, from); }
 
   private:
   static void MergeImpl(
@@ -496,18 +489,18 @@ class PositionData final : public ::google::protobuf::Message
   private:
   void SharedCtor(::google::protobuf::Arena* arena);
   static void SharedDtor(MessageLite& self);
-  void InternalSwap(PositionData* other);
+  void InternalSwap(MoveData* other);
  private:
   template <typename T>
   friend ::absl::string_view(
       ::google::protobuf::internal::GetAnyMessageName)();
-  static ::absl::string_view FullMessageName() { return "NetworkData.PositionData"; }
+  static ::absl::string_view FullMessageName() { return "NetworkData.MoveData"; }
 
  protected:
-  explicit PositionData(::google::protobuf::Arena* arena);
-  PositionData(::google::protobuf::Arena* arena, const PositionData& from);
-  PositionData(::google::protobuf::Arena* arena, PositionData&& from) noexcept
-      : PositionData(arena) {
+  explicit MoveData(::google::protobuf::Arena* arena);
+  MoveData(::google::protobuf::Arena* arena, const MoveData& from);
+  MoveData(::google::protobuf::Arena* arena, MoveData&& from) noexcept
+      : MoveData(arena) {
     *this = ::std::move(from);
   }
   const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
@@ -522,74 +515,74 @@ class PositionData final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
-    kX1FieldNumber = 1,
-    kY1FieldNumber = 2,
-    kZ1FieldNumber = 3,
-    kX2FieldNumber = 4,
-    kY2FieldNumber = 5,
-    kZ2FieldNumber = 6,
+    kXFieldNumber = 1,
+    kYFieldNumber = 2,
+    kZFieldNumber = 3,
+    kVerticalFieldNumber = 4,
+    kHorizontalFieldNumber = 5,
+    kSpeedFieldNumber = 6,
   };
-  // float x1 = 1;
-  void clear_x1() ;
-  float x1() const;
-  void set_x1(float value);
+  // float x = 1;
+  void clear_x() ;
+  float x() const;
+  void set_x(float value);
 
   private:
-  float _internal_x1() const;
-  void _internal_set_x1(float value);
+  float _internal_x() const;
+  void _internal_set_x(float value);
 
   public:
-  // float y1 = 2;
-  void clear_y1() ;
-  float y1() const;
-  void set_y1(float value);
+  // float y = 2;
+  void clear_y() ;
+  float y() const;
+  void set_y(float value);
 
   private:
-  float _internal_y1() const;
-  void _internal_set_y1(float value);
+  float _internal_y() const;
+  void _internal_set_y(float value);
 
   public:
-  // float z1 = 3;
-  void clear_z1() ;
-  float z1() const;
-  void set_z1(float value);
+  // float z = 3;
+  void clear_z() ;
+  float z() const;
+  void set_z(float value);
 
   private:
-  float _internal_z1() const;
-  void _internal_set_z1(float value);
+  float _internal_z() const;
+  void _internal_set_z(float value);
 
   public:
-  // float x2 = 4;
-  void clear_x2() ;
-  float x2() const;
-  void set_x2(float value);
+  // float vertical = 4;
+  void clear_vertical() ;
+  float vertical() const;
+  void set_vertical(float value);
 
   private:
-  float _internal_x2() const;
-  void _internal_set_x2(float value);
+  float _internal_vertical() const;
+  void _internal_set_vertical(float value);
 
   public:
-  // float y2 = 5;
-  void clear_y2() ;
-  float y2() const;
-  void set_y2(float value);
+  // float horizontal = 5;
+  void clear_horizontal() ;
+  float horizontal() const;
+  void set_horizontal(float value);
 
   private:
-  float _internal_y2() const;
-  void _internal_set_y2(float value);
+  float _internal_horizontal() const;
+  void _internal_set_horizontal(float value);
 
   public:
-  // float z2 = 6;
-  void clear_z2() ;
-  float z2() const;
-  void set_z2(float value);
+  // float speed = 6;
+  void clear_speed() ;
+  float speed() const;
+  void set_speed(float value);
 
   private:
-  float _internal_z2() const;
-  void _internal_set_z2(float value);
+  float _internal_speed() const;
+  void _internal_set_speed(float value);
 
   public:
-  // @@protoc_insertion_point(class_scope:NetworkData.PositionData)
+  // @@protoc_insertion_point(class_scope:NetworkData.MoveData)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
@@ -611,13 +604,13 @@ class PositionData final : public ::google::protobuf::Message
                           ::google::protobuf::Arena* arena);
     inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
                           ::google::protobuf::Arena* arena, const Impl_& from,
-                          const PositionData& from_msg);
-    float x1_;
-    float y1_;
-    float z1_;
-    float x2_;
-    float y2_;
-    float z2_;
+                          const MoveData& from_msg);
+    float x_;
+    float y_;
+    float z_;
+    float vertical_;
+    float horizontal_;
+    float speed_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -1297,138 +1290,138 @@ inline void RegisterData::set_allocated_password(std::string* value) {
 
 // -------------------------------------------------------------------
 
-// PositionData
+// MoveData
 
-// float x1 = 1;
-inline void PositionData::clear_x1() {
+// float x = 1;
+inline void MoveData::clear_x() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.x1_ = 0;
+  _impl_.x_ = 0;
 }
-inline float PositionData::x1() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.x1)
-  return _internal_x1();
+inline float MoveData::x() const {
+  // @@protoc_insertion_point(field_get:NetworkData.MoveData.x)
+  return _internal_x();
 }
-inline void PositionData::set_x1(float value) {
-  _internal_set_x1(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.x1)
+inline void MoveData::set_x(float value) {
+  _internal_set_x(value);
+  // @@protoc_insertion_point(field_set:NetworkData.MoveData.x)
 }
-inline float PositionData::_internal_x1() const {
+inline float MoveData::_internal_x() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.x1_;
+  return _impl_.x_;
 }
-inline void PositionData::_internal_set_x1(float value) {
+inline void MoveData::_internal_set_x(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.x1_ = value;
-}
-
-// float y1 = 2;
-inline void PositionData::clear_y1() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.y1_ = 0;
-}
-inline float PositionData::y1() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.y1)
-  return _internal_y1();
-}
-inline void PositionData::set_y1(float value) {
-  _internal_set_y1(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.y1)
-}
-inline float PositionData::_internal_y1() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.y1_;
-}
-inline void PositionData::_internal_set_y1(float value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.y1_ = value;
+  _impl_.x_ = value;
 }
 
-// float z1 = 3;
-inline void PositionData::clear_z1() {
+// float y = 2;
+inline void MoveData::clear_y() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.z1_ = 0;
+  _impl_.y_ = 0;
 }
-inline float PositionData::z1() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.z1)
-  return _internal_z1();
+inline float MoveData::y() const {
+  // @@protoc_insertion_point(field_get:NetworkData.MoveData.y)
+  return _internal_y();
 }
-inline void PositionData::set_z1(float value) {
-  _internal_set_z1(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.z1)
+inline void MoveData::set_y(float value) {
+  _internal_set_y(value);
+  // @@protoc_insertion_point(field_set:NetworkData.MoveData.y)
 }
-inline float PositionData::_internal_z1() const {
+inline float MoveData::_internal_y() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.z1_;
+  return _impl_.y_;
 }
-inline void PositionData::_internal_set_z1(float value) {
+inline void MoveData::_internal_set_y(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.z1_ = value;
+  _impl_.y_ = value;
 }
 
-// float x2 = 4;
-inline void PositionData::clear_x2() {
+// float z = 3;
+inline void MoveData::clear_z() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.x2_ = 0;
+  _impl_.z_ = 0;
 }
-inline float PositionData::x2() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.x2)
-  return _internal_x2();
+inline float MoveData::z() const {
+  // @@protoc_insertion_point(field_get:NetworkData.MoveData.z)
+  return _internal_z();
 }
-inline void PositionData::set_x2(float value) {
-  _internal_set_x2(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.x2)
+inline void MoveData::set_z(float value) {
+  _internal_set_z(value);
+  // @@protoc_insertion_point(field_set:NetworkData.MoveData.z)
 }
-inline float PositionData::_internal_x2() const {
+inline float MoveData::_internal_z() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.x2_;
+  return _impl_.z_;
 }
-inline void PositionData::_internal_set_x2(float value) {
+inline void MoveData::_internal_set_z(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.x2_ = value;
+  _impl_.z_ = value;
 }
 
-// float y2 = 5;
-inline void PositionData::clear_y2() {
+// float vertical = 4;
+inline void MoveData::clear_vertical() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.y2_ = 0;
+  _impl_.vertical_ = 0;
 }
-inline float PositionData::y2() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.y2)
-  return _internal_y2();
+inline float MoveData::vertical() const {
+  // @@protoc_insertion_point(field_get:NetworkData.MoveData.vertical)
+  return _internal_vertical();
 }
-inline void PositionData::set_y2(float value) {
-  _internal_set_y2(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.y2)
+inline void MoveData::set_vertical(float value) {
+  _internal_set_vertical(value);
+  // @@protoc_insertion_point(field_set:NetworkData.MoveData.vertical)
 }
-inline float PositionData::_internal_y2() const {
+inline float MoveData::_internal_vertical() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.y2_;
+  return _impl_.vertical_;
 }
-inline void PositionData::_internal_set_y2(float value) {
+inline void MoveData::_internal_set_vertical(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.y2_ = value;
+  _impl_.vertical_ = value;
 }
 
-// float z2 = 6;
-inline void PositionData::clear_z2() {
+// float horizontal = 5;
+inline void MoveData::clear_horizontal() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.z2_ = 0;
+  _impl_.horizontal_ = 0;
 }
-inline float PositionData::z2() const {
-  // @@protoc_insertion_point(field_get:NetworkData.PositionData.z2)
-  return _internal_z2();
+inline float MoveData::horizontal() const {
+  // @@protoc_insertion_point(field_get:NetworkData.MoveData.horizontal)
+  return _internal_horizontal();
 }
-inline void PositionData::set_z2(float value) {
-  _internal_set_z2(value);
-  // @@protoc_insertion_point(field_set:NetworkData.PositionData.z2)
+inline void MoveData::set_horizontal(float value) {
+  _internal_set_horizontal(value);
+  // @@protoc_insertion_point(field_set:NetworkData.MoveData.horizontal)
 }
-inline float PositionData::_internal_z2() const {
+inline float MoveData::_internal_horizontal() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.z2_;
+  return _impl_.horizontal_;
 }
-inline void PositionData::_internal_set_z2(float value) {
+inline void MoveData::_internal_set_horizontal(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.z2_ = value;
+  _impl_.horizontal_ = value;
+}
+
+// float speed = 6;
+inline void MoveData::clear_speed() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.speed_ = 0;
+}
+inline float MoveData::speed() const {
+  // @@protoc_insertion_point(field_get:NetworkData.MoveData.speed)
+  return _internal_speed();
+}
+inline void MoveData::set_speed(float value) {
+  _internal_set_speed(value);
+  // @@protoc_insertion_point(field_set:NetworkData.MoveData.speed)
+}
+inline float MoveData::_internal_speed() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.speed_;
+}
+inline void MoveData::_internal_set_speed(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.speed_ = value;
 }
 
 // -------------------------------------------------------------------

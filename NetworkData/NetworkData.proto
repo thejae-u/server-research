@@ -14,17 +14,16 @@ message RegisterData
   string password = 2;
 }
 
-message PositionData
+message MoveData 
 {
-  // start position
-  float x1 = 1;
-  float y1 = 2;
-  float z1 = 3;
+  // Current Position
+  float x = 1;
+  float y = 2;
+  float z = 3;
   
-  // end position
-  float x2 = 4;
-  float y2 = 5;
-  float z2 = 6;
+  float vertical = 4; // -1.0 to 1.0
+  float horizontal = 5; // -1.0 to 1.0
+  float speed = 6; // Speed of the movement
 }
 
 message RpcPacket
@@ -37,6 +36,7 @@ message RpcPacket
 
 enum RpcMethod
 {
+  // Login or DB methods
   NONE = 0;
   LOGIN = 1;
   REGISTER = 2;
@@ -48,17 +48,8 @@ enum RpcMethod
 
   IN_GAME_NONE = 100;
   MOVE = 101;
-  ATTACK = 102;
-  DROP_ITEM = 103;
-  USE_ITEM = 104;
-  USE_SKILL = 105;
-  
-  // State Calls
-  STATE_NONE = 200;
-  STATE_MOVE_START = 201;
-  STATE_MOVE_END = 202;
-  STATE_ATTACK_START = 203;
-  STATE_ATTACK_END = 204;
+  MoveStart = 102;
+  MoveStop = 103;
   
   // Network Settings
   NETWORK_NONE = 500;

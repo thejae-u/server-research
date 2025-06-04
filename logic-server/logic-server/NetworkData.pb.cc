@@ -56,18 +56,18 @@ struct RegisterDataDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 RegisterDataDefaultTypeInternal _RegisterData_default_instance_;
 
-inline constexpr PositionData::Impl_::Impl_(
+inline constexpr MoveData::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
-      : x1_{0},
-        y1_{0},
-        z1_{0},
-        x2_{0},
-        y2_{0},
-        z2_{0},
+      : x_{0},
+        y_{0},
+        z_{0},
+        vertical_{0},
+        horizontal_{0},
+        speed_{0},
         _cached_size_{0} {}
 
 template <typename>
-PROTOBUF_CONSTEXPR PositionData::PositionData(::_pbi::ConstantInitialized)
+PROTOBUF_CONSTEXPR MoveData::MoveData(::_pbi::ConstantInitialized)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
     : ::google::protobuf::Message(_class_data_.base()),
 #else   // PROTOBUF_CUSTOM_VTABLE
@@ -75,16 +75,16 @@ PROTOBUF_CONSTEXPR PositionData::PositionData(::_pbi::ConstantInitialized)
 #endif  // PROTOBUF_CUSTOM_VTABLE
       _impl_(::_pbi::ConstantInitialized()) {
 }
-struct PositionDataDefaultTypeInternal {
-  PROTOBUF_CONSTEXPR PositionDataDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
-  ~PositionDataDefaultTypeInternal() {}
+struct MoveDataDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR MoveDataDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~MoveDataDefaultTypeInternal() {}
   union {
-    PositionData _instance;
+    MoveData _instance;
   };
 };
 
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
-    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 PositionDataDefaultTypeInternal _PositionData_default_instance_;
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 MoveDataDefaultTypeInternal _MoveData_default_instance_;
 
 inline constexpr LoginData::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
@@ -175,19 +175,19 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::NetworkData::RegisterData, _impl_.username_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RegisterData, _impl_.password_),
         ~0u,  // no _has_bits_
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _internal_metadata_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::MoveData, _internal_metadata_),
         ~0u,  // no _extensions_
         ~0u,  // no _oneof_case_
         ~0u,  // no _weak_field_map_
         ~0u,  // no _inlined_string_donated_
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.x1_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.y1_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.z1_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.x2_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.y2_),
-        PROTOBUF_FIELD_OFFSET(::NetworkData::PositionData, _impl_.z2_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::MoveData, _impl_.x_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::MoveData, _impl_.y_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::MoveData, _impl_.z_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::MoveData, _impl_.vertical_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::MoveData, _impl_.horizontal_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::MoveData, _impl_.speed_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_._has_bits_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -210,13 +210,13 @@ static const ::_pbi::MigrationSchema
     schemas[] ABSL_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         {0, -1, -1, sizeof(::NetworkData::LoginData)},
         {10, -1, -1, sizeof(::NetworkData::RegisterData)},
-        {20, -1, -1, sizeof(::NetworkData::PositionData)},
+        {20, -1, -1, sizeof(::NetworkData::MoveData)},
         {34, 46, -1, sizeof(::NetworkData::RpcPacket)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::NetworkData::_LoginData_default_instance_._instance,
     &::NetworkData::_RegisterData_default_instance_._instance,
-    &::NetworkData::_PositionData_default_instance_._instance,
+    &::NetworkData::_MoveData_default_instance_._instance,
     &::NetworkData::_RpcPacket_default_instance_._instance,
 };
 const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
@@ -225,24 +225,20 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "/protobuf/timestamp.proto\"/\n\tLoginData\022\020"
     "\n\010username\030\001 \001(\t\022\020\n\010password\030\002 \001(\t\"2\n\014Re"
     "gisterData\022\020\n\010username\030\001 \001(\t\022\020\n\010password"
-    "\030\002 \001(\t\"V\n\014PositionData\022\n\n\002x1\030\001 \001(\002\022\n\n\002y1"
-    "\030\002 \001(\002\022\n\n\002z1\030\003 \001(\002\022\n\n\002x2\030\004 \001(\002\022\n\n\002y2\030\005 \001"
-    "(\002\022\n\n\002z2\030\006 \001(\002\"~\n\tRpcPacket\022\014\n\004uuid\030\001 \001("
-    "\014\022&\n\006method\030\002 \001(\0162\026.NetworkData.RpcMetho"
-    "d\022\014\n\004data\030\003 \001(\014\022-\n\ttimestamp\030\004 \001(\0132\032.goo"
-    "gle.protobuf.Timestamp*\367\002\n\tRpcMethod\022\010\n\004"
-    "NONE\020\000\022\t\n\005LOGIN\020\001\022\014\n\010REGISTER\020\002\022\014\n\010RETRI"
-    "EVE\020\003\022\n\n\006ACCESS\020\004\022\n\n\006REJECT\020\005\022\n\n\006LOGOUT\020"
-    "\006\022\020\n\014IN_GAME_NONE\020d\022\010\n\004MOVE\020e\022\n\n\006ATTACK\020"
-    "f\022\r\n\tDROP_ITEM\020g\022\014\n\010USE_ITEM\020h\022\r\n\tUSE_SK"
-    "ILL\020i\022\017\n\nSTATE_NONE\020\310\001\022\025\n\020STATE_MOVE_STA"
-    "RT\020\311\001\022\023\n\016STATE_MOVE_END\020\312\001\022\027\n\022STATE_ATTA"
-    "CK_START\020\313\001\022\025\n\020STATE_ATTACK_END\020\314\001\022\021\n\014NE"
-    "TWORK_NONE\020\364\003\022\r\n\010UDP_PORT\020\365\003\022\t\n\004UUID\020\366\003\022"
-    "\t\n\004PING\020\367\003\022\t\n\004PONG\020\370\003\022\021\n\014PACKET_COUNT\020\371\003"
-    "*H\n\013ELoginError\022\022\n\016USER_NOT_FOUND\020\000\022\026\n\022U"
-    "SER_ALREADY_EXIST\020\001\022\r\n\tINCORRECT\020\002b\006prot"
-    "o3"
+    "\030\002 \001(\t\"`\n\010MoveData\022\t\n\001x\030\001 \001(\002\022\t\n\001y\030\002 \001(\002"
+    "\022\t\n\001z\030\003 \001(\002\022\020\n\010vertical\030\004 \001(\002\022\022\n\nhorizon"
+    "tal\030\005 \001(\002\022\r\n\005speed\030\006 \001(\002\"~\n\tRpcPacket\022\014\n"
+    "\004uuid\030\001 \001(\014\022&\n\006method\030\002 \001(\0162\026.NetworkDat"
+    "a.RpcMethod\022\014\n\004data\030\003 \001(\014\022-\n\ttimestamp\030\004"
+    " \001(\0132\032.google.protobuf.Timestamp*\357\001\n\tRpc"
+    "Method\022\010\n\004NONE\020\000\022\t\n\005LOGIN\020\001\022\014\n\010REGISTER\020"
+    "\002\022\014\n\010RETRIEVE\020\003\022\n\n\006ACCESS\020\004\022\n\n\006REJECT\020\005\022"
+    "\n\n\006LOGOUT\020\006\022\020\n\014IN_GAME_NONE\020d\022\010\n\004MOVE\020e\022"
+    "\r\n\tMoveStart\020f\022\014\n\010MoveStop\020g\022\021\n\014NETWORK_"
+    "NONE\020\364\003\022\r\n\010UDP_PORT\020\365\003\022\t\n\004UUID\020\366\003\022\t\n\004PIN"
+    "G\020\367\003\022\t\n\004PONG\020\370\003\022\021\n\014PACKET_COUNT\020\371\003*H\n\013EL"
+    "oginError\022\022\n\016USER_NOT_FOUND\020\000\022\026\n\022USER_AL"
+    "READY_EXIST\020\001\022\r\n\tINCORRECT\020\002b\006proto3"
 };
 static const ::_pbi::DescriptorTable* const descriptor_table_NetworkData_2eproto_deps[1] =
     {
@@ -252,7 +248,7 @@ static ::absl::once_flag descriptor_table_NetworkData_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2eproto = {
     false,
     false,
-    842,
+    716,
     descriptor_table_protodef_NetworkData_2eproto,
     "NetworkData.proto",
     &descriptor_table_NetworkData_2eproto_once,
@@ -271,7 +267,7 @@ const ::google::protobuf::EnumDescriptor* RpcMethod_descriptor() {
   return file_level_enum_descriptors_NetworkData_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t RpcMethod_internal_data_[] = {
-    458752u, 393440u, 0u, 0u, 3758096384u, 7u, 0u, 0u, 62u, 503u, 501u, 505u, 500u, 502u, 504u, };
+    458752u, 393344u, 0u, 0u, 3758096384u, 1u, 503u, 501u, 505u, 500u, 502u, 504u, };
 bool RpcMethod_IsValid(int value) {
   return ::_pbi::ValidateEnum(value, RpcMethod_internal_data_);
 }
@@ -806,86 +802,86 @@ void RegisterData::InternalSwap(RegisterData* PROTOBUF_RESTRICT other) {
 }
 // ===================================================================
 
-class PositionData::_Internal {
+class MoveData::_Internal {
  public:
 };
 
-PositionData::PositionData(::google::protobuf::Arena* arena)
+MoveData::MoveData(::google::protobuf::Arena* arena)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
     : ::google::protobuf::Message(arena, _class_data_.base()) {
 #else   // PROTOBUF_CUSTOM_VTABLE
     : ::google::protobuf::Message(arena) {
 #endif  // PROTOBUF_CUSTOM_VTABLE
   SharedCtor(arena);
-  // @@protoc_insertion_point(arena_constructor:NetworkData.PositionData)
+  // @@protoc_insertion_point(arena_constructor:NetworkData.MoveData)
 }
-PositionData::PositionData(
-    ::google::protobuf::Arena* arena, const PositionData& from)
-    : PositionData(arena) {
+MoveData::MoveData(
+    ::google::protobuf::Arena* arena, const MoveData& from)
+    : MoveData(arena) {
   MergeFrom(from);
 }
-inline PROTOBUF_NDEBUG_INLINE PositionData::Impl_::Impl_(
+inline PROTOBUF_NDEBUG_INLINE MoveData::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility,
     ::google::protobuf::Arena* arena)
       : _cached_size_{0} {}
 
-inline void PositionData::SharedCtor(::_pb::Arena* arena) {
+inline void MoveData::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
   ::memset(reinterpret_cast<char *>(&_impl_) +
-               offsetof(Impl_, x1_),
+               offsetof(Impl_, x_),
            0,
-           offsetof(Impl_, z2_) -
-               offsetof(Impl_, x1_) +
-               sizeof(Impl_::z2_));
+           offsetof(Impl_, speed_) -
+               offsetof(Impl_, x_) +
+               sizeof(Impl_::speed_));
 }
-PositionData::~PositionData() {
-  // @@protoc_insertion_point(destructor:NetworkData.PositionData)
+MoveData::~MoveData() {
+  // @@protoc_insertion_point(destructor:NetworkData.MoveData)
   SharedDtor(*this);
 }
-inline void PositionData::SharedDtor(MessageLite& self) {
-  PositionData& this_ = static_cast<PositionData&>(self);
+inline void MoveData::SharedDtor(MessageLite& self) {
+  MoveData& this_ = static_cast<MoveData&>(self);
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.~Impl_();
 }
 
-inline void* PositionData::PlacementNew_(const void*, void* mem,
+inline void* MoveData::PlacementNew_(const void*, void* mem,
                                         ::google::protobuf::Arena* arena) {
-  return ::new (mem) PositionData(arena);
+  return ::new (mem) MoveData(arena);
 }
-constexpr auto PositionData::InternalNewImpl_() {
-  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(PositionData),
-                                            alignof(PositionData));
+constexpr auto MoveData::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(MoveData),
+                                            alignof(MoveData));
 }
 PROTOBUF_CONSTINIT
 PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::google::protobuf::internal::ClassDataFull PositionData::_class_data_ = {
+const ::google::protobuf::internal::ClassDataFull MoveData::_class_data_ = {
     ::google::protobuf::internal::ClassData{
-        &_PositionData_default_instance_._instance,
+        &_MoveData_default_instance_._instance,
         &_table_.header,
         nullptr,  // OnDemandRegisterArenaDtor
         nullptr,  // IsInitialized
-        &PositionData::MergeImpl,
-        ::google::protobuf::Message::GetNewImpl<PositionData>(),
+        &MoveData::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<MoveData>(),
 #if defined(PROTOBUF_CUSTOM_VTABLE)
-        &PositionData::SharedDtor,
-        ::google::protobuf::Message::GetClearImpl<PositionData>(), &PositionData::ByteSizeLong,
-            &PositionData::_InternalSerialize,
+        &MoveData::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<MoveData>(), &MoveData::ByteSizeLong,
+            &MoveData::_InternalSerialize,
 #endif  // PROTOBUF_CUSTOM_VTABLE
-        PROTOBUF_FIELD_OFFSET(PositionData, _impl_._cached_size_),
+        PROTOBUF_FIELD_OFFSET(MoveData, _impl_._cached_size_),
         false,
     },
-    &PositionData::kDescriptorMethods,
+    &MoveData::kDescriptorMethods,
     &descriptor_table_NetworkData_2eproto,
     nullptr,  // tracker
 };
-const ::google::protobuf::internal::ClassData* PositionData::GetClassData() const {
+const ::google::protobuf::internal::ClassData* MoveData::GetClassData() const {
   ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
   ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<3, 6, 0, 0, 2> PositionData::_table_ = {
+const ::_pbi::TcParseTable<3, 6, 0, 0, 2> MoveData::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
@@ -900,49 +896,49 @@ const ::_pbi::TcParseTable<3, 6, 0, 0, 2> PositionData::_table_ = {
     nullptr,  // post_loop_handler
     ::_pbi::TcParser::GenericFallback,  // fallback
     #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
-    ::_pbi::TcParser::GetTable<::NetworkData::PositionData>(),  // to_prefetch
+    ::_pbi::TcParser::GetTable<::NetworkData::MoveData>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
     {::_pbi::TcParser::MiniParse, {}},
-    // float x1 = 1;
+    // float x = 1;
     {::_pbi::TcParser::FastF32S1,
-     {13, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x1_)}},
-    // float y1 = 2;
+     {13, 63, 0, PROTOBUF_FIELD_OFFSET(MoveData, _impl_.x_)}},
+    // float y = 2;
     {::_pbi::TcParser::FastF32S1,
-     {21, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y1_)}},
-    // float z1 = 3;
+     {21, 63, 0, PROTOBUF_FIELD_OFFSET(MoveData, _impl_.y_)}},
+    // float z = 3;
     {::_pbi::TcParser::FastF32S1,
-     {29, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z1_)}},
-    // float x2 = 4;
+     {29, 63, 0, PROTOBUF_FIELD_OFFSET(MoveData, _impl_.z_)}},
+    // float vertical = 4;
     {::_pbi::TcParser::FastF32S1,
-     {37, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x2_)}},
-    // float y2 = 5;
+     {37, 63, 0, PROTOBUF_FIELD_OFFSET(MoveData, _impl_.vertical_)}},
+    // float horizontal = 5;
     {::_pbi::TcParser::FastF32S1,
-     {45, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y2_)}},
-    // float z2 = 6;
+     {45, 63, 0, PROTOBUF_FIELD_OFFSET(MoveData, _impl_.horizontal_)}},
+    // float speed = 6;
     {::_pbi::TcParser::FastF32S1,
-     {53, 63, 0, PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z2_)}},
+     {53, 63, 0, PROTOBUF_FIELD_OFFSET(MoveData, _impl_.speed_)}},
     {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
-    // float x1 = 1;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x1_), 0, 0,
+    // float x = 1;
+    {PROTOBUF_FIELD_OFFSET(MoveData, _impl_.x_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
-    // float y1 = 2;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y1_), 0, 0,
+    // float y = 2;
+    {PROTOBUF_FIELD_OFFSET(MoveData, _impl_.y_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
-    // float z1 = 3;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z1_), 0, 0,
+    // float z = 3;
+    {PROTOBUF_FIELD_OFFSET(MoveData, _impl_.z_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
-    // float x2 = 4;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x2_), 0, 0,
+    // float vertical = 4;
+    {PROTOBUF_FIELD_OFFSET(MoveData, _impl_.vertical_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
-    // float y2 = 5;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.y2_), 0, 0,
+    // float horizontal = 5;
+    {PROTOBUF_FIELD_OFFSET(MoveData, _impl_.horizontal_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
-    // float z2 = 6;
-    {PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z2_), 0, 0,
+    // float speed = 6;
+    {PROTOBUF_FIELD_OFFSET(MoveData, _impl_.speed_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
   }},
   // no aux_entries
@@ -950,74 +946,74 @@ const ::_pbi::TcParseTable<3, 6, 0, 0, 2> PositionData::_table_ = {
   }},
 };
 
-PROTOBUF_NOINLINE void PositionData::Clear() {
-// @@protoc_insertion_point(message_clear_start:NetworkData.PositionData)
+PROTOBUF_NOINLINE void MoveData::Clear() {
+// @@protoc_insertion_point(message_clear_start:NetworkData.MoveData)
   ::google::protobuf::internal::TSanWrite(&_impl_);
   ::uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  ::memset(&_impl_.x1_, 0, static_cast<::size_t>(
-      reinterpret_cast<char*>(&_impl_.z2_) -
-      reinterpret_cast<char*>(&_impl_.x1_)) + sizeof(_impl_.z2_));
+  ::memset(&_impl_.x_, 0, static_cast<::size_t>(
+      reinterpret_cast<char*>(&_impl_.speed_) -
+      reinterpret_cast<char*>(&_impl_.x_)) + sizeof(_impl_.speed_));
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
 
 #if defined(PROTOBUF_CUSTOM_VTABLE)
-        ::uint8_t* PositionData::_InternalSerialize(
+        ::uint8_t* MoveData::_InternalSerialize(
             const MessageLite& base, ::uint8_t* target,
             ::google::protobuf::io::EpsCopyOutputStream* stream) {
-          const PositionData& this_ = static_cast<const PositionData&>(base);
+          const MoveData& this_ = static_cast<const MoveData&>(base);
 #else   // PROTOBUF_CUSTOM_VTABLE
-        ::uint8_t* PositionData::_InternalSerialize(
+        ::uint8_t* MoveData::_InternalSerialize(
             ::uint8_t* target,
             ::google::protobuf::io::EpsCopyOutputStream* stream) const {
-          const PositionData& this_ = *this;
+          const MoveData& this_ = *this;
 #endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.PositionData)
+          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.MoveData)
           ::uint32_t cached_has_bits = 0;
           (void)cached_has_bits;
 
-          // float x1 = 1;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_x1()) != 0) {
+          // float x = 1;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_x()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                1, this_._internal_x1(), target);
+                1, this_._internal_x(), target);
           }
 
-          // float y1 = 2;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_y1()) != 0) {
+          // float y = 2;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_y()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                2, this_._internal_y1(), target);
+                2, this_._internal_y(), target);
           }
 
-          // float z1 = 3;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_z1()) != 0) {
+          // float z = 3;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_z()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                3, this_._internal_z1(), target);
+                3, this_._internal_z(), target);
           }
 
-          // float x2 = 4;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_x2()) != 0) {
+          // float vertical = 4;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_vertical()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                4, this_._internal_x2(), target);
+                4, this_._internal_vertical(), target);
           }
 
-          // float y2 = 5;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_y2()) != 0) {
+          // float horizontal = 5;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_horizontal()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                5, this_._internal_y2(), target);
+                5, this_._internal_horizontal(), target);
           }
 
-          // float z2 = 6;
-          if (::absl::bit_cast<::uint32_t>(this_._internal_z2()) != 0) {
+          // float speed = 6;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_speed()) != 0) {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
-                6, this_._internal_z2(), target);
+                6, this_._internal_speed(), target);
           }
 
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -1025,18 +1021,18 @@ PROTOBUF_NOINLINE void PositionData::Clear() {
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
                     this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
           }
-          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.PositionData)
+          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.MoveData)
           return target;
         }
 
 #if defined(PROTOBUF_CUSTOM_VTABLE)
-        ::size_t PositionData::ByteSizeLong(const MessageLite& base) {
-          const PositionData& this_ = static_cast<const PositionData&>(base);
+        ::size_t MoveData::ByteSizeLong(const MessageLite& base) {
+          const MoveData& this_ = static_cast<const MoveData&>(base);
 #else   // PROTOBUF_CUSTOM_VTABLE
-        ::size_t PositionData::ByteSizeLong() const {
-          const PositionData& this_ = *this;
+        ::size_t MoveData::ByteSizeLong() const {
+          const MoveData& this_ = *this;
 #endif  // PROTOBUF_CUSTOM_VTABLE
-          // @@protoc_insertion_point(message_byte_size_start:NetworkData.PositionData)
+          // @@protoc_insertion_point(message_byte_size_start:NetworkData.MoveData)
           ::size_t total_size = 0;
 
           ::uint32_t cached_has_bits = 0;
@@ -1045,28 +1041,28 @@ PROTOBUF_NOINLINE void PositionData::Clear() {
 
           ::_pbi::Prefetch5LinesFrom7Lines(&this_);
            {
-            // float x1 = 1;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_x1()) != 0) {
+            // float x = 1;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_x()) != 0) {
               total_size += 5;
             }
-            // float y1 = 2;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_y1()) != 0) {
+            // float y = 2;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_y()) != 0) {
               total_size += 5;
             }
-            // float z1 = 3;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_z1()) != 0) {
+            // float z = 3;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_z()) != 0) {
               total_size += 5;
             }
-            // float x2 = 4;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_x2()) != 0) {
+            // float vertical = 4;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_vertical()) != 0) {
               total_size += 5;
             }
-            // float y2 = 5;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_y2()) != 0) {
+            // float horizontal = 5;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_horizontal()) != 0) {
               total_size += 5;
             }
-            // float z2 = 6;
-            if (::absl::bit_cast<::uint32_t>(this_._internal_z2()) != 0) {
+            // float speed = 6;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_speed()) != 0) {
               total_size += 5;
             }
           }
@@ -1074,55 +1070,55 @@ PROTOBUF_NOINLINE void PositionData::Clear() {
                                                      &this_._impl_._cached_size_);
         }
 
-void PositionData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
-  auto* const _this = static_cast<PositionData*>(&to_msg);
-  auto& from = static_cast<const PositionData&>(from_msg);
-  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.PositionData)
+void MoveData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<MoveData*>(&to_msg);
+  auto& from = static_cast<const MoveData&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.MoveData)
   ABSL_DCHECK_NE(&from, _this);
   ::uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (::absl::bit_cast<::uint32_t>(from._internal_x1()) != 0) {
-    _this->_impl_.x1_ = from._impl_.x1_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_x()) != 0) {
+    _this->_impl_.x_ = from._impl_.x_;
   }
-  if (::absl::bit_cast<::uint32_t>(from._internal_y1()) != 0) {
-    _this->_impl_.y1_ = from._impl_.y1_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_y()) != 0) {
+    _this->_impl_.y_ = from._impl_.y_;
   }
-  if (::absl::bit_cast<::uint32_t>(from._internal_z1()) != 0) {
-    _this->_impl_.z1_ = from._impl_.z1_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_z()) != 0) {
+    _this->_impl_.z_ = from._impl_.z_;
   }
-  if (::absl::bit_cast<::uint32_t>(from._internal_x2()) != 0) {
-    _this->_impl_.x2_ = from._impl_.x2_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_vertical()) != 0) {
+    _this->_impl_.vertical_ = from._impl_.vertical_;
   }
-  if (::absl::bit_cast<::uint32_t>(from._internal_y2()) != 0) {
-    _this->_impl_.y2_ = from._impl_.y2_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_horizontal()) != 0) {
+    _this->_impl_.horizontal_ = from._impl_.horizontal_;
   }
-  if (::absl::bit_cast<::uint32_t>(from._internal_z2()) != 0) {
-    _this->_impl_.z2_ = from._impl_.z2_;
+  if (::absl::bit_cast<::uint32_t>(from._internal_speed()) != 0) {
+    _this->_impl_.speed_ = from._impl_.speed_;
   }
   _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
 }
 
-void PositionData::CopyFrom(const PositionData& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.PositionData)
+void MoveData::CopyFrom(const MoveData& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.MoveData)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
 
-void PositionData::InternalSwap(PositionData* PROTOBUF_RESTRICT other) {
+void MoveData::InternalSwap(MoveData* PROTOBUF_RESTRICT other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   ::google::protobuf::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(PositionData, _impl_.z2_)
-      + sizeof(PositionData::_impl_.z2_)
-      - PROTOBUF_FIELD_OFFSET(PositionData, _impl_.x1_)>(
-          reinterpret_cast<char*>(&_impl_.x1_),
-          reinterpret_cast<char*>(&other->_impl_.x1_));
+      PROTOBUF_FIELD_OFFSET(MoveData, _impl_.speed_)
+      + sizeof(MoveData::_impl_.speed_)
+      - PROTOBUF_FIELD_OFFSET(MoveData, _impl_.x_)>(
+          reinterpret_cast<char*>(&_impl_.x_),
+          reinterpret_cast<char*>(&other->_impl_.x_));
 }
 
-::google::protobuf::Metadata PositionData::GetMetadata() const {
+::google::protobuf::Metadata MoveData::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // ===================================================================

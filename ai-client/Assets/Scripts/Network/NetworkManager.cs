@@ -16,6 +16,11 @@ public class NetworkManager : Singleton<NetworkManager>
     [SerializeField] private string _serverIp = "127.0.0.1";
     [SerializeField] private ushort _serverPort = 53200;
     [SerializeField] private NetworkInputAction _inputAction;
+
+    [Header("Manual Mode")] 
+    [SerializeField] private bool _isManualMode = false;
+    public bool IsManualMode => _isManualMode;
+       
     public Guid ConnectedUuid { get; private set; }
     
     public Action disconnectAction;
@@ -33,8 +38,8 @@ public class NetworkManager : Singleton<NetworkManager>
 
     private uint _netSize;
 
-    private CancellationTokenSource _cancellationTokenSource = new();
-    public CancellationToken CToken => _cancellationTokenSource.Token;
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+    private CancellationToken CToken => _cancellationTokenSource.Token;
 
     public bool IsOnline { get; private set; }
     public bool IsSendPacketOn { get; private set; }
@@ -97,9 +102,6 @@ public class NetworkManager : Singleton<NetworkManager>
         try
         {
             _tcpClient = new TcpClient();
-            
-            // RTT packet pre-allocation
-            
             
             await _tcpClient.ConnectAsync(_serverIp, _serverPort);
             _tcpStream = _tcpClient.GetStream();
@@ -407,6 +409,10 @@ public class NetworkManager : Singleton<NetworkManager>
     {
         switch (data.Method)
         {
+            case RpcMethod.None:
+                SyncManager.Instance.SyncObjectNone(ProtoSerializer.ConvertUuidToGuid(data.Uuid));
+                break;
+            
             case RpcMethod.Uuid:
                 ConnectedUuid = ProtoSerializer.ConvertUuidToGuid(data.Uuid);
                 Debug.Log($"Connected UUID: {ConnectedUuid.ToString()}");
@@ -422,23 +428,18 @@ public class NetworkManager : Singleton<NetworkManager>
                 AsyncWriteByTcp(pongPacket).Forget();
                 break;
             
-            
+            case RpcMethod.MoveStart:
+            case RpcMethod.MoveStop:
             case RpcMethod.Move:
                 // Deserialize the data
-                PositionData positionData = PositionData.Parser.ParseFrom(data.Data);
-                
-                var startPosition = new Vector3(positionData.X1, positionData.Y1, positionData.Z1);
-                var targetPosition = new Vector3(positionData.X2, positionData.Y2, positionData.Z2);
+                MoveData moveData = MoveData.Parser.ParseFrom(data.Data);
                 
                 // Call SyncManager to sync the object position
-                SyncManager.Instance.SyncObjectPosition(ProtoSerializer.ConvertUuidToGuid(data.Uuid), startPosition, targetPosition);
+                SyncManager.Instance.SyncObjectPosition(ProtoSerializer.ConvertUuidToGuid(data.Uuid), moveData);
                 break;
             
             case RpcMethod.PacketCount:
-            case RpcMethod.Attack:
-            case RpcMethod.DropItem:
-            case RpcMethod.UseItem:
-            case RpcMethod.UseSkill:
+            case RpcMethod.NetworkNone:
                 Debug.Assert(false, "Not Implemented");
                 break;
             
@@ -452,10 +453,10 @@ public class NetworkManager : Singleton<NetworkManager>
             case RpcMethod.Access:
             case RpcMethod.Reject:
             case RpcMethod.Logout:
+            case RpcMethod.UdpPort:
                 Debug.Assert(false, "Not Sync Method");
                 break;
             
-            case RpcMethod.None:
             case RpcMethod.InGameNone:
             default:
                 Debug.Assert(false, "Invalid Method");

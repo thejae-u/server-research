@@ -20,27 +20,27 @@ public partial class SendPacketAction : Action
     protected override Status OnStart()
     {
         _networkManager = NetworkManager.Instance;
+
+        float vertical = Random.Range(-1.0f, 1.0f);
+        float horizontal = Random.Range(-1.0f, 1.0f);
+        float speed = Random.Range(3.0f, 8.0f);
         
-        var startPosition =
-            AiManager.Value.transform.position;
-        var targetPosition =
-            new Vector3(Random.Range(-5, 6), 1, Random.Range(-5, 6)); // Replace with actual target position
-        _targetPosition = targetPosition;
+        Vector3 position = AiManager.Value.transform.position;
         
-        var positionData = new PositionData
+        var moveData = new MoveData
         {
-            X1 = startPosition.x,
-            Y1 = startPosition.y,
-            Z1 = startPosition.z,
-            X2 = targetPosition.x,
-            Y2 = targetPosition.y,
-            Z2 = targetPosition.z
+            X = position.x,
+            Y = position.y,
+            Z = position.z,
+            Vertical = vertical,
+            Horizontal = horizontal,
+            Speed = speed
         };
         
         _sendPacket = new RpcPacket
         {
             Method = RpcMethod.Move,
-            Data = positionData.ToByteString(),
+            Data = moveData.ToByteString(),
             Timestamp = Timestamp.FromDateTime(DateTime.UtcNow),
         };
         
@@ -49,8 +49,8 @@ public partial class SendPacketAction : Action
 
     protected override Status OnUpdate()
     {
-        AiManager.Value.MoveTo(_targetPosition);
-        _ = NetworkManager.Instance.AsyncWriteRpcPacket(_sendPacket);
+        // AiManager.Value.MoveTo();
+        //_ = NetworkManager.Instance.AsyncWriteRpcPacket(_sendPacket);
         return Status.Success;
     }
 

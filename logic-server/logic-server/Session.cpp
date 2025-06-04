@@ -12,7 +12,7 @@ Session::Session(const IoContext::strand& strand, const IoContext::strand& rpcSt
 	_sessionUuid(guid),
 	_lastRtt(0)
 {
-	_pingTimer = std::make_unique<Scheduler>(_strand.context(), std::chrono::milliseconds(500), [this]() {
+	_pingTimer = std::make_shared<Scheduler>(_strand, std::chrono::milliseconds(500), [this]() {
 		SendPingPacket();
 	});
 }
@@ -25,6 +25,8 @@ void Session::Start()
 	TcpAsyncReadSize();
 	_pingTimer->Start();
 	UdpAsyncRead();
+
+	_isConnected = true;
 }
 
 bool Session::ExchangeUdpPort()
@@ -115,6 +117,7 @@ bool Session::SendUuidToClient() const
 void Session::Stop()
 {
 	SPDLOG_INFO("{} session stopped", to_string(_sessionUuid));
+	_isConnected = false;
 
 	_tcpSocketPtr->close();
 	_udpSocketPtr->close();
@@ -133,29 +136,37 @@ void Session::SetCollectInputAction(SessionInput inputAction)
 	_inputAction = std::move(inputAction);
 }
 
-void Session::ProcessRpc(const std::shared_ptr<RpcPacket>& packet)
+void Session::ProcessRpc(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs)
 {
-	const auto serializedData = std::make_shared<std::string>(packet->SerializeAsString());
-	if (!serializedData)
+	std::unordered_map<SSessionKey, RpcPacket> copiedInputs;
+	for (const auto& [key, packet] : allInputs)
 	{
-		SPDLOG_ERROR("{} {} : RpcPacket serialize failed", __func__, to_string(_sessionUuid));
-		return;
+		copiedInputs[key] = *packet;
 	}
+	
+	for (const auto& [key, packet] : copiedInputs)
+	{
+		const auto serializedData = std::make_shared<std::string>();
+		if (!packet.SerializeToString(serializedData.get()))
+		{
+			SPDLOG_ERROR("{} {} : RpcPacket serialize failed for key {}", __func__, to_string(_sessionUuid), to_string(key.guid));
+			return;
+		}
 
-	// Udp Send
-	UdpAsyncWrite(serializedData);
+		UdpAsyncWrite(serializedData);
+	}
 }
 
 void Session::SendPingPacket()
 {
 	RpcPacket packet;
 	packet.set_method(PING);
-	auto serializePingPacket = std::make_shared<std::string>(packet.SerializeAsString());
+	const auto serializePingPacket = std::make_shared<std::string>(packet.SerializeAsString());
 	const uint32_t sendDataSize =  static_cast<uint32_t>(serializePingPacket->size());
 	const uint32_t sendNetSize = htonl(sendDataSize);
 
 
-	auto func = std::make_shared<std::string>(__func__);
+	const auto dbgName = std::make_shared<std::string>(__func__);
 	_pingTime = Utility::StartStopwatch();
 	
 	boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)));
@@ -181,15 +192,15 @@ void Session::TcpAsyncReadSize()
 	_tcpDataSize = 0;
 	_tcpNetSize = 0;
 
-	auto func = std::make_shared<std::string>(__func__);
+	const auto dbgName = std::make_shared<std::string>(__func__);
 	boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(&_tcpNetSize, sizeof(_tcpNetSize)),
-		_strand.wrap([this, func](const boost::system::error_code& sizeEc, std::size_t)
+		_strand.wrap([this, dbgName](const boost::system::error_code& sizeEc, std::size_t)
 		{
 			if (sizeEc)
 			{
 				if (sizeEc != boost::asio::error::eof && sizeEc != boost::asio::error::connection_reset)
 				{
-					SPDLOG_ERROR("{} {} : TCP error Receiving Size ({})", *func, to_string(_sessionUuid), sizeEc.message());
+					SPDLOG_ERROR("{} {} : TCP error Receiving Size ({})", *dbgName, to_string(_sessionUuid), sizeEc.message());
 				}
 				
 				Stop();
@@ -201,7 +212,7 @@ void Session::TcpAsyncReadSize()
 
 			if (_tcpDataSize > MAX_PACKET_SIZE)
 			{
-				SPDLOG_ERROR("{} {} : TCP error Receiving Data Size ({})", *func, to_string(_sessionUuid), _tcpDataSize);
+				SPDLOG_ERROR("{} {} : TCP error Receiving Data Size ({})", *dbgName, to_string(_sessionUuid), _tcpDataSize);
 				TcpAsyncReadSize();
 				return;
 			}
@@ -214,9 +225,9 @@ void Session::TcpAsyncReadSize()
 
 void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer)
 {
-	auto func = std::make_shared<std::string>(__func__);
+	const auto dbgName = std::make_shared<std::string>(__func__);
 	boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(*dataBuffer),
-		_strand.wrap([this, dataBuffer, func](const boost::system::error_code& dataEc, std::size_t)
+		_strand.wrap([this, dataBuffer, dbgName](const boost::system::error_code& dataEc, std::size_t)
 		{
 			if (dataEc)
 			{
@@ -226,7 +237,7 @@ void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuf
 					return;
 				}
 
-				SPDLOG_ERROR("{} {} : TCP error Receiving Data ({})", *func, to_string(_sessionUuid), dataEc.message());
+				SPDLOG_ERROR("{} {} : TCP error Receiving Data ({})", *dbgName, to_string(_sessionUuid), dataEc.message());
 				TcpAsyncReadSize();
 				return;
 			}
@@ -234,7 +245,7 @@ void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuf
 			RpcPacket deserializeRpcPacket;
 			if (!deserializeRpcPacket.ParseFromArray(dataBuffer->data(), static_cast<int>(dataBuffer->size())))
 			{
-				SPDLOG_ERROR("{} {} : Error Parsing RpcPacket", *func, to_string(_sessionUuid));
+				SPDLOG_ERROR("{} {} : Error Parsing RpcPacket", *dbgName, to_string(_sessionUuid));
 				TcpAsyncReadSize();
 				return;
 			}
@@ -257,11 +268,11 @@ void Session::UdpAsyncRead()
 	buf->resize(MAX_PACKET_SIZE);
 	
     const auto senderEndpoint = std::make_shared<udp::endpoint>();
-	auto func = std::make_shared<std::string>(__func__);
+	const auto dbgName = std::make_shared<std::string>(__func__);
 
     _udpSocketPtr->async_receive_from(
         boost::asio::buffer(*buf), *senderEndpoint,
-        _rpcStrand.wrap([self, buf, func](const boost::system::error_code& ec, const std::size_t bytesRead)
+        _rpcStrand.wrap([self, buf, dbgName](const boost::system::error_code& ec, const std::size_t bytesRead)
         {
             if (ec)
             {
@@ -274,14 +285,14 @@ void Session::UdpAsyncRead()
 
             if (bytesRead < sizeof(std::uint16_t))
             {
-            	SPDLOG_ERROR("{} {} : Invalid packet received (bytes read under 2bytes)", *func, to_string(self->_sessionUuid));
+            	SPDLOG_ERROR("{} {} : Invalid packet received (bytes read under 2bytes)", *dbgName, to_string(self->_sessionUuid));
             	self->UdpAsyncRead();
                 return;
             }
 
         	if (buf->data() == nullptr)
         	{
-        		SPDLOG_ERROR("{} {} : Invalid packet received (buffer->data() is null)", *func, to_string(self->_sessionUuid));
+        		SPDLOG_ERROR("{} {} : Invalid packet received (buffer->data() is null)", *dbgName, to_string(self->_sessionUuid));
         		self->UdpAsyncRead();
         		return;
         	}
@@ -293,7 +304,7 @@ void Session::UdpAsyncRead()
 
             if (payloadSize == 0 || payloadSize + sizeof(std::uint16_t) > bytesRead)
             {
-            	SPDLOG_ERROR("{} {} : Invalid payload size (payloadSize is 0 or over bytesRead)", *func, to_string(self->_sessionUuid));
+            	SPDLOG_ERROR("{} {} : Invalid payload size (payloadSize is 0 or over bytesRead)", *dbgName, to_string(self->_sessionUuid));
                 self->UdpAsyncRead();
                 return;
             }
@@ -301,7 +312,7 @@ void Session::UdpAsyncRead()
             RpcPacket packet;
             if (!packet.ParseFromArray(buf->data() + sizeof(std::uint16_t), payloadSize))
             {
-            	SPDLOG_ERROR("{} {} : Error Parsing RpcPacket", *func, to_string(self->_sessionUuid));
+            	SPDLOG_ERROR("{} {} : Error Parsing RpcPacket", *dbgName, to_string(self->_sessionUuid));
                 self->UdpAsyncRead();
                 return;
             }
@@ -326,19 +337,19 @@ void Session::UdpAsyncWrite(const std::shared_ptr<std::string>& data)
 	payload->append(reinterpret_cast<const char*>(&netPayloadSize), sizeof(netPayloadSize));
 	payload->append(*data);
 
-	auto func = std::make_shared<std::string>(__func__);
+	const auto dbgName = std::make_shared<std::string>(__func__);
 	
 	_udpSocketPtr->async_send_to(boost::asio::buffer(*payload), _udpSendEp,
-		_rpcStrand.wrap([this, payload, func](const boost::system::error_code& ec, std::size_t)
+		_rpcStrand.wrap([this, payload, dbgName](const boost::system::error_code& ec, std::size_t)
 		{
 			if (ec)
 			{
-				SPDLOG_ERROR("{} {} : UDP error Sending Data ({})", *func, to_string(_sessionUuid), ec.message());
+				SPDLOG_ERROR("{} {} : UDP error Sending Data ({})", *dbgName, to_string(_sessionUuid), ec.message());
 				return;
 			}
 
 			std::string addressStr = _udpSendEp.address().to_string();
 			std::string portStr = std::to_string(_udpSendEp.port());
-			SPDLOG_INFO("{} {} : send packet to {} {}", *func, to_string(_sessionUuid), addressStr, portStr);
+			// SPDLOG_INFO("{} {} : send packet to {} {}", *dbgName, to_string(_sessionUuid), addressStr, portStr);
 		}));
 }

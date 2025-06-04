@@ -32,7 +32,7 @@ int main()
 	auto server = std::make_shared<Server>(ctxStrand, rpcStrand, acceptor);
 
 	server->AcceptClientAsync();
-	SPDLOG_INFO("Logic Server Started");
+	SPDLOG_INFO("{} Logic Server Started", __func__);
 
 	workCtxThreads.reserve(ctxThreadCount - rpcCtxThreadCount);
 	for (std::size_t i = 0; i < ctxThreadCount - rpcCtxThreadCount; ++i)

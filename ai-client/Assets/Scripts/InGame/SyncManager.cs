@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using NetworkData;
 
 public class SyncManager : Singleton<SyncManager> 
 {
@@ -53,20 +54,53 @@ public class SyncManager : Singleton<SyncManager>
         return syncObject;
     }
 
-    public void SyncObjectPosition(Guid objectId, Vector3 startPosition, Vector3 targetPosition)
+    public void SyncObjectPosition(Guid objectId, MoveData moveData)
     {
-        // self packet check and return -> TODO : interporlation first move to sync with server
-        if (objectId == _networkManager.ConnectedUuid)
+        Debug.Log($"Received SyncObjectPosition - {objectId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+        if (objectId == Guid.Empty)
+        {
+            Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
             return;
+        }
+
+        if (objectId == _networkManager.ConnectedUuid)
+        {
+            // self packet check and return
+            if (Mathf.Approximately(moveData.X, transform.position.x) && 
+                Mathf.Approximately(moveData.Y, transform.position.y) && 
+                Mathf.Approximately(moveData.Z, transform.position.z))
+            {
+                Debug.Log($"Self packet position is same as current position. No need to sync.");
+            }
+            else
+            {
+                Debug.Log($"Self packet position is different. Syncing position needed.");
+                // Here you can handle self movement logic if needed
+            }
+            
+            return;
+        }
+
+        var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
         
         if (!_syncObjects.TryGetValue(objectId, out GameObject syncObject))
         {
             // If the object doesn't exist, create it
             syncObject = CreateSyncObject(objectId, startPosition);
+            return;
         }
         
         var syncObjectComponent = syncObject.GetComponent<SyncObject>();
         // Sync position
-        syncObjectComponent.SyncPosition(objectId, startPosition, targetPosition).Forget();
+        syncObjectComponent.SyncPosition(objectId, moveData).Forget();
+    }
+
+    public void SyncObjectNone(Guid objectId)
+    {
+        // self packet check and return
+        if (objectId == _networkManager.ConnectedUuid)
+            return;
+        
+        Debug.Log($"SyncObjectNone - {objectId}");
     }
 }

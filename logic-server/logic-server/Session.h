@@ -20,6 +20,7 @@ using boost::uuids::uuid;
 class Server;
 class LockstepGroup;
 class Scheduler;
+struct SSessionKey;
 
 constexpr std::int64_t INVALID_RTT = -1;
 constexpr std::size_t MAX_PACKET_SIZE = 128;
@@ -43,13 +44,15 @@ public:
 	using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
 	void SetCollectInputAction(SessionInput inputAction);
 
-	void ProcessRpc(const std::shared_ptr<RpcPacket>& packet);
+	void ProcessRpc(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs);
 	tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
 	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 	const uuid& GetSessionUuid() const { return _sessionUuid; }
 	bool ExchangeUdpPort();
 	std::int64_t CheckAndGetRtt() const;
 	bool SendUuidToClient() const;
+
+	bool IsValid() const { return _isConnected; }
 	
 private:
 	using TcpSocket = tcp::socket;
@@ -61,10 +64,12 @@ private:
 	std::shared_ptr<UdpSocket> _udpSocketPtr;
 	udp::endpoint _udpSendEp;
 
+	bool _isConnected = false;
+
 	uuid _sessionUuid;
 	std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
 
-	std::unique_ptr<Scheduler> _pingTimer;
+	std::shared_ptr<Scheduler> _pingTimer;
 	std::uint32_t _checkRttDelay = 500;
 	std::chrono::high_resolution_clock::time_point _pingTime;
 	std::uint64_t _lastRtt;
@@ -74,7 +79,6 @@ private:
 
 	std::uint32_t _tcpNetSize = 0;
 	std::uint32_t _tcpDataSize = 0;
-
 
 	void SendPingPacket();
 	void ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet);

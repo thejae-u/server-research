@@ -658,6 +658,7 @@ MonoBehaviour:
   _serverIp: 127.0.0.1
   _serverPort: 53200
   _inputAction: {fileID: 11400000, guid: 934de38865525454491c50c7af5a9876, type: 2}
+  _isManualMode: 1
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -831,6 +832,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 236a809cf893f4845baa1543f4919341, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _playerMoveActions: {fileID: 11400000, guid: 0a64cd44c95d6de44ace875efaa6f8dc, type: 2}
+  _moveSpeed: 5
+  _movePacketSendInterval: 33
 --- !u!114 &1070463410
 MonoBehaviour:
   m_ObjectHideFlags: 0

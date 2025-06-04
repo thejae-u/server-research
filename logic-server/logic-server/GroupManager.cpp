@@ -17,7 +17,7 @@ void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
             if (!group->IsFull())
             {
                 group->AddMember(newSession);
-                SPDLOG_INFO("Session {} is allocated to Group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
+                SPDLOG_INFO("{} : Session {} is allocated to Group {}", __func__, to_string(newSession->GetSessionUuid()), to_string(groupId));
                 newSession->Start();
                 return;
             }
@@ -25,22 +25,29 @@ void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
     }
 
     // If no group is found, create a new group
-    const auto newGroup = std::make_shared<LockstepGroup>(_strand, (*_uuidGenerator)());
-    newGroup->SetNotifyEmptyCallback([this](const std::shared_ptr<LockstepGroup>& emptyGroup)
-    {
-        RemoveEmptyGroup(emptyGroup);
-    });
-
-    newGroup->Start();
+    const auto newGroup = CreateNewGroup();
     newGroup->AddMember(newSession);
+    newGroup->Start();
     newSession->Start();
-    SPDLOG_INFO("All groups are full, created new group {} for session {}",
-        to_string(newGroup->GetGroupId()), to_string(newSession->GetSessionUuid()));
 
     {
         std::lock_guard<std::mutex> lock(_groupMutex);
         _groups[newGroup->GetGroupId()] = newGroup;
     }
+}
+
+std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup()
+{
+    const auto newGroup = std::make_shared<LockstepGroup>(_strand, (*_uuidGenerator)());
+    newGroup->SetNotifyEmptyCallback([this](const std::shared_ptr<LockstepGroup>& emptyGroup)
+    {
+        RemoveEmptyGroup(emptyGroup);
+    });
+    newGroup->Start();
+    
+    SPDLOG_INFO("{} : Created new group {}", __func__, to_string(newGroup->GetGroupId()));
+    
+    return newGroup;
 }
 
 void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyGroup)
@@ -51,7 +58,7 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyG
 
         if (it == _groups.end())
         {
-            SPDLOG_ERROR("Group {} not found in GroupManager", to_string(groupKey));
+            SPDLOG_ERROR("{} : Group {} not found in GroupManager", __func__, to_string(groupKey));
             return;
         }
         
@@ -59,8 +66,10 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyG
         _groups.erase(it);
     }
 
-    SPDLOG_INFO("Removed empty group {}", to_string(emptyGroup->GetGroupId()));
+    SPDLOG_INFO("{} : Removed empty group {}", __func__, to_string(emptyGroup->GetGroupId()));
 }
+
+
 
 /*
 bool GroupManager::InsertSessionToGroup(const std::shared_ptr<Session>& session, const int64_t& rtt)

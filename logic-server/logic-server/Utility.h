@@ -30,13 +30,6 @@ namespace Utility
         return uuid;
     }
 
-    static PositionData ParseToPositionData(const RpcPacket& packet)
-    {
-        PositionData result;
-        result.ParseFromString(packet.data());
-        return result;
-    }
-
     static std::chrono::high_resolution_clock::time_point StartStopwatch()
     {
         return std::chrono::high_resolution_clock::now();
@@ -53,6 +46,14 @@ namespace Utility
         std::string result;
         switch (method)
         {
+        case NONE:
+            result = "NONE";
+            break;
+            
+        case UDP_PORT:
+            result = "UDP_PORT";
+            break;
+            
         case PING:
             result = "PING";
             break;
@@ -68,33 +69,23 @@ namespace Utility
         case MOVE:
             result = "MOVE";
             break;
-
+            
+        case MoveStart:
+            result = "MoveStart";
+            break;
+            
+        case MoveStop:
+            result = "MoveStop";
+            break;
+            
         case PACKET_COUNT:
-            result = "PACKET_COUNT";
+            result = "PacketCount";
             break;
         
-        case LOGIN:
-        case REGISTER:
-        case RETRIEVE:
-        case ACCESS:
-        case REJECT:
-        case LOGOUT:
-        case ATTACK:
-        case DROP_ITEM:
-        case USE_ITEM:
-        case USE_SKILL:
-        case STATE_NONE:
-        case STATE_MOVE_START:
-        case STATE_MOVE_END:
-        case STATE_ATTACK_START:
-        case STATE_ATTACK_END:
-        case NONE:
-        case IN_GAME_NONE:
         default:
             result = "INVALID";
             break;
         }
-
         return result;
     }
 }

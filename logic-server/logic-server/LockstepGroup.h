@@ -92,7 +92,7 @@ private:
     
     std::mutex _bufferMutex;
 
-    std::unique_ptr<Scheduler> _tickTimer;
+    std::shared_ptr<Scheduler> _tickTimer;
     bool _isRunning = false;
 
     NotifyEmptyCallback _notifyEmptyCallback;
