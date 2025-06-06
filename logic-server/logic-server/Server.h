@@ -23,10 +23,11 @@ class LockstepGroup;
 class Server : public std::enable_shared_from_this<Server>
 {
 public:
-	Server(const IoContext::strand& strand, const IoContext::strand& rpcStrand, tcp::acceptor& acceptor);
+	Server(const IoContext::strand& workStrand, const IoContext::strand& rpcStrand, tcp::acceptor& acceptor);
 	~Server() = default;
-	
-	void AcceptClientAsync();
+
+	void Start();
+	void Stop();
 
 private:
 	IoContext::strand _strand;
@@ -36,5 +37,8 @@ private:
 	std::unique_ptr<GroupManager> _groupManager;
 	std::shared_ptr<random_generator> _uuidGenerator;
 
+	bool _isRunning;
+
+	void AcceptClientAsync();
 	void InitSessionNetwork(const std::shared_ptr<Session>& newSession) const;
 };

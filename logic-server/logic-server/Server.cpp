@@ -4,14 +4,36 @@
 
 #include <iostream>
 
-Server::Server(const IoContext::strand& strand, const IoContext::strand& rpcStrand, tcp::acceptor& acceptor) : _strand(strand), _rpcStrand(rpcStrand), _acceptor(acceptor)
+Server::Server(const IoContext::strand& workStrand, const IoContext::strand& rpcStrand, tcp::acceptor& acceptor) : _strand(workStrand), _rpcStrand(rpcStrand), _acceptor(acceptor)
 {
 	_uuidGenerator = std::make_shared<random_generator>();
-	_groupManager = std::make_unique<GroupManager>(strand, _uuidGenerator);
+	_groupManager = std::make_unique<GroupManager>(workStrand, _uuidGenerator);
+	_isRunning = false;
+}
+
+void Server::Start()
+{
+	_isRunning = true;
+	AcceptClientAsync();
+}
+
+void Server::Stop()
+{
+	SPDLOG_INFO("Server stopping...");
+
+	_isRunning = false;
+	_acceptor.close();
+	_groupManager.reset();
+	_uuidGenerator.reset();
+	
+	SPDLOG_INFO("Server stopped.");
 }
 
 void Server::AcceptClientAsync()
 {
+	if (!_isRunning)
+		return;
+	
 	auto self(shared_from_this());
 	auto newSession = std::make_shared<Session>(_strand, _rpcStrand, (*_uuidGenerator)());
 
@@ -19,13 +41,20 @@ void Server::AcceptClientAsync()
 	{
 		if (ec)
 		{
+			if (ec == boost::asio::error::operation_aborted || ec == boost::asio::error::connection_aborted)
+			{
+				SPDLOG_INFO("Accept operation aborted");
+				return;
+			}
+			
 			SPDLOG_ERROR("Accept failed: {}", ec.message());
 			AcceptClientAsync();
 			return;
 		}
 
-		boost::asio::post(_strand.wrap([this, newSession]() { InitSessionNetwork(newSession); }));
 		AcceptClientAsync();
+		
+		boost::asio::post(_strand.wrap([this, newSession]() { InitSessionNetwork(newSession); }));
 	}));
 }
 

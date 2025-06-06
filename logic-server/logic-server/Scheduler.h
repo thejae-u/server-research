@@ -41,12 +41,13 @@ inline void Scheduler::DoStart()
 {
     auto self(shared_from_this());
     _timer->expires_after(_cycleTime);
-    _timer->async_wait(_strand.wrap([self](const boost::system::error_code& ec)
+    _timer->async_wait([self](const boost::system::error_code& ec)
     {
         if (ec)
         {
             if (ec == boost::asio::error::operation_aborted)
             {
+                SPDLOG_INFO("Scheduler aborted");
                 return; // Timer was stopped
             }
 
@@ -56,13 +57,13 @@ inline void Scheduler::DoStart()
 
         self->_handler(); // Execute the task
         self->Start(); // Restart the timer
-    }));
+    });
 }
 
 inline void Scheduler::Stop()
 {
     auto self(shared_from_this());
-    boost::asio::post(_strand.wrap([self]{ self->DoStop();} ));
+    boost::asio::post(_strand.wrap([self]{ self->DoStop();}));
 }
 
 inline void Scheduler::DoStop()

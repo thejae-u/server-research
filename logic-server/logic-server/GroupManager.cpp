@@ -39,10 +39,10 @@ void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
 std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup()
 {
     const auto newGroup = std::make_shared<LockstepGroup>(_strand, (*_uuidGenerator)());
-    newGroup->SetNotifyEmptyCallback([this](const std::shared_ptr<LockstepGroup>& emptyGroup)
+    newGroup->SetNotifyEmptyCallback(_strand.wrap([this](const std::shared_ptr<LockstepGroup>& emptyGroup)
     {
         RemoveEmptyGroup(emptyGroup);
-    });
+    }));
     newGroup->Start();
     
     SPDLOG_INFO("{} : Created new group {}", __func__, to_string(newGroup->GetGroupId()));
@@ -68,68 +68,3 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyG
 
     SPDLOG_INFO("{} : Removed empty group {}", __func__, to_string(emptyGroup->GetGroupId()));
 }
-
-
-
-/*
-bool GroupManager::InsertSessionToGroup(const std::shared_ptr<Session>& session, const int64_t& rtt)
-{
-    // RTT Group Key
-    const auto groupKey = static_cast<std::uint64_t>(rtt / 33);
-    
-    const auto enterGroup = FindGroupByGroupKey(groupKey);
-
-    if (enterGroup == nullptr)
-    {
-        SPDLOG_ERROR("{} : enterGroup is nullptr (rtt {})", __func__, rtt);
-    }
-
-    enterGroup->AddMember(session);
-    return true;
-}
-
-std::shared_ptr<LockstepGroup> GroupManager::FindGroupByGroupKey(const std::uint64_t& groupKey)
-{
-    // if group key is not found, create a new group
-    std::lock_guard<std::mutex> lock(_groupMutex);
-    if (const auto it = _groups.find(groupKey); it == _groups.end())
-    {
-        return CreateNewKeyGroup(groupKey);
-    }
-    
-    // if exist group key, find empty group
-    for (const auto& [groupNumber, group] : _groups[groupKey])
-    {
-        if (!group->IsFull())
-        {
-            return group;
-        }
-    }
-
-    // if all groups are full, create a new group
-    std::size_t newGroupNumber = _groups[groupKey].size();
-    auto newGroup = std::make_shared<LockstepGroup>(_strand, (*_uuidGenerator)(), groupKey, newGroupNumber);
-    newGroup->SetNotifyEmptyCallback([this](const std::shared_ptr<LockstepGroup>& emptyGroup)
-    {
-        RemoveEmptyGroup(emptyGroup);
-    });
-    newGroup->Start();
-    _groups[groupKey][newGroupNumber] = newGroup;
-
-    return newGroup;
-}
-
-std::shared_ptr<LockstepGroup> GroupManager::CreateNewKeyGroup(const std::uint64_t& groupKey)
-{
-    _groups[groupKey] = std::map<std::size_t, std::shared_ptr<LockstepGroup>>();
-    
-    const auto newGroup = std::make_shared<LockstepGroup>(_strand, (*_uuidGenerator)(), groupKey, 0);
-    newGroup->SetNotifyEmptyCallback([this](const std::shared_ptr<LockstepGroup>& emptyGroup)
-    {
-        RemoveEmptyGroup(emptyGroup);
-    });
-    newGroup->Start();
-
-    _groups[groupKey][0] = newGroup;
-    return newGroup;
-}*/

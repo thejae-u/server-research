@@ -29,6 +29,18 @@ void Session::Start()
 	_isConnected = true;
 }
 
+void Session::Stop()
+{
+	SPDLOG_INFO("{} session stopped", to_string(_sessionUuid));
+	_isConnected = false;
+
+	_tcpSocketPtr->close();
+	_udpSocketPtr->close();
+
+	_pingTimer->Stop();
+	_onStopCallback(shared_from_this());
+}
+
 bool Session::ExchangeUdpPort()
 {
 	const std::uint16_t udpPort = _udpSocketPtr->local_endpoint().port();
@@ -114,18 +126,6 @@ bool Session::SendUuidToClient() const
 	return true;
 }
 
-void Session::Stop()
-{
-	SPDLOG_INFO("{} session stopped", to_string(_sessionUuid));
-	_isConnected = false;
-
-	_tcpSocketPtr->close();
-	_udpSocketPtr->close();
-
-	_pingTimer->Stop();
-	_onStopCallback(shared_from_this());
-}
-
 void Session::SetStopCallback(StopCallback stopCallback)
 {
 	_onStopCallback = std::move(stopCallback);
@@ -179,12 +179,51 @@ void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet)
 	{
 		const auto rtt = Utility::StopStopwatch(_pingTime);
 		_lastRtt = rtt;
-		// SPDLOG_INFO("{} rtt: {}ms", to_string(_sessionUuid), rtt);
+
+		RpcPacket rttPacket;
+		rttPacket.set_method(LAST_RTT);
+
+		std::string rttData = std::to_string(rtt);
+		SPDLOG_INFO("RTT is {}", rttData);
+		rttPacket.set_data(rttData);
+		const auto serializedRttPacket = std::make_shared<std::string>(rttPacket.SerializeAsString());
+		
+		TcpAsyncWrite(serializedRttPacket); // Send the last RTT back to the client
 	}
 	else
 	{
 		SPDLOG_ERROR("{} : Invalid packet method ({})", to_string(_sessionUuid), Utility::MethodToString(packet->method()));
 	}
+}
+
+void Session::TcpAsyncWrite(const std::shared_ptr<std::string>& data)
+{
+	auto self(shared_from_this());
+
+	const std::uint32_t dataSize = static_cast<std::uint32_t>(data->size());
+	const std::uint32_t netSize = htonl(dataSize);
+	
+	boost::asio::async_write(*_tcpSocketPtr, boost::asio::buffer(&netSize, sizeof(netSize)),
+		_strand.wrap([self, data](const boost::system::error_code& sizeEc, std::size_t)
+		{
+			if (sizeEc)
+			{
+				SPDLOG_ERROR("TCP Error Sending Size to {}: {}", to_string(self->_sessionUuid), sizeEc.message());
+				return;
+			}
+
+			boost::asio::async_write(*self->_tcpSocketPtr, boost::asio::buffer(*data),
+				self->_strand.wrap([self, data](const boost::system::error_code& dataEc, std::size_t)
+				{
+					if (dataEc)
+					{
+						SPDLOG_ERROR("TCP Error Sending Data to {}: {}", to_string(self->_sessionUuid), dataEc.message());
+						return;
+					}
+
+					SPDLOG_INFO("{} : TCP Data sent successfully ({} bytes)", to_string(self->_sessionUuid), data->size());
+				}));
+		}));
 }
 
 void Session::TcpAsyncReadSize()
@@ -198,12 +237,17 @@ void Session::TcpAsyncReadSize()
 		{
 			if (sizeEc)
 			{
-				if (sizeEc != boost::asio::error::eof && sizeEc != boost::asio::error::connection_reset)
+				if (sizeEc == boost::asio::error::eof
+					|| sizeEc == boost::asio::error::connection_reset
+					|| sizeEc == boost::asio::error::connection_aborted
+					|| sizeEc == boost::asio::error::operation_aborted)
 				{
-					SPDLOG_ERROR("{} {} : TCP error Receiving Size ({})", *dbgName, to_string(_sessionUuid), sizeEc.message());
+					SPDLOG_INFO("Session {} : TcpAsyncRead aborted", to_string(_sessionUuid));
+					Stop();
+					return;
 				}
 				
-				Stop();
+				SPDLOG_ERROR("{} {} : TCP error Receiving Size ({})", *dbgName, to_string(_sessionUuid), sizeEc.message());
 				return;
 			}
 
@@ -277,7 +321,10 @@ void Session::UdpAsyncRead()
             if (ec)
             {
             	if (ec == boost::asio::error::eof || ec == boost::asio::error::operation_aborted)
+            	{
+            		SPDLOG_INFO("UDP receive operation aborted or EOF");
             		return;
+            	}
 
             	self->UdpAsyncRead();
                 return;

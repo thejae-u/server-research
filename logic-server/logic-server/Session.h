@@ -49,7 +49,6 @@ public:
 	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 	const uuid& GetSessionUuid() const { return _sessionUuid; }
 	bool ExchangeUdpPort();
-	std::int64_t CheckAndGetRtt() const;
 	bool SendUuidToClient() const;
 
 	bool IsValid() const { return _isConnected; }
@@ -82,6 +81,8 @@ private:
 
 	void SendPingPacket();
 	void ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet);
+
+	void TcpAsyncWrite(const std::shared_ptr<std::string>& data);
 	
 	void TcpAsyncReadSize();
 	void TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer);

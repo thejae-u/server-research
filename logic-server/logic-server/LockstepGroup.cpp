@@ -85,15 +85,12 @@ void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shar
         std::lock_guard<std::mutex> lock(_bufferMutex);
         _inputBuffer[_currentBucket][key] = request;
     }
-        
-    SPDLOG_INFO("{} CollectInput: Session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
+       
+    // SPDLOG_INFO("{} CollectInput: Session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::ProcessStep()
 {
-    // _inputBuffer is must locked by Tick()
-    // Process the input buffer for the current frame
-
     std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> input;
     
     {
@@ -120,8 +117,8 @@ void LockstepGroup::Tick()
     {
         return;
     }
-    ProcessStep();
     
+    ProcessStep();
 
     {
         std::lock_guard<std::mutex> lock(_bucketMutex);
@@ -131,13 +128,5 @@ void LockstepGroup::Tick()
     {
         std::lock_guard<std::mutex> lock(_inputIdCounterMutex);
         _inputIdCounter = 0;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(_bufferMutex);
-
-        // remain the 5 buckets of input buffer
-        //if (const std::size_t clearBucket = _currentBucket - 6; _inputBuffer.find(clearBucket) != _inputBuffer.end())
-            //_inputBuffer.erase(clearBucket);
     }
 }

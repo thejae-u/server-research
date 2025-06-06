@@ -137,6 +137,7 @@
     <ClCompile Include="Session.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ContextManager.h" />
     <ClInclude Include="GroupManager.h" />
     <ClInclude Include="LockstepGroup.h" />
     <ClInclude Include="NetworkData.pb.h" />
