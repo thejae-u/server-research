@@ -35,6 +35,8 @@ public class NetworkManager : Singleton<NetworkManager>
     private readonly object _receivedPacketLock = new();
     private uint _sentPacketCount = 0;
     private uint _receivedPacketCount = 0;
+    private uint _lastRtt = 0;
+    public uint LastRtt => _lastRtt;
 
     private uint _netSize;
 
@@ -83,10 +85,16 @@ public class NetworkManager : Singleton<NetworkManager>
     private void TryConnectToServer()
     {
         if (IsOnline)
+        {
+            Debug.Log($"already connected.");
             return;
-        
+        }
+
         if (IsTryingToConnect)
+        {
+            Debug.Log($"already trying to connect.");
             return;
+        }
         
         Debug.Log($"NetworkManager TryConnectToServer");
         ConnectToServer().Forget();
@@ -102,7 +110,8 @@ public class NetworkManager : Singleton<NetworkManager>
         try
         {
             _tcpClient = new TcpClient();
-            
+
+            Debug.Log("Connecting to server Start");
             await _tcpClient.ConnectAsync(_serverIp, _serverPort);
             _tcpStream = _tcpClient.GetStream();
             
@@ -436,6 +445,11 @@ public class NetworkManager : Singleton<NetworkManager>
                 
                 // Call SyncManager to sync the object position
                 SyncManager.Instance.SyncObjectPosition(ProtoSerializer.ConvertUuidToGuid(data.Uuid), moveData);
+                break;
+            
+            case RpcMethod.LastRtt:
+                byte[] rttData = data.Data.ToByteArray();
+                _lastRtt = uint.Parse(Encoding.ASCII.GetString(rttData));
                 break;
             
             case RpcMethod.PacketCount:
