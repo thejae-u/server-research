@@ -91,6 +91,7 @@ enum RpcMethod : int {
   PING = 503,
   PONG = 504,
   PACKET_COUNT = 505,
+  LAST_RTT = 506,
   RpcMethod_INT_MIN_SENTINEL_DO_NOT_USE_ =
       std::numeric_limits<::int32_t>::min(),
   RpcMethod_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -100,8 +101,8 @@ enum RpcMethod : int {
 bool RpcMethod_IsValid(int value);
 extern const uint32_t RpcMethod_internal_data_[];
 constexpr RpcMethod RpcMethod_MIN = static_cast<RpcMethod>(0);
-constexpr RpcMethod RpcMethod_MAX = static_cast<RpcMethod>(505);
-constexpr int RpcMethod_ARRAYSIZE = 505 + 1;
+constexpr RpcMethod RpcMethod_MAX = static_cast<RpcMethod>(506);
+constexpr int RpcMethod_ARRAYSIZE = 506 + 1;
 const ::google::protobuf::EnumDescriptor*
 RpcMethod_descriptor();
 template <typename T>

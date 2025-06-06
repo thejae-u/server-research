@@ -230,15 +230,16 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "tal\030\005 \001(\002\022\r\n\005speed\030\006 \001(\002\"~\n\tRpcPacket\022\014\n"
     "\004uuid\030\001 \001(\014\022&\n\006method\030\002 \001(\0162\026.NetworkDat"
     "a.RpcMethod\022\014\n\004data\030\003 \001(\014\022-\n\ttimestamp\030\004"
-    " \001(\0132\032.google.protobuf.Timestamp*\357\001\n\tRpc"
+    " \001(\0132\032.google.protobuf.Timestamp*\376\001\n\tRpc"
     "Method\022\010\n\004NONE\020\000\022\t\n\005LOGIN\020\001\022\014\n\010REGISTER\020"
     "\002\022\014\n\010RETRIEVE\020\003\022\n\n\006ACCESS\020\004\022\n\n\006REJECT\020\005\022"
     "\n\n\006LOGOUT\020\006\022\020\n\014IN_GAME_NONE\020d\022\010\n\004MOVE\020e\022"
     "\r\n\tMoveStart\020f\022\014\n\010MoveStop\020g\022\021\n\014NETWORK_"
     "NONE\020\364\003\022\r\n\010UDP_PORT\020\365\003\022\t\n\004UUID\020\366\003\022\t\n\004PIN"
-    "G\020\367\003\022\t\n\004PONG\020\370\003\022\021\n\014PACKET_COUNT\020\371\003*H\n\013EL"
-    "oginError\022\022\n\016USER_NOT_FOUND\020\000\022\026\n\022USER_AL"
-    "READY_EXIST\020\001\022\r\n\tINCORRECT\020\002b\006proto3"
+    "G\020\367\003\022\t\n\004PONG\020\370\003\022\021\n\014PACKET_COUNT\020\371\003\022\r\n\010LA"
+    "ST_RTT\020\372\003*H\n\013ELoginError\022\022\n\016USER_NOT_FOU"
+    "ND\020\000\022\026\n\022USER_ALREADY_EXIST\020\001\022\r\n\tINCORREC"
+    "T\020\002b\006proto3"
 };
 static const ::_pbi::DescriptorTable* const descriptor_table_NetworkData_2eproto_deps[1] =
     {
@@ -248,7 +249,7 @@ static ::absl::once_flag descriptor_table_NetworkData_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2eproto = {
     false,
     false,
-    716,
+    731,
     descriptor_table_protodef_NetworkData_2eproto,
     "NetworkData.proto",
     &descriptor_table_NetworkData_2eproto_once,
@@ -267,7 +268,7 @@ const ::google::protobuf::EnumDescriptor* RpcMethod_descriptor() {
   return file_level_enum_descriptors_NetworkData_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t RpcMethod_internal_data_[] = {
-    458752u, 393344u, 0u, 0u, 3758096384u, 1u, 503u, 501u, 505u, 500u, 502u, 504u, };
+    458752u, 458880u, 0u, 0u, 3758096384u, 1u, 503u, 501u, 505u, 500u, 502u, 504u, 506u, };
 bool RpcMethod_IsValid(int value) {
   return ::_pbi::ValidateEnum(value, RpcMethod_internal_data_);
 }
