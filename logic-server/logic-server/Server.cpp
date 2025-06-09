@@ -1,57 +1,76 @@
 ﻿#include "Server.h"
 #include "Session.h"
+#include "LockstepGroup.h"
 
 #include <iostream>
 
-Server::Server(const io_context::strand& strand, tcp::acceptor& acceptor) : _strand(strand), _acceptor(acceptor), _sessionsCount(0)
+Server::Server(const IoContext::strand& workStrand, const IoContext::strand& rpcStrand, tcp::acceptor& acceptor) : _strand(workStrand), _rpcStrand(rpcStrand), _acceptor(acceptor)
 {
-	_sessions.resize(_sessionsCount);
+	_uuidGenerator = std::make_shared<random_generator>();
+	_groupManager = std::make_unique<GroupManager>(workStrand, _uuidGenerator);
+	_isRunning = false;
 }
 
-Server::~Server()
+void Server::Start()
 {
+	_isRunning = true;
+	AcceptClientAsync();
+}
+
+void Server::Stop()
+{
+	SPDLOG_INFO("Server stopping...");
+
+	_isRunning = false;
+	_acceptor.close();
+	_groupManager.reset();
+	_uuidGenerator.reset();
+	
+	SPDLOG_INFO("Server stopped.");
 }
 
 void Server::AcceptClientAsync()
 {
+	if (!_isRunning)
+		return;
+	
 	auto self(shared_from_this());
-	auto newSession = std::make_shared<Session>(_strand, self);
+	auto newSession = std::make_shared<Session>(_strand, _rpcStrand, (*_uuidGenerator)());
 
 	_acceptor.async_accept(newSession->GetSocket(), _strand.wrap([this, newSession](const boost::system::error_code& ec)
 	{
 		if (ec)
 		{
-			std::cerr << "accept failed: " << ec.message() << "\n";
-			boost::asio::post(_strand.wrap([this]() { AcceptClientAsync(); }));
+			if (ec == boost::asio::error::operation_aborted || ec == boost::asio::error::connection_aborted)
+			{
+				SPDLOG_INFO("Accept operation aborted");
+				return;
+			}
+			
+			SPDLOG_ERROR("Accept failed: {}", ec.message());
+			AcceptClientAsync();
 			return;
 		}
+
+		AcceptClientAsync();
 		
-		std::cout << "Client Connected: " << newSession->GetSocket().remote_endpoint().address() << "\n";
-		newSession->Start();
-            
-		// Add session to the set
-		_sessions.push_back(newSession);
-		++_sessionsCount;
-		std::cout << "Sessions.size(): " << _sessions.size() << "\n";
-		
-		boost::asio::post(_strand.wrap([this]() { AcceptClientAsync(); })); // Accept next client
+		boost::asio::post(_strand.wrap([this, newSession]() { InitSessionNetwork(newSession); }));
 	}));
 }
 
-void Server::DisconnectSession(const std::shared_ptr<Session>& caller)
+void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession) const
 {
-	std::cout << "Client Disconnected: " << caller->GetSocket().remote_endpoint().address() << "\n";
-	_sessions.erase(std::find(_sessions.begin(), _sessions.end(), caller));
-	--_sessionsCount;
-}
-
-void Server::BroadcastAll(std::shared_ptr<Session> caller, RpcPacket packet) 
-{
-	for (auto& session : _sessions)
+	if (!newSession->ExchangeUdpPort())
 	{
-		if (session == caller)
-			continue;
-
-		boost::asio::post(_strand.wrap([this, session, packet]() { session->RpcProcess(packet); }));
+		SPDLOG_ERROR("New Session failed to exchange UDP port");
+		return;
 	}
+
+	if (!newSession->SendUuidToClient())
+	{
+		SPDLOG_ERROR("New Session failed to send UUID to client");
+		return;
+	}
+
+	_groupManager->AddSession(newSession);
 }

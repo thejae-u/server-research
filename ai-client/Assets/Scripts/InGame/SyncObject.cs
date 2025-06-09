@@ -1,47 +1,67 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using NetworkData;
 using UnityEngine;
 
 public class SyncObject : MonoBehaviour
 {
+    [SerializeField] private PlayerStatData _playerStatData; // Player Stat Data for the object
+    
     // Several Sync Data can be added to the SyncObject
-    
-    public string ObjectId { get; private set; }
+    public Guid ObjectId { get; private set; }
+    private NetworkManager _networkManager;
+    private MeshRenderer _meshRenderer;
 
-    private bool _isPositionSyncing;
-    
-    public void Init(string objectId)
+    private readonly object _positionLock = new();
+    private Vector3 _lastNetworkPosition;
+
+    public void Init(Guid objectId)
     {
         ObjectId = objectId;
-    }
-    
-    public void SyncPosition(Vector3 startPosition, Vector3 targetPosition, float duration)
-    {
-        if (_isPositionSyncing)
-            return;
-        
-        _isPositionSyncing = true;
-        MoveObject(startPosition, targetPosition, duration).Forget();
-    }
+        _meshRenderer = GetComponent<MeshRenderer>();
+        _networkManager = NetworkManager.Instance;
 
-    private async UniTask MoveObject(Vector3 startPosition, Vector3 targetPosition, float duration)
-    {
-        CancellationToken token = this.GetCancellationTokenOnDestroy();
-        
-        transform.position = startPosition;
-        var elapsedTime = 0f;
-
-        while (elapsedTime < duration)
+        if (ObjectId == _networkManager.ConnectedUuid)
         {
-            float t = elapsedTime / duration;
-            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(targetPosition - startPosition), t);
-            
-            await UniTask.Yield(PlayerLoopTiming.Update, token);
-            elapsedTime += Time.deltaTime;
+            _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
+        }
+    }
+
+    public async UniTask SyncPosition(Guid instanceGuid, MoveData moveData)
+    {
+        var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
+        Vector3 direction = (transform.right * moveData.Horizontal + transform.forward * moveData.Vertical).normalized;
+
+        float speed = _playerStatData.speed * Time.deltaTime;
+
+        lock (_positionLock)
+        {
+            _lastNetworkPosition = startPosition + direction * speed;
         }
 
-        transform.position = targetPosition;
-        _isPositionSyncing = false;
+        Debug.Log($"{instanceGuid} : Move Data - Position: {moveData.X} {moveData.Y} {moveData.Z}, speed - {moveData.Speed}");
+        Debug.Log($"Diff: {(moveData.X - transform.position.x)}, {(moveData.Y - transform.position.y)}, {(moveData.Z - transform.position.z)}");
+        
+        if(!Mathf.Approximately(moveData.X, transform.position.x) || !Mathf.Approximately(moveData.Y, transform.position.y) || !Mathf.Approximately(moveData.Z, transform.position.z))
+            Debug.Log($"Need Interpolation: {ObjectId}");
+        
+        // Move the object to the target position
+        await UniTask.Yield();
+    }
+
+    private void Update()
+    {
+        // interpolate the position of the object
+        if (!_networkManager.IsOnline)
+            return;
+        
+        lock (_positionLock)
+        {
+            if (Vector3.Distance(transform.position, _lastNetworkPosition) > 0.01f)
+            {
+                transform.position = Vector3.Lerp(transform.position, _lastNetworkPosition, Time.deltaTime * _playerStatData.speed);
+            }
+        }
     }
 }

@@ -1,44 +1,38 @@
-#include "Server.h"
 #include <boost/asio.hpp>
 #include <memory>
 #include <thread>
 #include <vector>
 #include <iostream>
 
-const std::string DB_IP = "127.0.0.1"; // DB SERVER IP ( must be changed )
-constexpr unsigned short DB_PORT = 53000; // DB SERVER PORT
-constexpr unsigned short THIS_PORT = 53200; // LOGIC SERVER PORT ( THIS )
+#include "Server.h"
+#include "ContextManager.h"
 
+constexpr unsigned short SERVER_PORT = 53200;
 using namespace boost::asio::ip;
 
 int main()
 {
-	io_context io;
-	io_context::strand ioStrand(io);
+	const auto ctxThreadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 100;
+	const std::size_t rpcCtxThreadCount = ctxThreadCount / 5; // 20% of total threads for RPC
+	const std::size_t workCtxThreadCount = ctxThreadCount - rpcCtxThreadCount; // Remaining threads for work context
 
-	tcp::endpoint thisEndPoint(tcp::v4(), THIS_PORT);
-	tcp::acceptor acceptor(io, thisEndPoint);
+	auto context1 = std::make_shared<ContextManager>(workCtxThreadCount);
+	auto context2 = std::make_shared<ContextManager>(rpcCtxThreadCount);
+
+	tcp::endpoint thisEndPoint(tcp::v4(), SERVER_PORT);
+	tcp::acceptor acceptor(context1->GetContext(), thisEndPoint);
 	
-	std::vector<std::shared_ptr<std::thread>> ioThreads;
-	auto server = std::make_shared<Server>(ioStrand, acceptor);
-	const auto ioThreadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 100;
+	auto server = std::make_shared<Server>(context1->GetStrand(), context2->GetStrand(), acceptor);
 
-	boost::asio::post(ioStrand.wrap([server]() { server->AcceptClientAsync(); }));
-	std::cout << "Logic Server Started\n";
+	server->Start();
+	SPDLOG_INFO("{} Logic Server Started", __func__);
 
-	ioThreads.reserve(ioThreadCount);
-	for (std::size_t i = 0; i < ioThreadCount; ++i)
-	{
-		ioThreads.emplace_back(std::make_shared<std::thread>([&io]() { io.run(); }));
-	}
+	std::cin.get();
 
-	for (auto& ioThread : ioThreads)
-	{
-		if (ioThread->joinable())
-		{
-			ioThread->join();
-		}
-	}
+	server->Stop();
 
+	context1->Stop();
+	context2->Stop();
+	
 	return 0;
 }

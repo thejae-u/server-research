@@ -14,57 +14,29 @@ message RegisterData
   string password = 2;
 }
 
-message PositionData
+message MoveData 
 {
-  // start position
-  float x1 = 1;
-  float y1 = 2;
-  float z1 = 3;
+  // Current Position
+  float x = 1;
+  float y = 2;
+  float z = 3;
   
-  // end position
-  float x2 = 4;
-  float y2 = 5;
-  float z2 = 6;
-  
-  // Move Duration
-  float duration = 7;
-}
-
-message RemoteCallData
-{
-  string id = 1;
-  RpcMethod method = 2;
-  bytes data = 3; // serialized parameter data (Login Data, Position Data, etc.)
-}
-
-message AttackData
-{
-  string target = 1;
-  int32 damage = 2;
-}
-
-message ItemData
-{
-  string item_id = 1;
+  float vertical = 4; // -1.0 to 1.0
+  float horizontal = 5; // -1.0 to 1.0
+  float speed = 6; // Speed of the movement
 }
 
 message RpcPacket
 {
-  string ip = 1;
-  string uuid = 2;
-  RpcMethod method = 3;
-  bytes data = 4; // serialized parameter data (Login Data, Position Data, etc.)
-  google.protobuf.Timestamp timestamp = 5;
-}
-
-message ResponsePacket
-{
-  bytes data = 1; // serialized response data
-  google.protobuf.Timestamp timestamp = 2;
+  bytes uuid = 1;
+  RpcMethod method = 2;
+  bytes data = 3; // serialized parameter data (Login Data, Position Data, etc.)
+  google.protobuf.Timestamp timestamp = 4;
 }
 
 enum RpcMethod
 {
+  // Login or DB methods
   NONE = 0;
   LOGIN = 1;
   REGISTER = 2;
@@ -76,49 +48,17 @@ enum RpcMethod
 
   IN_GAME_NONE = 100;
   MOVE = 101;
-  ATTACK = 102;
-  DROP_ITEM = 103;
-  USE_ITEM = 104;
-  USE_SKILL = 105;
+  MoveStart = 102;
+  MoveStop = 103;
   
-  REMOTE_MOVE_CALL = 500;
-  REMOTE_ATTACK_CALL = 501;
-}
-
-enum RpcResponseMethod
-{
-  RES_NONE = 0;
-  RES_LOGIN = 1;
-  RES_REGISTER = 2;
-  RES_RETRIEVE = 3;
-  RES_ACCESS = 4;
-  RES_REJECT = 5;
-  RES_LOGOUT = 6;
-  // Limit DB access to 99
-  
-  RES_IN_GAME_NONE = 100;
-  RES_MOVE = 101;
-  RES_ATTACK = 102;
-  RES_DROP_ITEM = 103;
-  RES_USE_ITEM = 104;
-  RES_USE_SKILL = 105;
-  
-  RES_REMOTE_MOVE_CALL = 500;
-  RES_REMOTE_ATTACK_CALL = 501;
-}
-
-enum AdminRpcMethod
-{
-  ADMIN_NONE = 0;
-  
-  ADMIN_LOGIN = 1;
-  ADMIN_LOGOUT = 2;
-  
-  ADMIN_NOTIFY = 100;
-  
-  ADMIN_SERVER_OFF = 900;
-  ADMIN_SERVER_ON = 901;
-  ADMIN_SERVER_REBOOT = 902;
+  // Network Settings
+  NETWORK_NONE = 500;
+  UDP_PORT = 501;
+  UUID = 502;
+  PING = 503;
+  PONG = 504;
+  PACKET_COUNT = 505;
+  LAST_RTT = 506;
 }
 
 enum ELoginError 

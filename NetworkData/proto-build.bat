@@ -12,6 +12,7 @@ set COPY_TARGET1=..\db-server\db-server
 set COPY_TARGET2=..\login-server\login-server
 set COPY_TARGET3=..\logic-server\logic-server
 set COPY_TARGET4=..\ai-client\Assets\Scripts\Network
+set COPY_TARGET5=..\multi-client-test\multi-client-test
 
 if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
 del /Q Generated\*
@@ -22,7 +23,7 @@ echo [Compiling %PROTO_FILE% for c++...]
 echo [C++ Compile Success]
 echo [Compiling %PROTO_FILE% for c#...]
 "%PROTOC%" --csharp_out="%OUTPUT_DIR%" "%PROTO_FILE%
-echo [C# Comfile Success]
+echo [C# Compile Success]
 
 
 :: 생성된 파일 이름 추출
@@ -49,6 +50,10 @@ echo [C# COPY]
 if not exist %COPY_TARGET4% mkdir echo [Not EXIST DIR: MKDIR...] "%COPY_TARGET%"
 echo [COPY %GENERATED_CS% to %COPY_TARGET4%]
 copy /Y "%GENERATED_CS%" "%COPY_TARGET4%"
+
+echo [COPY to %COPY_TARGET5%]
+echo [COPY %GENERATED_CS% to %COPY_TARGET5%]
+copy /Y "%GENERATED_CS%" "%COPY_TARGET5%"
 
 echo [ALL Done!]
 endlocal

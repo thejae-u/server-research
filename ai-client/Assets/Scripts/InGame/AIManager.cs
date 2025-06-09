@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using UnityEngine;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using NetworkData;
@@ -12,76 +12,123 @@ using Random = UnityEngine.Random;
 
 public class AIManager : MonoBehaviour
 {
-    public bool IsMoving { get; private set; }
-    private RpcPacket _rpcPacket;
+    [SerializeField] private PlayerMoveActions _playerMoveActions;
+    [SerializeField] private PlayerStatData _playerStatData;
+    [SerializeField] private float _movePacketSendInterval = 16.6f; // in milliseconds
+    
     private NetworkManager _networkManager;
     
+    private bool _isMoving;
 
+    private Vector3 _cachedDirection;
+
+    private float _lastSendDeltaTime = 0.0f;
+
+    private MoveData _moveData = new()
+    {
+        X = 0.0f,
+        Y = 0.0f,
+        Z = 0.0f,
+        Horizontal = 0.0f,
+        Vertical = 0.0f,
+        Speed = 0.0f
+    };
+    
+    private readonly RpcPacket _sendPacket = new ()
+    {
+        Method = RpcMethod.None,    
+        Data = ByteString.Empty,
+    };
+    
     private void Start()
     {
-        _rpcPacket = new RpcPacket
-        {
-            Method = RpcMethod.None,
-            Data = ByteString.Empty
-        };
-        
         _networkManager = NetworkManager.Instance;
-        _rpcPacket.Uuid = NetworkManager.Instance.GetInstanceID().ToString();
+        _isMoving = false;
     }
 
-    public void MoveCharacter(Vector3 targetPosition)
+    private void OnEnable()
     {
-        if (IsMoving || !_networkManager.IsOnline)
-            return;
-        
-        IsMoving = true;
-        MoveCharacterAsync(targetPosition).Forget();
+        _playerMoveActions.onMoveStartAction += OnMoveStart;
+        _playerMoveActions.onMoveAction += OnMove;
+        _playerMoveActions.onMoveStopAction += OnMoveStop;
+    }
+
+    private void OnDisable()
+    {
+        _playerMoveActions.onMoveAction -= OnMove;
+        _playerMoveActions.onMoveStopAction -= OnMoveStop;
+        _playerMoveActions.onMoveStartAction -= OnMoveStart;
     }
     
-    private async UniTask MoveCharacterAsync(Vector3 targetPosition)
+    private void Update()
     {
-        float duration = Random.Range(1.5f, 5.0f);
+        if (!_networkManager.IsOnline)
+            return;
         
-        _rpcPacket.Method = RpcMethod.Move;
-        
-        // Serialize the target position to a byte array
-        var serializePositionData = new PositionData
-        {
-            // Start position
-            X1 = transform.position.x,
-            Y1 = transform.position.y,
-            Z1 = transform.position.z,
-            
-            // Target position
-            X2 = targetPosition.x,
-            Y2 = targetPosition.y,
-            Z2 = targetPosition.z,
-            
-            Duration = duration // can deprecate this
-        };
-        
-        _rpcPacket.Data = serializePositionData.ToByteString();
-        _rpcPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
+        _lastSendDeltaTime += Time.deltaTime * 1000.0f; // Convert to milliseconds
 
-        NetworkManager.Instance.SendAsync(_rpcPacket).Forget();
-        CancellationToken token = this.GetCancellationTokenOnDestroy();
-        
-        var elapsedTime = 0f;
-        Vector3 startPosition = transform.position;
-
-        while (elapsedTime < duration)
+        if (!_isMoving)
         {
-            float t = elapsedTime / duration;
-            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(targetPosition - startPosition), t);
-            
-            await UniTask.Yield(PlayerLoopTiming.Update, token);
-            elapsedTime += Time.deltaTime;
+            return;
         }
         
-        transform.position = targetPosition;
-        IsMoving = false;
+        MoveTo();
+        SendPacket();
+    }
+
+    private void SendPacket()
+    {
+        if (_lastSendDeltaTime < _movePacketSendInterval)
+        {
+            return;
+        }
+
+        _lastSendDeltaTime = 0.0f;
+
+        _moveData.X = transform.position.x;
+        _moveData.Y = transform.position.y;
+        _moveData.Z = transform.position.z;
+
+        _sendPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
+        _sendPacket.Data = _moveData.ToByteString();
+
+        _networkManager.AsyncWriteRpcPacket(_sendPacket).Forget();
+    }
+
+    public void MoveTo()
+    {
+        if (_cachedDirection == Vector3.zero) return;
+        transform.position += _cachedDirection * (_playerStatData.speed * Time.deltaTime);
+    }
+
+    private void OnMoveStart()
+    {
+        _isMoving = true;
+
+        _sendPacket.Method = RpcMethod.MoveStart;
+        _moveData.Horizontal = 0;
+        _moveData.Vertical = 0;
+        _moveData.Speed = 0;
+    }
+
+    private void OnMove(Vector2 move)
+    {
+        Vector3 dir = transform.right * move.x + transform.forward * move.y;
+        _cachedDirection = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.zero;
+        
+        _sendPacket.Method = RpcMethod.Move;
+        _moveData.Horizontal = dir.x;
+        _moveData.Vertical = dir.z;
+        _moveData.Speed = _playerStatData.speed;
+    }
+    
+    private void OnMoveStop()
+    {
+        _isMoving = false;
+        
+        _sendPacket.Method = RpcMethod.MoveStop;
+        _moveData.Horizontal = 0;
+        _moveData.Vertical = 0;
+        _moveData.Speed = 0;
     }
 }
-        
-        
