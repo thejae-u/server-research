@@ -13,7 +13,7 @@ using Random = UnityEngine.Random;
 public class AIManager : MonoBehaviour
 {
     [SerializeField] private PlayerMoveActions _playerMoveActions;
-    [SerializeField] private float _moveSpeed = 3.0f;
+    [SerializeField] private PlayerStatData _playerStatData;
     [SerializeField] private float _movePacketSendInterval = 16.6f; // in milliseconds
     
     private NetworkManager _networkManager;
@@ -98,7 +98,7 @@ public class AIManager : MonoBehaviour
     public void MoveTo()
     {
         if (_cachedDirection == Vector3.zero) return;
-        transform.position += _cachedDirection * (3.0f * Time.deltaTime);
+        transform.position += _cachedDirection * (_playerStatData.speed * Time.deltaTime);
     }
 
     private void OnMoveStart()
@@ -119,7 +119,7 @@ public class AIManager : MonoBehaviour
         _sendPacket.Method = RpcMethod.Move;
         _moveData.Horizontal = dir.x;
         _moveData.Vertical = dir.z;
-        _moveData.Speed = _moveSpeed;
+        _moveData.Speed = _playerStatData.speed;
     }
     
     private void OnMoveStop()

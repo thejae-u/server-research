@@ -6,10 +6,15 @@ using UnityEngine;
 
 public class SyncObject : MonoBehaviour
 {
+    [SerializeField] private PlayerStatData _playerStatData; // Player Stat Data for the object
+    
     // Several Sync Data can be added to the SyncObject
     public Guid ObjectId { get; private set; }
     private NetworkManager _networkManager;
     private MeshRenderer _meshRenderer;
+
+    private readonly object _positionLock = new();
+    private Vector3 _lastNetworkPosition;
 
     public void Init(Guid objectId)
     {
@@ -28,10 +33,12 @@ public class SyncObject : MonoBehaviour
         var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
         Vector3 direction = (transform.right * moveData.Horizontal + transform.forward * moveData.Vertical).normalized;
 
-        float speed = 5.0f * Time.deltaTime;
+        float speed = _playerStatData.speed * Time.deltaTime;
 
-        Vector3 targetPosition = startPosition + direction * speed;
-        transform.position = targetPosition;
+        lock (_positionLock)
+        {
+            _lastNetworkPosition = startPosition + direction * speed;
+        }
 
         Debug.Log($"{instanceGuid} : Move Data - Position: {moveData.X} {moveData.Y} {moveData.Z}, speed - {moveData.Speed}");
         Debug.Log($"Diff: {(moveData.X - transform.position.x)}, {(moveData.Y - transform.position.y)}, {(moveData.Z - transform.position.z)}");
@@ -41,5 +48,20 @@ public class SyncObject : MonoBehaviour
         
         // Move the object to the target position
         await UniTask.Yield();
+    }
+
+    private void Update()
+    {
+        // interpolate the position of the object
+        if (!_networkManager.IsOnline)
+            return;
+        
+        lock (_positionLock)
+        {
+            if (Vector3.Distance(transform.position, _lastNetworkPosition) > 0.01f)
+            {
+                transform.position = Vector3.Lerp(transform.position, _lastNetworkPosition, Time.deltaTime * _playerStatData.speed);
+            }
+        }
     }
 }

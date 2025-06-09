@@ -69,7 +69,7 @@ private:
 	std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
 
 	std::shared_ptr<Scheduler> _pingTimer;
-	std::uint32_t _checkRttDelay = 500;
+	const std::uint32_t _pingDelay = 500;
 	std::chrono::high_resolution_clock::time_point _pingTime;
 	std::uint64_t _lastRtt;
 

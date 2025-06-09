@@ -98,13 +98,23 @@ void LockstepGroup::ProcessStep()
         input = _inputBuffer[_currentBucket];
     }
 
-    for (const auto& member : _members)
+    for (auto it = _members.begin(); it != _members.end(); ++it)
+    {
+        if (*it == nullptr || !(*it)->IsValid())
+        {
+            continue;
+        }
+
+        (*it)->ProcessRpc(input);
+    }
+
+    /*for (const auto& member : _members)
     {
         if (member->IsValid())
         {
             member->ProcessRpc(input);
         }
-    }
+    }*/
 }
 
 void LockstepGroup::Tick()

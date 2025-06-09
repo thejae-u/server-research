@@ -37,7 +37,7 @@ namespace Utility
 
     static std::int64_t StopStopwatch(const std::chrono::high_resolution_clock::time_point startTime)
     {
-        auto endTime = std::chrono::high_resolution_clock::now();
+        const auto endTime = std::chrono::high_resolution_clock::now();
         return std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
     }
 

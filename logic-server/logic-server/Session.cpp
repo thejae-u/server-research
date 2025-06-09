@@ -12,7 +12,7 @@ Session::Session(const IoContext::strand& strand, const IoContext::strand& rpcSt
 	_sessionUuid(guid),
 	_lastRtt(0)
 {
-	_pingTimer = std::make_shared<Scheduler>(_strand, std::chrono::milliseconds(500), [this]() {
+	_pingTimer = std::make_shared<Scheduler>(_strand, std::chrono::milliseconds(_pingDelay), [this]() {
 		SendPingPacket();
 	});
 }
@@ -184,7 +184,6 @@ void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet)
 		rttPacket.set_method(LAST_RTT);
 
 		std::string rttData = std::to_string(rtt);
-		SPDLOG_INFO("RTT is {}", rttData);
 		rttPacket.set_data(rttData);
 		const auto serializedRttPacket = std::make_shared<std::string>(rttPacket.SerializeAsString());
 		
@@ -220,8 +219,6 @@ void Session::TcpAsyncWrite(const std::shared_ptr<std::string>& data)
 						SPDLOG_ERROR("TCP Error Sending Data to {}: {}", to_string(self->_sessionUuid), dataEc.message());
 						return;
 					}
-
-					SPDLOG_INFO("{} : TCP Data sent successfully ({} bytes)", to_string(self->_sessionUuid), data->size());
 				}));
 		}));
 }
