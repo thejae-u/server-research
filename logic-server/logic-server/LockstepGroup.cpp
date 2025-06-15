@@ -107,14 +107,6 @@ void LockstepGroup::ProcessStep()
 
         (*it)->ProcessRpc(input);
     }
-
-    /*for (const auto& member : _members)
-    {
-        if (member->IsValid())
-        {
-            member->ProcessRpc(input);
-        }
-    }*/
 }
 
 void LockstepGroup::Tick()
