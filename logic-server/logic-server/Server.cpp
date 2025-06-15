@@ -4,10 +4,11 @@
 
 #include <iostream>
 
-Server::Server(const IoContext::strand& workStrand, const IoContext::strand& rpcStrand, tcp::acceptor& acceptor) : _strand(workStrand), _rpcStrand(rpcStrand), _acceptor(acceptor)
+Server::Server(const std::shared_ptr<ContextManager>& workContext, const std::shared_ptr<ContextManager>& rpcContext, tcp::acceptor& acceptor)
+	: _strand(workContext->GetStrand()), _rpcStrand(rpcContext->GetStrand()), _acceptor(acceptor)
 {
 	_uuidGenerator = std::make_shared<random_generator>();
-	_groupManager = std::make_unique<GroupManager>(workStrand, _uuidGenerator);
+	_groupManager = std::make_unique<GroupManager>(_strand, _uuidGenerator);
 	_isRunning = false;
 }
 

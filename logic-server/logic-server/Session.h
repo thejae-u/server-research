@@ -44,7 +44,7 @@ public:
 	using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
 	void SetCollectInputAction(SessionInput inputAction);
 
-	void ProcessRpc(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs);
+	void SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs);
 	tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
 	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 	const uuid& GetSessionUuid() const { return _sessionUuid; }

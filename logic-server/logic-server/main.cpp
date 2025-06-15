@@ -16,13 +16,13 @@ int main()
 	const std::size_t rpcCtxThreadCount = ctxThreadCount / 5; // 20% of total threads for RPC
 	const std::size_t workCtxThreadCount = ctxThreadCount - rpcCtxThreadCount; // Remaining threads for work context
 
-	auto context1 = std::make_shared<ContextManager>(workCtxThreadCount);
-	auto context2 = std::make_shared<ContextManager>(rpcCtxThreadCount);
+	auto workThreadContext = std::make_shared<ContextManager>(workCtxThreadCount);
+	auto rpcThreadContext = std::make_shared<ContextManager>(rpcCtxThreadCount);
 
 	tcp::endpoint thisEndPoint(tcp::v4(), SERVER_PORT);
-	tcp::acceptor acceptor(context1->GetContext(), thisEndPoint);
+	tcp::acceptor acceptor(workThreadContext->GetContext(), thisEndPoint);
 	
-	auto server = std::make_shared<Server>(context1->GetStrand(), context2->GetStrand(), acceptor);
+	auto server = std::make_shared<Server>(workThreadContext, rpcThreadContext, acceptor);
 
 	server->Start();
 	SPDLOG_INFO("{} Logic Server Started", __func__);
@@ -31,8 +31,8 @@ int main()
 
 	server->Stop();
 
-	context1->Stop();
-	context2->Stop();
+	workThreadContext->Stop();
+	rpcThreadContext->Stop();
 	
 	return 0;
 }

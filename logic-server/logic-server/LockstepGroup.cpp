@@ -105,7 +105,7 @@ void LockstepGroup::ProcessStep()
             continue;
         }
 
-        (*it)->ProcessRpc(input);
+        (*it)->SendRpcPacketToClient(input);
     }
 }
 
