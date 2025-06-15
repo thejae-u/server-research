@@ -60,6 +60,7 @@ public class SyncManager : Singleton<SyncManager>
         if (objectId == Guid.Empty)
         {
             Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
+            ++_networkManager.ErrorCount;
             return;
         }
 

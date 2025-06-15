@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using UnityEngine;
 using System.Net.Sockets;
@@ -37,6 +39,23 @@ public class NetworkManager : Singleton<NetworkManager>
     private uint _receivedPacketCount = 0;
     private uint _lastRtt = 0;
     public uint LastRtt => _lastRtt;
+    private List<uint> _rttList = new();
+    public uint RttAverage { get; private set; }
+
+    public uint ErrorCount { get; set; }
+
+    public float ErrorRate
+    {
+        get
+        {
+            if (ErrorCount == 0)
+            {
+                return 0.0f;
+            }
+
+            return ErrorCount / (float)_receivedPacketCount * 100.0f;
+        }
+    }
 
     private uint _netSize;
 
@@ -450,6 +469,8 @@ public class NetworkManager : Singleton<NetworkManager>
             case RpcMethod.LastRtt:
                 byte[] rttData = data.Data.ToByteArray();
                 _lastRtt = uint.Parse(Encoding.ASCII.GetString(rttData));
+                _rttList.Add(_lastRtt);
+                RttAverage = (uint)_rttList.Average(x => x);
                 break;
             
             case RpcMethod.PacketCount:
