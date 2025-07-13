@@ -36,7 +36,4 @@ private:
     std::mutex _groupMutex;
     
     std::shared_ptr<LockstepGroup> CreateNewGroup();
-    
-    bool InsertSessionToGroup(const std::shared_ptr<Session>& session, const int64_t& rtt);
-    std::shared_ptr<LockstepGroup> FindGroupByGroupKey(const std::uint64_t& groupKey);
 };

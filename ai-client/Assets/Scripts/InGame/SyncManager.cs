@@ -60,11 +60,11 @@ public class SyncManager : Singleton<SyncManager>
         if (objectId == Guid.Empty)
         {
             Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
+            ++_networkManager.ErrorCount;
             return;
         }
 
         var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
-        
         if (!_syncObjects.TryGetValue(objectId, out GameObject syncObject))
         {
             // If the object doesn't exist, create it
@@ -74,7 +74,7 @@ public class SyncManager : Singleton<SyncManager>
         
         var syncObjectComponent = syncObject.GetComponent<SyncObject>();
         // Sync position
-        syncObjectComponent.SyncPosition(objectId, moveData).Forget();
+        syncObjectComponent.SyncPosition(moveData).Forget();
     }
 
     public void SyncObjectNone(Guid objectId)

@@ -136,7 +136,7 @@ void Session::SetCollectInputAction(SessionInput inputAction)
 	_inputAction = std::move(inputAction);
 }
 
-void Session::ProcessRpc(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs)
+void Session::SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs)
 {
 	std::unordered_map<SSessionKey, RpcPacket> copiedInputs;
 	for (const auto& [key, packet] : allInputs)

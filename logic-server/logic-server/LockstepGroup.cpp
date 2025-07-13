@@ -105,16 +105,8 @@ void LockstepGroup::ProcessStep()
             continue;
         }
 
-        (*it)->ProcessRpc(input);
+        (*it)->SendRpcPacketToClient(input);
     }
-
-    /*for (const auto& member : _members)
-    {
-        if (member->IsValid())
-        {
-            member->ProcessRpc(input);
-        }
-    }*/
 }
 
 void LockstepGroup::Tick()
