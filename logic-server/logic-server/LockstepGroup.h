@@ -13,6 +13,7 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
+#include "Base.h"
 #include "NetworkData.pb.h"
 
 using IoContext = boost::asio::io_context;
@@ -46,11 +47,11 @@ namespace std
     };
 }
 
-class LockstepGroup : public std::enable_shared_from_this<LockstepGroup>
+class LockstepGroup final : public Base<LockstepGroup>
 {
 public:
     LockstepGroup(const IoContext::strand& strand, uuid groupId); 
-    ~LockstepGroup()
+    ~LockstepGroup() override
     {
         SPDLOG_INFO("{} : LockstepGroup destroyed", to_string(_groupId));
     }
@@ -58,8 +59,8 @@ public:
     using NotifyEmptyCallback = std::function<void(const std::shared_ptr<LockstepGroup>&)>;
     void SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallback);
 
-    void Start();
-    void Stop();
+    void Start() override;
+    void Stop() override;
     void AddMember(const std::shared_ptr<Session>& newSession);
     void RemoveMember(const std::shared_ptr<Session>& session);
     void CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest);
