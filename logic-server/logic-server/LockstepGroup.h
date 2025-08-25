@@ -80,6 +80,8 @@ private:
     IoContext::strand _strand;
     std::set<std::shared_ptr<Session>> _members;
     const std::size_t _maxSessionCount = 4;
+
+    // TODO : Scheduler가 Tick을 실행 하면서 Member의 상태를 확인할 때 memory access error가 발생함 -> mutex 관련 문제도 발생
     std::mutex _memberMutex;
     
     std::size_t _fixedDeltaMs;

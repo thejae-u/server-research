@@ -20,7 +20,11 @@ void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallba
 void LockstepGroup::Start()
 {
     _isRunning = true;
-    _tickTimer = std::make_shared<Scheduler>(_strand, std::chrono::milliseconds(_fixedDeltaMs), [this]() { Tick(); });
+    _tickTimer = std::make_shared<Scheduler>(_strand, std::chrono::milliseconds(_fixedDeltaMs), [this]()
+    {
+        Tick();
+    });
+    
     _tickTimer->Start();
 }
 
@@ -83,6 +87,7 @@ void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shar
 
     {
         std::lock_guard<std::mutex> lock(_bufferMutex);
+        std::lock_guard<std::mutex> bucketLock(_bucketMutex);
         _inputBuffer[_currentBucket][key] = request;
     }
        
@@ -95,6 +100,7 @@ void LockstepGroup::ProcessStep()
     
     {
         std::lock_guard<std::mutex> lock(_bufferMutex);
+        std::lock_guard<std::mutex> bucketLock(_bucketMutex);
         input = _inputBuffer[_currentBucket];
     }
 
@@ -114,11 +120,11 @@ void LockstepGroup::Tick()
     if (!_isRunning)
         return;
 
-    std::lock_guard<std::mutex> memberLock(_memberMutex);
-    if (_members.empty())
+    // TODO : member가 empty 일 경우는 그룹의 소멸로 이어지는데 확인 할 필요가 있는지에 대해 의문 -> Tick을 실행 할 때 무결성을 검증해야함
+    /*if (_members.empty())
     {
         return;
-    }
+    }*/
     
     ProcessStep();
 
