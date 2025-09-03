@@ -10,6 +10,7 @@
 #include <memory>
 #include <vector>
 
+#include "Base.h"
 #include "GroupManager.h"
 #include "NetworkData.pb.h"
 #include "ContextManager.h"
@@ -21,14 +22,13 @@ using namespace NetworkData;
 class Session;
 class LockstepGroup;
 
-class Server : public std::enable_shared_from_this<Server>
+class Server final : public Base<Server>
 {
 public:
 	Server(const std::shared_ptr<ContextManager>& workContext, const std::shared_ptr<ContextManager>& rpcContext, tcp::acceptor& acceptor);
-	~Server() = default;
 
-	void Start();
-	void Stop();
+	void Start() override;
+	void Stop() override;
 
 private:
 	IoContext::strand _strand;

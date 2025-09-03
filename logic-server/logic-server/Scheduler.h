@@ -6,7 +6,7 @@
 #include <chrono>
 #include <spdlog/spdlog.h>
 
-class Scheduler : public std::enable_shared_from_this<Scheduler>
+class Scheduler : public Base<Scheduler>
 {
 public:
     using IoContext = boost::asio::io_context;
@@ -17,9 +17,8 @@ public:
         _timer = std::make_unique<boost::asio::steady_timer>(strand.context());
     }
 
-    ~Scheduler() = default;
-    void Start();
-    void Stop();
+    void Start() override;
+    void Stop() override;
 
 private:
     IoContext::strand& _strand;
@@ -60,13 +59,7 @@ inline void Scheduler::DoStart()
     });
 }
 
-inline void Scheduler::Stop()
+inline void Scheduler::Stop() 
 {
-    auto self(shared_from_this());
-    boost::asio::post(_strand.wrap([self]{ self->DoStop();}));
-}
-
-inline void Scheduler::DoStop()
-{
-    _timer->cancel();
+    boost::asio::post(_strand.wrap([this]{ _timer->cancel(); }));
 }

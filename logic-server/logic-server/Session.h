@@ -8,6 +8,7 @@
 #include <memory>
 #include <boost/uuid/uuid_io.hpp>
 
+#include "Base.h"
 #include "Scheduler.h"
 #include "NetworkData.pb.h"
 
@@ -25,18 +26,18 @@ struct SSessionKey;
 constexpr std::int64_t INVALID_RTT = -1;
 constexpr std::size_t MAX_PACKET_SIZE = 128;
 
-class Session : public std::enable_shared_from_this<Session>
+class Session final : public Base<Session>
 {
 public:
 	
 	Session(const IoContext::strand& strand, const IoContext::strand& rpcStrand,  uuid guid);
-	~Session()
+	~Session() override
 	{
 		SPDLOG_INFO("{} : Session destroyed", to_string(_sessionUuid));
 	}
 
-	void Start();
-	void Stop();
+	void Start() override;
+	void Stop() override;
 
 	using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
 	void SetStopCallback(StopCallback stopCallback);
