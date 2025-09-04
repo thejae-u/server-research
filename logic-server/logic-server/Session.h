@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -21,6 +21,7 @@ using boost::uuids::uuid;
 class Server;
 class LockstepGroup;
 class Scheduler;
+class ContextManager;
 struct SSessionKey;
 
 constexpr std::int64_t INVALID_RTT = -1;
@@ -29,8 +30,8 @@ constexpr std::size_t MAX_PACKET_SIZE = 128;
 class Session final : public Base<Session>
 {
 public:
-	
-	Session(const IoContext::strand& strand, const IoContext::strand& rpcStrand,  uuid guid);
+
+	Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager, uuid guid);
 	~Session() override
 	{
 		SPDLOG_INFO("{} : Session destroyed", to_string(_sessionUuid));
@@ -50,16 +51,19 @@ public:
 	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 	const uuid& GetSessionUuid() const { return _sessionUuid; }
 	bool ExchangeUdpPort();
+	void AsyncExchangeUdpPortWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
 	bool SendUuidToClient() const;
+	void AsyncSendUuidToClientWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
 
 	bool IsValid() const { return _isConnected; }
-	
+
 private:
 	using TcpSocket = tcp::socket;
 	using UdpSocket = udp::socket;
 
-	IoContext::strand _strand;
-	IoContext::strand _rpcStrand;
+	std::shared_ptr<ContextManager> _ctxManager;
+	std::shared_ptr<ContextManager> _rpcCtxManager;
+
 	std::shared_ptr<TcpSocket> _tcpSocketPtr;
 	std::shared_ptr<UdpSocket> _udpSocketPtr;
 	udp::endpoint _udpSendEp;
@@ -84,7 +88,7 @@ private:
 	void ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet);
 
 	void TcpAsyncWrite(const std::shared_ptr<std::string>& data);
-	
+
 	void TcpAsyncReadSize();
 	void TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer);
 

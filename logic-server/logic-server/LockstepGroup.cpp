@@ -5,136 +5,134 @@
 #include "Session.h"
 #include "Utility.h"
 #include "Scheduler.h"
+#include "ContextManager.h"
 
-LockstepGroup::LockstepGroup(const IoContext::strand& strand, const uuid groupId)
-    : _groupId(groupId), _strand(strand)
+LockstepGroup::LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const uuid groupId)
+	: _groupId(groupId), _ctxManager(ctxManager)
 {
-    _fixedDeltaMs = 33;
+	_fixedDeltaMs = TICK_TIME; // Delay Time
 }
 
 void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallback)
 {
-    _notifyEmptyCallback = std::move(notifyEmptyCallback);
+	_notifyEmptyCallback = std::move(notifyEmptyCallback);
 }
 
 void LockstepGroup::Start()
 {
-    _isRunning = true;
-    _tickTimer = std::make_shared<Scheduler>(_strand, std::chrono::milliseconds(_fixedDeltaMs), [this]()
-    {
-        Tick();
-    });
-    
-    _tickTimer->Start();
+	_isRunning = true;
+	_tickTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_fixedDeltaMs), [this]()
+		{
+			Tick();
+		});
+
+	_tickTimer->Start();
 }
 
 void LockstepGroup::Stop()
 {
-    _tickTimer->Stop();
-    _notifyEmptyCallback(shared_from_this());
+	_tickTimer->Stop();
+	_notifyEmptyCallback(shared_from_this());
 }
 
 void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 {
-    {
-        std::lock_guard<std::mutex> lock(_memberMutex);
-        if (const auto [it, success] = _members.insert(newSession); !success)
-        {
-            SPDLOG_ERROR("{} {} : Failed to add member to group {}", __func__, to_string(newSession->GetSessionUuid()), to_string(_groupId));
-        }
-    }
+	{
+		std::lock_guard<std::mutex> lock(_memberMutex);
+		if (const auto [it, success] = _members.insert(newSession); !success)
+		{
+			SPDLOG_ERROR("{} {} : Failed to add member to group {}", __func__, to_string(newSession->GetSessionUuid()), to_string(_groupId));
+		}
+	}
 
-    newSession->SetGroup(shared_from_this());
-    newSession->SetStopCallback([this](const std::shared_ptr<Session>& session)
-    {
-       RemoveMember(session); 
-    });
+	newSession->SetGroup(shared_from_this());
+	newSession->SetStopCallback([this](const std::shared_ptr<Session>& session)
+		{
+			RemoveMember(session);
+		});
 
-    newSession->SetCollectInputAction([this](const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest)
-    {
-        CollectInput(rpcRequest);
-    });
-    
-    SPDLOG_INFO("{} {} : Added member {}", __func__, to_string(_groupId), to_string(newSession->GetSessionUuid()));
+	newSession->SetCollectInputAction([this](const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest)
+		{
+			CollectInput(rpcRequest);
+		});
+
+	SPDLOG_INFO("{} {} : Added member {}", __func__, to_string(_groupId), to_string(newSession->GetSessionUuid()));
 }
 
 void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
-    SPDLOG_INFO("{} {} : Removed from {}", __func__, to_string(session->GetSessionUuid()), to_string(_groupId));
+	SPDLOG_INFO("{} {} : Removed from {}", __func__, to_string(session->GetSessionUuid()), to_string(_groupId));
 
-    {
-        std::lock_guard<std::mutex> lock(_memberMutex);
-        _members.erase(session);
-        
-        if (!_members.empty())
-        {
-            return;
-        }
+	{
+		std::lock_guard<std::mutex> lock(_memberMutex);
+		_members.erase(session);
 
-        Stop();
-    }
+		if (!_members.empty())
+		{
+			return;
+		}
+
+		Stop();
+	}
 }
 
 void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest)
 {
-    auto [guid, request] = *rpcRequest;
+	auto [guid, request] = *rpcRequest;
 
-    SSessionKey key;
-    {
-        std::lock_guard<std::mutex> inputCounterLock(_inputIdCounterMutex);
-        key = SSessionKey{_inputIdCounter++, guid};
-    }
+	SSessionKey key;
+	{
+		std::lock_guard<std::mutex> inputCounterLock(_inputIdCounterMutex);
+		key = SSessionKey{ _inputIdCounter++, guid };
+	}
 
-    {
-        std::lock_guard<std::mutex> lock(_bufferMutex);
-        std::lock_guard<std::mutex> bucketLock(_bucketMutex);
-        _inputBuffer[_currentBucket][key] = request;
-    }
-       
-    // SPDLOG_INFO("{} CollectInput: Session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
+	{
+		std::lock_guard<std::mutex> lock(_bufferMutex);
+		std::lock_guard<std::mutex> bucketLock(_bucketMutex);
+		_inputBuffer[_currentBucket][key] = request;
+	}
+
+	// SPDLOG_INFO("{} CollectInput: Session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::ProcessStep()
 {
-    std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> input;
-    
-    {
-        std::lock_guard<std::mutex> lock(_bufferMutex);
-        std::lock_guard<std::mutex> bucketLock(_bucketMutex);
-        input = _inputBuffer[_currentBucket];
-    }
+	std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> input;
 
-    for (auto it = _members.begin(); it != _members.end(); ++it)
-    {
-        if (*it == nullptr || !(*it)->IsValid())
-        {
-            continue;
-        }
+	{
+		std::lock_guard<std::mutex> lock(_bufferMutex);
+		std::lock_guard<std::mutex> bucketLock(_bucketMutex);
+		input = _inputBuffer[_currentBucket];
+	}
 
-        (*it)->SendRpcPacketToClient(input);
-    }
+	for (auto it = _members.begin(); it != _members.end(); ++it)
+	{
+		if (*it == nullptr || !(*it)->IsValid())
+		{
+			continue;
+		}
+
+		(*it)->SendRpcPacketToClient(input);
+	}
 }
 
 void LockstepGroup::Tick()
 {
-    if (!_isRunning)
-        return;
+	if (!_isRunning)
+		return;
 
-    // TODO : member가 empty 일 경우는 그룹의 소멸로 이어지는데 확인 할 필요가 있는지에 대해 의문 -> Tick을 실행 할 때 무결성을 검증해야함
-    /*if (_members.empty())
-    {
-        return;
-    }*/
-    
-    ProcessStep();
+	auto self = shared_from_this();
 
-    {
-        std::lock_guard<std::mutex> lock(_bucketMutex);
-        _currentBucket++;
-    }
+	boost::asio::post(_ctxManager->GetBlockingPool(), [self]()
+		{
+			self->ProcessStep();
 
-    {
-        std::lock_guard<std::mutex> lock(_inputIdCounterMutex);
-        _inputIdCounter = 0;
-    }
+			boost::asio::post(self->_ctxManager->GetStrand(), [self]()
+				{
+					self->_currentBucket++;
+					self->_inputIdCounter = 0;
+				}
+			);
+		}
+	);
 }

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -25,14 +25,14 @@ class LockstepGroup;
 class Server final : public Base<Server>
 {
 public:
-	Server(const std::shared_ptr<ContextManager>& workContext, const std::shared_ptr<ContextManager>& rpcContext, tcp::acceptor& acceptor);
+	Server(const std::shared_ptr<ContextManager>& mainCtxManager, const std::shared_ptr<ContextManager>& rpcCtxManager, tcp::acceptor& acceptor);
 
 	void Start() override;
 	void Stop() override;
 
 private:
-	IoContext::strand _strand;
-	IoContext::strand _rpcStrand;
+	std::shared_ptr<ContextManager> _mainCtxManager;
+	std::shared_ptr<ContextManager> _rpcCtxManager;
 	tcp::acceptor& _acceptor;
 
 	std::unique_ptr<GroupManager> _groupManager;
