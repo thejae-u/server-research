@@ -39,7 +39,7 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 {
 	{
 		std::lock_guard<std::mutex> lock(_memberMutex);
-		if (const auto [it, success] = _members.insert(newSession); !success)
+		if (const auto& [it, success] = _members.insert(newSession); !success)
 		{
 			SPDLOG_ERROR("{} {} : Failed to add member to group {}", __func__, to_string(newSession->GetSessionUuid()), to_string(_groupId));
 		}
@@ -105,14 +105,20 @@ void LockstepGroup::ProcessStep()
 		input = _inputBuffer[_currentBucket];
 	}
 
-	for (auto it = _members.begin(); it != _members.end(); ++it)
+	// Copy and safe Access to Members
+	std::set<std::shared_ptr<Session>> cpMembers;
 	{
-		if (*it == nullptr || !(*it)->IsValid())
-		{
-			continue;
-		}
+		std::lock_guard<std::mutex> memberLock(_memberMutex);
+		cpMembers = _members;
+	}
 
-		(*it)->SendRpcPacketToClient(input);
+	for (auto& member : cpMembers)
+	{
+		if (member == nullptr || !member->IsValid())
+			continue;
+
+		// Session Rpc Call
+		member->SendRpcPacketToClient(input);
 	}
 }
 
