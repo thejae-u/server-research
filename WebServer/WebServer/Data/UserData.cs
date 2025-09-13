@@ -5,7 +5,7 @@ namespace WebServer.Data;
 public class UserData
 {
     [Key]
-    public required Guid Uid { get; set; }
+    public required Guid UID { get; set; }
 
     [Required]
     public required string Username { get; set; }

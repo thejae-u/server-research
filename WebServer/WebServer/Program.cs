@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using WebServer.Controllers;
 using WebServer.Data;
+using WebServer.Services;
 
 namespace WebServer
 {
@@ -31,6 +33,15 @@ namespace WebServer
                 });
             });
 
+            // DI
+            builder.Services.AddScoped<IUserService, UserService>();
+
+            // Auto Mapper 설정
+            builder.Services.AddAutoMapper(cfg =>
+            {
+                cfg.AddMaps(typeof(Program).Assembly);
+            });
+
             // DB Context
             var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
             builder.Services.AddDbContext<GameServerDbContext>(options =>
@@ -50,6 +61,22 @@ namespace WebServer
 
             var app = builder.Build();
 
+            // Internal Error Handler
+            app.UseExceptionHandler(appError =>
+            {
+                appError.Run(async context =>
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/json";
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        context.Response.StatusCode,
+                        Message = "서버 내부 오류가 발생했습니다. 관리자에게 문의하세요."
+                    });
+                });
+            });
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -60,6 +87,8 @@ namespace WebServer
                     options.RoutePrefix = string.Empty;
                 });
             }
+
+            app.UseCors(AllowSpecificOrigins);
 
             app.UseHttpsRedirection();
 
