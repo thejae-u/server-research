@@ -43,7 +43,7 @@ public class AuthController : ControllerBase
     [HttpDelete("cancellation")]
     public async Task<IActionResult> Cancellation([FromBody] UserDeleteDto userDeleteDto)
     {
-        var result = await _userService.DeleteUserAsync(username, userDeleteDto);
+        var result = await _userService.DeleteUserAsync(userDeleteDto);
         return result ? Ok(new { Message = $"{userDeleteDto.UID} 탈퇴 처리 완료" }) : BadRequest();
     }
 }
