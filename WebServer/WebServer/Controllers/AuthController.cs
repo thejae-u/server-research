@@ -25,6 +25,13 @@ public class AuthController : ControllerBase
         return users.Any() ? Ok(users) : NoContent();
     }
 
+    [HttpGet("find/{userid}")]
+    public async Task<IActionResult> GetUserById(Guid userid)
+    {
+        var user = await _userService.GetUSerByIdAsync(userid);
+        return user != null ? Ok(user) : NotFound();
+    }
+
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserRegisterDto userRegisterDto)
     {

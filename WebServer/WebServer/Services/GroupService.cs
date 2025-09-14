@@ -127,4 +127,10 @@ public class GroupService : IGroupService
 
         return await GetGroupInfoAsync(groupId);
     }
+
+    public async Task<UserGroupDto?> LeaveGroupAsync(Guid groupId, Guid userId)
+    {
+        await Task.Yield();
+        return null;
+    }
 }

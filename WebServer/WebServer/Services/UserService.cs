@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 
@@ -17,13 +16,11 @@ public class UserService : IUserService
 {
     private readonly GameServerDbContext _gdbContext;
     private readonly IConfiguration _configuration;
-    private readonly IMapper _mapper;
 
-    public UserService(GameServerDbContext gdbContext, IConfiguration configuration, IMapper mapper)
+    public UserService(GameServerDbContext gdbContext, IConfiguration configuration)
     {
         _gdbContext = gdbContext;
         _configuration = configuration;
-        _mapper = mapper;
     }
 
     public async Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto)
@@ -44,8 +41,8 @@ public class UserService : IUserService
         await _gdbContext.AddAsync(user);
         await _gdbContext.SaveChangesAsync();
 
-        // UserDto로 매핑하여 반환
-        return _mapper.Map<UserDto>(user);
+        // UserDto로 직접 매핑하여 반환
+        return new UserDto().Mapping(user);
     }
 
     public async Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto)
@@ -77,8 +74,7 @@ public class UserService : IUserService
         var token = new JwtSecurityToken(jwtSettings.Issuer, jwtSettings.Audience, claims, expires: expires, signingCredentials: creds);
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
-        var userDto = _mapper.Map<UserDto>(user);
-
+        var userDto = new UserDto().Mapping(user);
         return new UserResponseDto
         {
             Token = tokenString,
@@ -89,7 +85,8 @@ public class UserService : IUserService
     public async Task<UserDto?> GetUSerByIdAsync(Guid id)
     {
         var user = await _gdbContext.Users.FindAsync(id);
-        return _mapper.Map<UserDto>(user);
+        var userDto = user == null ? null : new UserDto().Mapping(user);
+        return userDto;
     }
 
     public async Task<bool> DeleteUserAsync(UserDeleteDto userDeleteDto)
@@ -107,6 +104,13 @@ public class UserService : IUserService
     public async Task<IEnumerable<UserDto>> GetAllUserAsync()
     {
         var users = await _gdbContext.Users.ToListAsync();
-        return _mapper.Map<IEnumerable<UserDto>>(users);
+
+        var userDtoList = new List<UserDto>();
+        foreach (var user in users)
+        {
+            userDtoList.Add(new UserDto().Mapping(user));
+        }
+
+        return userDtoList;
     }
 }

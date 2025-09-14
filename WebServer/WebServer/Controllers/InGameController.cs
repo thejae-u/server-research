@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using WebServer.Dtos;
 using WebServer.Services;
@@ -11,15 +10,13 @@ namespace WebServer.Controllers;
 public class InGameController : ControllerBase
 {
     private readonly IGroupService _groupService;
-    private readonly IMapper _mapper;
     private readonly IConfiguration _config;
 
     private readonly IDistributedCache _cache;
 
-    public InGameController(IGroupService groupService, IMapper mapper, IConfiguration config, IDistributedCache cache)
+    public InGameController(IGroupService groupService, IConfiguration config, IDistributedCache cache)
     {
         _groupService = groupService;
-        _mapper = mapper;
         _config = config;
         _cache = cache;
     }
@@ -46,21 +43,17 @@ public class InGameController : ControllerBase
         return group == null ? NotFound() : Ok(group);
     }
 
-    // 새 게임을 시작
-    [HttpPost("start/{groupid}")]
-    public async Task<IActionResult> CreateNewGame(Guid groupid)
+    [HttpPost("leave")]
+    public async Task<IActionResult> LeaveGroup([FromHeader] Guid groupid, Guid userid)
     {
-        await Task.Yield();
-        // 로비 그룹 -> 게임 그룹
-        return NoContent();
+        var group = await _groupService.LeaveGroupAsync(groupid, userid);
+        return group == null ? NotFound() : Ok(group);
     }
 
-    // 게임을 종료
-    [HttpPost("close/{groupid}")]
-    public async Task<IActionResult> CloseGame(Guid groupid)
+    [HttpDelete("{groupid}")]
+    public async Task<IActionResult> DeleteGroup([FromHeader] Guid groupid)
     {
         await Task.Yield();
-        // 게임 저장 로직, 게임 그룹 -> 로비 그룹
         return NoContent();
     }
 }

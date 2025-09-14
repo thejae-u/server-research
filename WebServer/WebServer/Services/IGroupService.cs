@@ -9,4 +9,6 @@ public interface IGroupService
     Task<UserGroupDto?> GetGroupInfoAsync(Guid groupId);
 
     Task<UserGroupDto?> JoinGroupAsync(Guid groupId, Guid userId);
+
+    Task<UserGroupDto?> LeaveGroupAsync(Guid groupId, Guid userId);
 }

@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
 using WebServer.Controllers;
@@ -37,12 +36,6 @@ namespace WebServer
             // DI
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IGroupService, GroupService>();
-
-            // Auto Mapper 설정
-            builder.Services.AddAutoMapper(cfg =>
-            {
-                cfg.AddMaps(typeof(Program).Assembly);
-            });
 
             // DB Context
             var connectionString = builder.Configuration.GetConnectionString("PersistantDB");

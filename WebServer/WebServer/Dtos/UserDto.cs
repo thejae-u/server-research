@@ -1,4 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using WebServer.Data;
 
 namespace WebServer.Dtos;
 
@@ -49,4 +52,20 @@ public class UserDto
     public required string Username { get; set; }
     public required string Role { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    [SetsRequiredMembers]
+    public UserDto()
+    {
+        Username = "None";
+        Role = "Player";
+    }
+
+    public UserDto Mapping(UserData user)
+    {
+        UID = user.UID;
+        Username = user.Username;
+        Role = user.Role;
+        CreatedAt = user.CreatedAt;
+        return this;
+    }
 }
