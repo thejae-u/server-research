@@ -2,6 +2,13 @@
 
 namespace WebServer.Data;
 
+public static class RoleCaching
+{
+    public static readonly string Player = "Player";
+    public static readonly string Admin = "Admin";
+    public static readonly string Internal = "Internal";
+}
+
 public class UserData
 {
     [Key]
@@ -15,5 +22,5 @@ public class UserData
 
     public DateTime CreatedAt { get; set; }
 
-    public string Role { get; set; } = "Player";
+    public string Role { get; set; } = RoleCaching.Player;
 }

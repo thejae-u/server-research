@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 using WebServer.Controllers;
 using WebServer.Data;
 using WebServer.Services;
@@ -35,6 +36,7 @@ namespace WebServer
 
             // DI
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IGroupService, GroupService>();
 
             // Auto Mapper 설정
             builder.Services.AddAutoMapper(cfg =>
@@ -43,10 +45,19 @@ namespace WebServer
             });
 
             // DB Context
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+            var connectionString = builder.Configuration.GetConnectionString("PersistantDB");
             builder.Services.AddDbContext<GameServerDbContext>(options =>
             {
                 options.UseNpgsql(connectionString);
+            });
+
+            // Distributed Cache
+            var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? throw new ArgumentException("Failed to read RedisCache Connection String.");
+            builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
+            builder.Services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = builder.Configuration.GetConnectionString("Redis");
+                options.InstanceName = "RedisCache";
             });
 
             // docker container 보안 완화

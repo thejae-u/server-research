@@ -36,7 +36,7 @@ public class UserService : IUserService
             UID = Guid.NewGuid(),
             Username = userRegisterDto.Username,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(userRegisterDto.Password),
-            Role = "Player",
+            Role = RoleCaching.Player,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -104,7 +104,7 @@ public class UserService : IUserService
         return true;
     }
 
-    public async Task<List<UserDto>> GetAllUserAsync()
+    public async Task<IEnumerable<UserDto>> GetAllUserAsync()
     {
         var users = await _gdbContext.Users.ToListAsync();
         return _mapper.Map<IEnumerable<UserDto>>(users);

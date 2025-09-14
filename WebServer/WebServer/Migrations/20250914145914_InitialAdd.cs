@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,16 +7,29 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WebServer.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialAdd : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "UserDatas",
+                name: "Groups",
                 columns: table => new
                 {
-                    Uid = table.Column<Guid>(type: "uuid", nullable: false),
+                    GroupId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Players = table.Column<List<Guid>>(type: "uuid[]", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Groups", x => x.GroupId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    UID = table.Column<Guid>(type: "uuid", nullable: false),
                     Username = table.Column<string>(type: "text", nullable: false),
                     PasswordHash = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -23,7 +37,7 @@ namespace WebServer.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserDatas", x => x.Uid);
+                    table.PrimaryKey("PK_Users", x => x.UID);
                 });
         }
 
@@ -31,7 +45,10 @@ namespace WebServer.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "UserDatas");
+                name: "Groups");
+
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }

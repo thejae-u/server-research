@@ -9,4 +9,5 @@ public class GameServerDbContext : DbContext
     }
 
     public DbSet<UserData> Users { get; set; }
+    public DbSet<UserGroupData> Groups { get; set; }
 }
