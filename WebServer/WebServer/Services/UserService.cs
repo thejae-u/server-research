@@ -54,24 +54,13 @@ public class UserService : IUserService
             return null; // 사용자가 없거나 비밀번호가 틀림
         }
 
-        var jwtSettings = TokenUtils.GetJwtSettings(_config);
+        // JWT Setting Load
+        var jwtSettings = _config.GetJwtSettings();
 
-        Debug.Assert(jwtSettings is not null);
+        // Token Generate
+        var tokenString = jwtSettings.GenerateToken(user);
 
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.UID.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Role, user.Role)
-        };
-
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.UtcNow.AddHours(1);
-
-        var token = new JwtSecurityToken(jwtSettings.Issuer, jwtSettings.Audience, claims, expires: expires, signingCredentials: creds);
-        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
+        // Convert UserData to UserDto
         var userDto = new UserDto().Mapping(user);
         return new UserResponseDto
         {

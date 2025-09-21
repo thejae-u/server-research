@@ -38,7 +38,7 @@ public class InternalApiController : ControllerBase
         var jwtSettings = TokenUtils.GetJwtSettings(_config);
 
         // 토큰 검증 규칙 생성
-        var validationParameters = TokenUtils.GetTokenValidationParam(jwtSettings);
+        var validationParameters = jwtSettings.GetTokenValidationParam();
 
         // 토큰 검증
         var tokenHandler = new JwtSecurityTokenHandler();

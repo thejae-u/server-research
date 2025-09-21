@@ -24,6 +24,7 @@
   <ItemGroup>
     <Folder Include="Hubs\" />
     <Folder Include="Migrations\" />
+    <Folder Include="RegSetting\" />
     <Folder Include="Profiles\" />
   </ItemGroup>
 
