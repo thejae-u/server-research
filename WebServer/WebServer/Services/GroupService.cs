@@ -1,12 +1,13 @@
 ﻿using StackExchange.Redis;
-using System.Collections;
-using System.Reflection.Metadata.Ecma335;
 using WebServer.Dtos;
 
 namespace WebServer.Services;
 
 public class GroupService : IGroupService
 {
+    private const int ExpireTime = 1; // 그룹 Key 만료 시간 (Hours)
+
+    private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _redisCache;
 
     private const string GroupMemberKeyPrefix = "group:members:";
@@ -18,6 +19,7 @@ public class GroupService : IGroupService
 
     public GroupService(IConnectionMultiplexer redis)
     {
+        _redis = redis;
         _redisCache = redis.GetDatabase();
     }
 
@@ -27,7 +29,7 @@ public class GroupService : IGroupService
         var newGroup = new UserGroupDto
         {
             GroupId = Guid.NewGuid(),
-            Players = new List<Guid> { userId },
+            Players = [userId],
             CreatedAt = DateTime.UtcNow,
             AverageRtt = 0,
             AverageErrorRate = 0
@@ -50,7 +52,7 @@ public class GroupService : IGroupService
 
         _ = trans.SetAddAsync(memberKey, userId.ToString());
 
-        var expiry = TimeSpan.FromHours(24);
+        var expiry = TimeSpan.FromHours(ExpireTime);
         _ = trans.KeyExpireAsync(infoKey, expiry);
         _ = trans.KeyExpireAsync(memberKey, expiry);
 
@@ -132,5 +134,35 @@ public class GroupService : IGroupService
     {
         await Task.Yield();
         return null;
+    }
+
+    // Admin Method Area
+
+    public async Task<IEnumerable<UserGroupDto>> GetAllGroupAsync()
+    {
+        var groups = new List<UserGroupDto>();
+        var server = _redis.GetServer(_redis.GetEndPoints().First());
+        var pattern = $"{GroupInfoExcludedMembersKeyPrefix}*";
+
+        await foreach (var key in server.KeysAsync(pattern: pattern))
+        {
+            var groupIdString = key.ToString().Split(":").Last();
+            if (Guid.TryParse(groupIdString, out var groupId))
+            {
+                var groupInfo = await GetGroupInfoAsync(groupId);
+                if (groupInfo != null)
+                {
+                    groups.Add(groupInfo);
+                }
+            }
+        }
+
+        return groups;
+    }
+
+    public async Task FlushCaching()
+    {
+        var server = _redis.GetServer(_redis.GetEndPoints().First());
+        await server.FlushAllDatabasesAsync();
     }
 }

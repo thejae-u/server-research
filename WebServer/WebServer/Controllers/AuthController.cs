@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using WebServer.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using WebServer.Dtos;
 using WebServer.Services;
 
@@ -16,13 +13,6 @@ public class AuthController : ControllerBase
     public AuthController(IUserService userService)
     {
         _userService = userService;
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetAllPlayer()
-    {
-        var users = await _userService.GetAllUserAsync();
-        return users.Any() ? Ok(users) : NoContent();
     }
 
     [HttpGet("find/{userid}")]
@@ -51,6 +41,6 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Cancellation([FromBody] UserDeleteDto userDeleteDto)
     {
         var result = await _userService.DeleteUserAsync(userDeleteDto);
-        return result ? Ok(new { Message = $"{userDeleteDto.UID} 탈퇴 처리 완료" }) : BadRequest();
+        return result ? Ok(new { Message = $"탈퇴 처리 완료" }) : BadRequest();
     }
 }

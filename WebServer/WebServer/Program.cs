@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
-using WebServer.Controllers;
 using WebServer.Data;
 using WebServer.Services;
 
@@ -52,6 +51,9 @@ namespace WebServer
                 options.Configuration = builder.Configuration.GetConnectionString("Redis");
                 options.InstanceName = "RedisCache";
             });
+
+            // SignalR
+            builder.Services.AddSignalR();
 
             // docker container 보안 완화
             builder.Services.AddCors(options =>

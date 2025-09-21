@@ -8,19 +8,19 @@ using System.Text;
 
 using WebServer.Data;
 using WebServer.Dtos;
-using WebServer.Settings;
+using WebServer.Utils;
 
 namespace WebServer.Services;
 
 public class UserService : IUserService
 {
     private readonly GameServerDbContext _gdbContext;
-    private readonly IConfiguration _configuration;
+    private readonly IConfiguration _config;
 
-    public UserService(GameServerDbContext gdbContext, IConfiguration configuration)
+    public UserService(GameServerDbContext gdbContext, IConfiguration config)
     {
         _gdbContext = gdbContext;
-        _configuration = configuration;
+        _config = config;
     }
 
     public async Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto)
@@ -54,9 +54,7 @@ public class UserService : IUserService
             return null; // 사용자가 없거나 비밀번호가 틀림
         }
 
-        var jwtSettings = _configuration.GetSection("Jwt").Get<JwtSettings>();
-        if (JwtSettings.Validate(jwtSettings))
-            throw new ArgumentNullException(nameof(jwtSettings));
+        var jwtSettings = TokenUtils.GetJwtSettings(_config);
 
         Debug.Assert(jwtSettings is not null);
 
@@ -113,4 +111,6 @@ public class UserService : IUserService
 
         return userDtoList;
     }
+
+    private static
 }

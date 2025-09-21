@@ -11,4 +11,9 @@ public interface IGroupService
     Task<UserGroupDto?> JoinGroupAsync(Guid groupId, Guid userId);
 
     Task<UserGroupDto?> LeaveGroupAsync(Guid groupId, Guid userId);
+
+    // admin method Area
+    Task<IEnumerable<UserGroupDto>> GetAllGroupAsync();
+
+    Task FlushCaching();
 }
