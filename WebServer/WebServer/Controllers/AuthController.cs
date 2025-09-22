@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WebServer.Dtos;
 using WebServer.Services;
 
@@ -42,5 +44,13 @@ public class AuthController : ControllerBase
     {
         var result = await _userService.DeleteUserAsync(userDeleteDto);
         return result ? Ok(new { Message = $"탈퇴 처리 완료" }) : BadRequest();
+    }
+
+    [HttpGet("validate-token")]
+    [Authorize]
+    public IActionResult Validate()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Ok(new { Message = "Token is valid", UserId = userId });
     }
 }
