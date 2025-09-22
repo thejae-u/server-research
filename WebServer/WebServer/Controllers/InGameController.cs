@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
-using WebServer.Dtos;
 using WebServer.Services;
 
 namespace WebServer.Controllers;

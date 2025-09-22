@@ -1,22 +1,25 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
-using WebServer.Utils;
+
+using WebServer.Services;
 
 namespace WebServer.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/internal")]
 public class InternalApiController : ControllerBase
 {
     private readonly IConfiguration _config;
+    private readonly ITokenService _tokenService;
 
-    public InternalApiController(IConfiguration config)
+    public InternalApiController(IConfiguration config, ITokenService tokenService)
     {
         _config = config;
+        _tokenService = tokenService;
     }
 
     [HttpGet("validate-token")]
@@ -34,11 +37,8 @@ public class InternalApiController : ControllerBase
             return Unauthorized("Invalid API Key");
         }
 
-        // jwt 값 가져오기
-        var jwtSettings = TokenUtils.GetJwtSettings(_config);
-
         // 토큰 검증 규칙 생성
-        var validationParameters = jwtSettings.GetTokenValidationParam();
+        var validationParameters = _tokenService.GetTokenValidationParam();
 
         // 토큰 검증
         var tokenHandler = new JwtSecurityTokenHandler();

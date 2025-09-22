@@ -1,26 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
-
-using System.Diagnostics;
-using System.Security.Claims;
-using System.Text;
-
 using WebServer.Data;
 using WebServer.Dtos;
-using WebServer.Utils;
 
 namespace WebServer.Services;
 
 public class UserService : IUserService
 {
     private readonly GameServerDbContext _gdbContext;
-    private readonly IConfiguration _config;
+    private readonly ITokenService _tokenService;
 
-    public UserService(GameServerDbContext gdbContext, IConfiguration config)
+    public UserService(GameServerDbContext gdbContext, ITokenService tokenService)
     {
         _gdbContext = gdbContext;
-        _config = config;
+        _tokenService = tokenService;
     }
 
     public async Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto)
@@ -54,11 +46,8 @@ public class UserService : IUserService
             return null; // 사용자가 없거나 비밀번호가 틀림
         }
 
-        // JWT Setting Load
-        var jwtSettings = _config.GetJwtSettings();
-
         // Token Generate
-        var tokenString = jwtSettings.GenerateToken(user);
+        var tokenString = _tokenService.GenerateToken(user); // Default 1 Hour expire time
 
         // Convert UserData to UserDto
         var userDto = new UserDto().Mapping(user);
@@ -100,6 +89,4 @@ public class UserService : IUserService
 
         return userDtoList;
     }
-
-    private static
 }
