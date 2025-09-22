@@ -20,6 +20,9 @@ public class UserService : IUserService
         if (await _gdbContext.Users.AnyAsync(u => u.Username == userRegisterDto.Username))
             return null; // Already Exsist
 
+        if (userRegisterDto.Password.Length < 8)
+            return null; // password must be over 8 words
+
         var user = new UserData
         {
             UID = Guid.NewGuid(),
