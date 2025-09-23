@@ -168,15 +168,15 @@
             <form id="register-form">
                 <div class="input-group">
                     <label for="register-username">사용할 아이디</label>
-                    <input type="text" id="register-username" required>
+                    <input pattern=".{4,20}" type="text" id="register-username" title="아이디는 4~20자여야 합니다." required>
                 </div>
                 <div class="input-group">
                     <label for="register-password">비밀번호(8~16자)</label>
-                    <input pattern=".{8,16}" required type="password" id="register-password">
+                    <input pattern=".{8,16}" required type="password" id="register-password" title="비밀번호는 8~16자여야 합니다.">
                 </div>
                 <div class="input-group">
                     <label for="register-confirm-password">비밀번호 확인(8~16자)</label>
-                    <input pattern=".{8,16}" required type="password" id="register-confirm-password">
+                    <input pattern=".{8,16}" required type="password" id="register-confirm-password" title="비밀번호는 8~16자여야 합니다.">
                 </div>
                 <button type="submit" id="register-button" class="register-button">회원가입</button>
             </form>

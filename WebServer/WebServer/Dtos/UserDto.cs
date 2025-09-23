@@ -29,7 +29,8 @@ public class UserLoginDto
 // 로그인 성공 시 반환 데이터
 public class UserResponseDto
 {
-    public required string Token { get; set; } // JWT
+    public required string AccessToken { get; set; } // JWT
+    public string? RefreshToken { get; set; }
     public required UserDto User { get; set; } // 유저 정보
 }
 

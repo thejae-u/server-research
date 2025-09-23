@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using Network;
 using NetworkData;
 
 public class SyncManager : Singleton<SyncManager> 

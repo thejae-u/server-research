@@ -1,6 +1,7 @@
 using System;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
+using Network;
 using NetworkData;
 using Unity.Behavior;
 using UnityEngine;

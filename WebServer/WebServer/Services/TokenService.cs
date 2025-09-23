@@ -17,7 +17,17 @@ public class TokenService : ITokenService
         _jwtSettings = jwtSettingsOPtions.Value;
     }
 
-    public string GenerateToken(UserData user, double expireTime = 1)
+    public string GenerateAccessToken(UserData user, double expireTime = 1)
+    {
+        return Generate(user, _jwtSettings.AccessKey, expireTime);
+    }
+
+    public string GenerateRefreshToken(UserData user, double expireTime = 30)
+    {
+        return Generate(user, _jwtSettings.RefreshKey, expireTime);
+    }
+
+    private string Generate(UserData user, string jwtKey, double expireTime)
     {
         var claims = new[]
         {
@@ -26,9 +36,14 @@ public class TokenService : ITokenService
             new Claim(ClaimTypes.Role, user.Role)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expires = DateTime.UtcNow.AddHours(expireTime);
+
+        DateTime expires;
+        if (jwtKey == _jwtSettings.RefreshKey)
+            expires = DateTime.UtcNow.AddDays(expireTime); // Refresh Token has Long Term
+        else
+            expires = DateTime.UtcNow.AddHours(expireTime); // Access Token has Short Term
 
         var token = new JwtSecurityToken(_jwtSettings.Issuer, _jwtSettings.Audience, claims, expires: expires, signingCredentials: creds);
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
@@ -48,7 +63,7 @@ public class TokenService : ITokenService
 
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.AccessKey)),
 
             ClockSkew = TimeSpan.Zero
         };

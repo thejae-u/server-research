@@ -33,9 +33,9 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
+    public async Task<IActionResult> Login([FromHeader] string? refreshToken, [FromBody] UserLoginDto userLoginDto)
     {
-        var response = await _userService.LoginAsync(userLoginDto);
+        var response = await _userService.LoginAsync(userLoginDto, refreshToken);
         return response != null ? Ok(response) : BadRequest();
     }
 

@@ -40,7 +40,7 @@ public class UserService : IUserService
         return new UserDto().Mapping(user);
     }
 
-    public async Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto)
+    public async Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto, string? refreshToken)
     {
         var user = await _gdbContext.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
 
@@ -50,13 +50,18 @@ public class UserService : IUserService
         }
 
         // Token Generate
-        var tokenString = _tokenService.GenerateToken(user); // Default 1 Hour expire time
+        var accessTokenString = _tokenService.GenerateAccessToken(user); // Default 1 Hour expire time
+
+        string refreshTokenString = "";
+        if (string.IsNullOrEmpty(refreshToken))
+            refreshTokenString = _tokenService.GenerateRefreshToken(user); // Default 30 Days expire time
 
         // Convert UserData to UserDto
         var userDto = new UserDto().Mapping(user);
         return new UserResponseDto
         {
-            Token = tokenString,
+            AccessToken = accessTokenString,
+            RefreshToken = refreshTokenString,
             User = userDto
         };
     }

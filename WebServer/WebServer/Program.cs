@@ -54,7 +54,7 @@ namespace WebServer
                     ValidAudience = jwtSettings.Audience,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.AccessKey)),
                     ClockSkew = TimeSpan.Zero
                 };
             });
