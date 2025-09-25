@@ -1,11 +1,19 @@
 using System;
 using System.IO;
+using Newtonsoft.Json;
 using UnityEngine;
 using Utility;
 
 public class AuthManager : Singleton<AuthManager>
 {
-    private static readonly string REFRESH_TOKEN_PATH = "/.user.refresh_token";
+    [Serializable]
+    public class TokenInfo
+    {
+        public string refreshToken;
+        public string userName;
+    }
+    
+    private static readonly string REFRESH_TOKEN_PATH = "/.user.refresh_info";
     
     public string RefreshToken { get; private set; }
     public string AccessToken { get; private set; }
@@ -32,7 +40,10 @@ public class AuthManager : Singleton<AuthManager>
             return;
         }
 
-        RefreshToken = File.ReadAllText(_tokenPath);
+        string loadedJson = File.ReadAllText(_tokenPath);
+        var deserializedData = JsonConvert.DeserializeObject<TokenInfo>(loadedJson);
+        RefreshToken = deserializedData.refreshToken;
+        Username = deserializedData.userName;
     }
 
     public void InitTokens(LoginResponse response)
@@ -62,7 +73,14 @@ public class AuthManager : Singleton<AuthManager>
             }
             
             // Encrypt Refresh Token needed 
-            File.WriteAllText(_tokenPath, RefreshToken);
+            var tokenInfo = new TokenInfo
+            {
+                refreshToken = RefreshToken,
+                userName = Username
+            };
+            
+            string serializeData = JsonConvert.SerializeObject(tokenInfo);
+            File.WriteAllText(_tokenPath, serializeData);
         }
         catch (Exception ex)
         {

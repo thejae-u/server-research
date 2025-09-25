@@ -30,6 +30,7 @@ namespace Utility
         public string createdAt;
     }
     
+    [Serializable]
     public class UserSimpleDto
     {
         public Guid uid { get; set; }
@@ -57,5 +58,12 @@ namespace Utility
         public List<UserSimpleDto> players { get; set; }
 
         public DateTime createdAt { get; set; }
+    }
+
+    [Serializable]
+    public class CreateGroupRequestDto
+    {
+        public string groupName;
+        public UserSimpleDto requester;
     }
 }

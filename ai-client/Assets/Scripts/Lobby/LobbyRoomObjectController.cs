@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Utility;
 
-public class RoomController : MonoBehaviour
+public class LobbyRoomObjectController : MonoBehaviour
 {
     private GroupDto _groupDto;
     
@@ -22,7 +22,7 @@ public class RoomController : MonoBehaviour
         RoomGuid = data.groupId;
         _roomNameText.text = data.name;
         _roomOwnerNameText.text = data.owner.username;
-        _roomPlayerCountText.text = data.players.Count.ToString();
+        _roomPlayerCountText.text = $"{data.players.Count}/4";
     }
 
     private void Awake()
@@ -38,5 +38,6 @@ public class RoomController : MonoBehaviour
     private void OnClickJoinButton()
     {
         // Room Guid로 web Server에 접근 요청
+        Debug.Log($"Room Click {_groupDto.groupId}: {_groupDto.owner.username}");
     }
 }

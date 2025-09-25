@@ -2,18 +2,24 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
 using Newtonsoft.Json;
+using TMPro;
+using UnityEngine.UI;
 
 public class LobbyManager : MonoBehaviour
 {
     [SerializeField] private GameObject _roomPrefab;
     [SerializeField] private Transform _contentTr;
+    [SerializeField] private Button _createRoomButton;
+    [SerializeField] private TMP_InputField _roomNameField;
 
-    private Dictionary<Guid, RoomController> _rooms = new();
+    private Dictionary<Guid, LobbyRoomObjectController> _rooms = new();
     private IEnumerator _updateRoutine;
+    private IEnumerator _createRoomRoutine;
 
     private WaitForSeconds _waitForSeconds;
 
@@ -25,10 +31,34 @@ public class LobbyManager : MonoBehaviour
         
         _waitForSeconds = new WaitForSeconds(1.0f);
         
-        InitLobby();
+        _createRoomButton.onClick.AddListener(OnClickCreateRoomButton);
     }
 
-    private void InitLobby()
+    private void OnClickCreateRoomButton()
+    {
+        string roomName = _roomNameField.text;
+        if (string.IsNullOrEmpty(roomName))
+            return;
+        
+        if (string.IsNullOrEmpty(_authManager.AccessToken))
+            return;
+        
+        CreateRoom(roomName);
+    }
+
+    private void OnEnable()
+    {
+        UpdateLobby();
+    }
+
+    private void OnDisable()
+    {
+        if (_updateRoutine is null) return;
+        StopCoroutine(_updateRoutine);
+        _updateRoutine = null;
+    }
+
+    private void UpdateLobby()
     {
         _updateRoutine = UpdateLobbyRoutine();
         StartCoroutine(_updateRoutine);
@@ -78,7 +108,7 @@ public class LobbyManager : MonoBehaviour
         {
             if (!serverRoomIds.Contains(roomId))
             {
-                if(_rooms.TryGetValue(roomId, out RoomController roomController))
+                if(_rooms.TryGetValue(roomId, out LobbyRoomObjectController roomController))
                 {
                     Destroy(roomController.gameObject);
                     _rooms.Remove(roomId);
@@ -88,16 +118,73 @@ public class LobbyManager : MonoBehaviour
 
         foreach (var room in rooms)
         {
-            if (_rooms.TryGetValue(room.groupId, out RoomController roomController))
+            if (_rooms.TryGetValue(room.groupId, out LobbyRoomObjectController roomController))
             {
                 roomController.UpdateRoomState(room);
             }
             else
             {
-                var newRoomController = Instantiate(_roomPrefab, _contentTr).GetComponent<RoomController>();
+                var newRoomController = Instantiate(_roomPrefab, _contentTr).GetComponent<LobbyRoomObjectController>();
                 newRoomController.UpdateRoomState(room);
                 _rooms.Add(room.groupId, newRoomController);
             }
         }
+    }
+    
+    private void CreateRoom(string roomName)
+    {
+        if (_createRoomRoutine is not null)
+            return;
+        
+        _createRoomRoutine = CreateRoomRoutine(roomName);
+        StartCoroutine(_createRoomRoutine);
+    }
+
+    private IEnumerator CreateRoomRoutine(string roomName)
+    {
+        _createRoomButton.interactable = false;
+        const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_GROUP_CREATE;
+        var requester = new UserSimpleDto
+        {
+            username = _authManager.Username,
+            uid = _authManager.UserGuid
+        };
+        
+        var requestDto = new CreateGroupRequestDto
+        {
+            groupName = roomName,
+            requester = requester
+        };
+
+        string requestJson = JsonConvert.SerializeObject(requestDto);
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(requestJson);
+        
+        using var request = new UnityWebRequest(apiUri, "POST");
+        request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        
+        yield return request.SendWebRequest();
+
+        switch (request.result)
+        {
+            case UnityWebRequest.Result.Success:
+                Debug.Log($"room Created");
+                break;
+            case UnityWebRequest.Result.ConnectionError:
+                Debug.Log($"서버와 연결에 실패하였습니다.");
+                break;
+            
+            case UnityWebRequest.Result.ProtocolError:
+            case UnityWebRequest.Result.InProgress:
+            case UnityWebRequest.Result.DataProcessingError:
+            default:
+                Debug.LogError($"Fatal Error in Create Room Response");
+                break;
+        }
+
+        _createRoomRoutine = null;
+        _createRoomButton.interactable = true;
     }
 }

@@ -10,8 +10,9 @@ using Utility;
 
 public class AccessRefreshManager : MonoBehaviour
 {
-    
     [SerializeField] private Button _accessButton;
+    [SerializeField] private Button _logoutButton;
+    [SerializeField] private TMP_Text _userNameText;
     [SerializeField] private TMP_Text _statusText;
 
     private IEnumerator _accessRoutine;
@@ -23,9 +24,11 @@ public class AccessRefreshManager : MonoBehaviour
     private void Awake()
     {
         _accessButton.onClick.AddListener(OnClickAccessButton);
+        _logoutButton.onClick.AddListener(OnClickLogoutButton);
 
         _authManager = AuthManager.Instance;
         _statusText.text = "";
+        _userNameText.text = $"로그인 된 아이디 : {_authManager.Username}";
     }
 
     private void OnClickAccessButton()
@@ -35,6 +38,18 @@ public class AccessRefreshManager : MonoBehaviour
         
         _accessRoutine = AccessRoutine();
         StartCoroutine(_accessRoutine);
+    }
+
+    private void OnClickLogoutButton()
+    {
+        if (_backToLoginRoutine is not null)
+        {
+            StopCoroutine(_backToLoginRoutine);
+            _backToLoginRoutine = null;
+        }
+
+        _backToLoginRoutine = BackToLoginRoutine(true);
+        StartCoroutine(_backToLoginRoutine);
     }
 
     private IEnumerator AccessRoutine()
@@ -97,10 +112,14 @@ public class AccessRefreshManager : MonoBehaviour
         }
     }
 
-    private IEnumerator BackToLoginRoutine()
+    private IEnumerator BackToLoginRoutine(bool isLogout = false)
     {
         const float DURATION = 3.0f;
-        ToastStatusText("로그인 정보가 만료되었습니다.\n다시 로그인 해주세요.", Color.black, DURATION);
+        if(!isLogout)
+            ToastStatusText("로그인 정보가 만료되었습니다.\n다시 로그인 해주세요.", Color.black, DURATION);
+        else
+            ToastStatusText("로그아웃 되었습니다.\n로그인 페이지로 이동합니다.", Color.black, DURATION);
+            
 
         while (_toastRoutine is not null)
         {
