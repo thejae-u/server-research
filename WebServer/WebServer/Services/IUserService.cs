@@ -8,7 +8,10 @@ public interface IUserService
     Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto);
 
     // 로그인 성공 시 Token과 UserDto 반환, 실패 시 null 반환
-    Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto, string? refreshToken);
+    Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto);
+
+    // 리프레시 토큰으로 액세스 토큰 발급
+    Task<UserResponseDto?> RefreshAsync(string refreshToken);
 
     // Id 조회 성공 시 UserDto 반환, 실패 시 null 반환
     Task<UserDto?> GetUSerByIdAsync(Guid id);

@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GetUserById(Guid userid)
     {
         var user = await _userService.GetUSerByIdAsync(userid);
-        return user != null ? Ok(user) : NotFound();
+        return user is not null ? Ok(user) : NotFound();
     }
 
     [HttpPost("register")]
@@ -29,14 +29,21 @@ public class AuthController : ControllerBase
     {
         var userDto = await _userService.RegisterAsync(userRegisterDto);
 
-        return userDto != null ? Ok(new { Message = "회원가입 성공!" }) : BadRequest();
+        return userDto is not null ? Ok(new { Message = "회원가입 성공!" }) : BadRequest();
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromHeader] string? refreshToken, [FromBody] UserLoginDto userLoginDto)
+    public async Task<IActionResult> Login([FromBody] UserLoginDto userLoginDto)
     {
-        var response = await _userService.LoginAsync(userLoginDto, refreshToken);
-        return response != null ? Ok(response) : BadRequest();
+        var response = await _userService.LoginAsync(userLoginDto);
+        return response is not null ? Ok(response) : BadRequest();
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] string refreshToken)
+    {
+        var response = await _userService.RefreshAsync(refreshToken);
+        return response is not null ? Ok(response) : BadRequest();
     }
 
     [HttpDelete("cancellation")]

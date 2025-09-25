@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+using System.Security.Claims;
 using WebServer.Data;
 
 namespace WebServer.Dtos;
@@ -29,8 +29,8 @@ public class UserLoginDto
 // 로그인 성공 시 반환 데이터
 public class UserResponseDto
 {
-    public required string AccessToken { get; set; } // JWT
-    public string? RefreshToken { get; set; }
+    public required string AccessToken { get; set; }
+    public required string RefreshToken { get; set; }
     public required UserDto User { get; set; } // 유저 정보
 }
 
@@ -69,4 +69,18 @@ public class UserDto
         CreatedAt = user.CreatedAt;
         return this;
     }
+}
+
+public class UserSimpleDto
+{
+    [Required]
+    public required Guid UID { get; set; }
+
+    public required string Username { get; set; }
+}
+
+public class UserDtoForTokenResponse
+{
+    public Guid? UserId { get; set; }
+    public ClaimsPrincipal? Principal { get; set; }
 }

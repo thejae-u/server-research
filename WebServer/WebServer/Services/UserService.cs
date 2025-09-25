@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using WebServer.Data;
 using WebServer.Dtos;
 
@@ -40,7 +41,7 @@ public class UserService : IUserService
         return new UserDto().Mapping(user);
     }
 
-    public async Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto, string? refreshToken)
+    public async Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto)
     {
         var user = await _gdbContext.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
 
@@ -51,10 +52,7 @@ public class UserService : IUserService
 
         // Token Generate
         var accessTokenString = _tokenService.GenerateAccessToken(user); // Default 1 Hour expire time
-
-        string refreshTokenString = "";
-        if (string.IsNullOrEmpty(refreshToken))
-            refreshTokenString = _tokenService.GenerateRefreshToken(user); // Default 30 Days expire time
+        var refreshTokenString = await _tokenService.GenerateRefreshToken(user);
 
         // Convert UserData to UserDto
         var userDto = new UserDto().Mapping(user);
@@ -63,6 +61,29 @@ public class UserService : IUserService
             AccessToken = accessTokenString,
             RefreshToken = refreshTokenString,
             User = userDto
+        };
+    }
+
+    public async Task<UserResponseDto?> RefreshAsync(string refreshToken)
+    {
+        var responseFromTokenService = await _tokenService.ValidateRefreshToken(refreshToken);
+        if (responseFromTokenService is null ||
+            responseFromTokenService.UserId is null ||
+            responseFromTokenService.Principal is null) return null;
+
+        var userId = responseFromTokenService.UserId;
+        var principal = responseFromTokenService.Principal;
+        var user = await _gdbContext.Users.FindAsync(userId);
+
+        if (user is null) return null;
+
+        var newAccessToken = _tokenService.GenerateAccessToken(user);
+
+        return new UserResponseDto
+        {
+            AccessToken = newAccessToken,
+            RefreshToken = refreshToken,
+            User = new UserDto().Mapping(user)
         };
     }
 

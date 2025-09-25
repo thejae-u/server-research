@@ -4,14 +4,14 @@ namespace WebServer.Settings;
 
 public class JwtSettings
 {
-    [Required]
-    public string AccessKey { get; set; } = string.Empty;
+    public required string Issuer { get; set; } = string.Empty;
+    public required string Audience { get; set; } = string.Empty;
 
     [Required]
-    public string RefreshKey { get; set; } = string.Empty;
+    public required string AccessKey { get; set; } = string.Empty;
 
-    public string Issuer { get; set; } = string.Empty;
-    public string Audience { get; set; } = string.Empty;
+    [Required]
+    public required string RefreshKey { get; set; } = string.Empty;
 
     public static bool Validate(JwtSettings? settings)
     {

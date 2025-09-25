@@ -1,19 +1,22 @@
 ﻿using WebServer.Dtos;
+using WebServer.Utils;
 
 namespace WebServer.Services;
 
 public interface IGroupService
 {
-    Task<UserGroupDto> CreateNewGroupAsync(Guid userId);
+    Task<IEnumerable<GroupDto>> GetAllGroupAsync();
 
-    Task<UserGroupDto?> GetGroupInfoAsync(Guid groupId);
+    Task<GroupDto?> CreateNewGroupAsync(CreateGroupRequestDto ownerUser);
 
-    Task<UserGroupDto?> JoinGroupAsync(Guid groupId, Guid userId);
+    Task<Result<GroupDto?>> GetGroupInfoAsync(Guid groupId);
 
-    Task<UserGroupDto?> LeaveGroupAsync(Guid groupId, Guid userId);
+    Task<Result<GroupDto?>> JoinGroupAsync(JoinGroupRequestDto requestDto);
 
-    // admin method Area
-    Task<IEnumerable<UserGroupDto>> GetAllGroupAsync();
+    Task<Result<GroupDto?>> LeaveGroupAsync(DefaultGroupRequestDto requestDto);
 
-    Task FlushCaching();
+    // Admin Method Area
+    Task<bool> FlushGroupsAsync(UserDto requester);
+
+    Task<bool> FlushGroupAsyncTest();
 }

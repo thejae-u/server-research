@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using WebServer.Data;
+using WebServer.Dtos;
 using WebServer.Services;
 
 namespace WebServer.Controllers;
@@ -32,10 +34,20 @@ public class AdminController : ControllerBase
         return groups.Count() == 0 ? NoContent() : Ok(groups);
     }
 
-    [HttpGet("flush/groups")]
-    public async Task<IActionResult> FlushCaching()
+    [HttpDelete("flush/groups")]
+    public async Task<IActionResult> FlushAllCaching()
     {
-        await _groupService.FlushCaching();
+        bool commited = await _groupService.FlushGroupAsyncTest();
+        if (!commited) return NotFound();
+
+        // User Caching flush add
         return Ok();
+    }
+
+    [HttpPost("group/create")]
+    public async Task<IActionResult> CreateGroupAdmin([FromBody] CreateGroupRequestDto request)
+    {
+        var group = await _groupService.CreateNewGroupAsync(request);
+        return group is not null ? Ok(group) : BadRequest();
     }
 }
