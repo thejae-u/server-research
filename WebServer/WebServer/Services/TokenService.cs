@@ -44,8 +44,8 @@ public class TokenService : ITokenService
     {
         var claims = new Claim[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.UID.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Sub, user.UID.ToString()),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
         var expires = DateTime.UtcNow.AddDays(expireTime);

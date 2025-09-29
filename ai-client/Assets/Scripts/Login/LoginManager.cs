@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Text;
 using UnityEngine;
@@ -27,17 +28,20 @@ public class LoginManager : MonoBehaviour
 
     private void Awake()
     {
-        _loginButton.onClick.AddListener(OnClickLoginButton); 
+        _loginButton.onClick.AddListener(OnClickLoginButton);
         _registerButton.onClick.AddListener(OnClickRegisterButton);
 
         _statusText.text = "";
 
         _authManager = AuthManager.Instance;
+    }
 
+    private void Start()
+    {
         // 이미 인증 토큰이 있는 경우 접속 버튼이 있는 창을 띄움
         if (_authManager.HasRefreshToken)
         {
-            _accessCanvas.SetActive(true); 
+            _accessCanvas.SetActive(true);
         }
     }
 

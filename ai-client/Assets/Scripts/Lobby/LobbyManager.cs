@@ -21,17 +21,31 @@ public class LobbyManager : MonoBehaviour
     private IEnumerator _updateRoutine;
     private IEnumerator _createRoomRoutine;
 
-    private WaitForSeconds _waitForSeconds;
-
     private AuthManager _authManager;
+    
+    private LobbyCanvasController _lobbyCanvasController;
+
+    private WaitForSeconds _waitSecond;
+    
+    public bool IsRequestedJoin { get; private set; }
+
+    public void NotifyRequestJoin()
+    {
+        IsRequestedJoin = true;
+    }
+
+    public void NotifyRequestEndJoin()
+    {
+        IsRequestedJoin = false;
+    }
     
     private void Awake()
     {
         _authManager = AuthManager.Instance;
-        
-        _waitForSeconds = new WaitForSeconds(1.0f);
-        
         _createRoomButton.onClick.AddListener(OnClickCreateRoomButton);
+
+        _lobbyCanvasController = transform.parent.GetComponent<LobbyCanvasController>();
+        _waitSecond = new WaitForSeconds(0.5f);
     }
 
     private void OnClickCreateRoomButton()
@@ -48,14 +62,29 @@ public class LobbyManager : MonoBehaviour
 
     private void OnEnable()
     {
-        UpdateLobby();
+        InitLobby();
     }
 
     private void OnDisable()
     {
-        if (_updateRoutine is null) return;
-        StopCoroutine(_updateRoutine);
-        _updateRoutine = null;
+        if (_updateRoutine is not null)
+        {
+            StopCoroutine(_updateRoutine);
+            _updateRoutine = null;
+        }
+
+        if (_createRoomRoutine is not null)
+        {
+            StopCoroutine(_createRoomRoutine);
+            _createRoomRoutine = null;
+        }
+    }
+
+    private void InitLobby()
+    {
+        _createRoomButton.interactable = true;
+        _roomNameField.text = "";
+        UpdateLobby();
     }
 
     private void UpdateLobby()
@@ -74,6 +103,7 @@ public class LobbyManager : MonoBehaviour
         {
             using UnityWebRequest request = UnityWebRequest.Get(apiUri);
             request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
+            
             yield return request.SendWebRequest();
             
             switch (request.result)
@@ -94,29 +124,24 @@ public class LobbyManager : MonoBehaviour
                     Debug.LogError($"Fatal Error in Update Lobby Response");
                     break;
             }
-            
-            yield return _waitForSeconds;
+
+            yield return _waitSecond;
         }
     }
     
     private void UpdateRooms(List<GroupDto> rooms)
     {
-        var serverRoomIds = rooms.Select(r => r.groupId).ToHashSet();
-        var localRoomIds = _rooms.Keys.ToList();
+        HashSet<Guid> serverRoomIds = rooms.Select(r => r.groupId).ToHashSet();
+        List<Guid> localRoomIds = _rooms.Keys.ToList();
 
-        foreach (var roomId in localRoomIds)
+        foreach (Guid roomId in localRoomIds.Where(roomId => !serverRoomIds.Contains(roomId)))
         {
-            if (!serverRoomIds.Contains(roomId))
-            {
-                if(_rooms.TryGetValue(roomId, out LobbyRoomObjectController roomController))
-                {
-                    Destroy(roomController.gameObject);
-                    _rooms.Remove(roomId);
-                }
-            }
+            if (!_rooms.TryGetValue(roomId, out LobbyRoomObjectController roomController)) continue;
+            Destroy(roomController.gameObject);
+            _rooms.Remove(roomId);
         }
 
-        foreach (var room in rooms)
+        foreach (GroupDto room in rooms)
         {
             if (_rooms.TryGetValue(room.groupId, out LobbyRoomObjectController roomController))
             {
@@ -170,7 +195,9 @@ public class LobbyManager : MonoBehaviour
         switch (request.result)
         {
             case UnityWebRequest.Result.Success:
-                Debug.Log($"room Created");
+                // Parsing GroupDto
+                var response = JsonConvert.DeserializeObject<GroupDto>(request.downloadHandler.text);
+                _lobbyCanvasController.ChangePanelToRoomPanel(response);
                 break;
             case UnityWebRequest.Result.ConnectionError:
                 Debug.Log($"서버와 연결에 실패하였습니다.");
@@ -180,7 +207,7 @@ public class LobbyManager : MonoBehaviour
             case UnityWebRequest.Result.InProgress:
             case UnityWebRequest.Result.DataProcessingError:
             default:
-                Debug.LogError($"Fatal Error in Create Room Response");
+                Debug.LogError($"Fatal Error in Create Room Response: {request.responseCode}");
                 break;
         }
 

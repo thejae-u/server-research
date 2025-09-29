@@ -43,21 +43,27 @@ public class LobbyController : ControllerBase
     public async Task<IActionResult> GetGroupInfoById([FromBody] Guid groupId)
     {
         var group = await _groupService.GetGroupInfoAsync(groupId);
-        return group == null ? NotFound() : Ok(group);
+        if (group is null || !group.IsSuccess) return NotFound();
+
+        return Ok(group.Value);
     }
 
     [HttpPost("join")]
     public async Task<IActionResult> JoinGroup([FromBody] JoinGroupRequestDto requestDto)
     {
         var group = await _groupService.JoinGroupAsync(requestDto);
-        return group == null ? NotFound() : Ok(group);
+        if (group is null || !group.IsSuccess) return NotFound();
+
+        return Ok(group.Value);
     }
 
     [HttpPost("leave")]
     public async Task<IActionResult> LeaveGroup([FromBody] DefaultGroupRequestDto requestDto)
     {
         var group = await _groupService.LeaveGroupAsync(requestDto);
-        return group == null ? NotFound() : Ok(group);
+        if (group is null || !group.IsSuccess) return NotFound();
+
+        return Ok(group.Value);
     }
 
     [HttpDelete("plush")]

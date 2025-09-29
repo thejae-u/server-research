@@ -10,8 +10,10 @@ namespace Utility
         public const string API_AUTH_LOGIN = "/api/auth/login";
         public const string API_AUTH_REFRESH = "/api/auth/refresh";
         public const string API_GROUP_JOIN = "/api/group/join";
+        public const string API_GROUP_LEAVE = "/api/group/leave";
         public const string API_GROUP_CREATE = "/api/group/create";
         public const string API_GROUP_GET_ALL = "/api/group/info/lobby";
+        public const string API_GROUP_GET_INFO = "/api/group/info";
     }
     
     
@@ -65,5 +67,13 @@ namespace Utility
     {
         public string groupName;
         public UserSimpleDto requester;
+    }
+
+    [Serializable]
+    public class JoinGroupRequestDto
+    {
+        public Guid groupId { get; set; }
+
+        public UserSimpleDto requester { get; set; }
     }
 }

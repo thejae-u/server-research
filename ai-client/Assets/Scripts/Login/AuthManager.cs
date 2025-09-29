@@ -1,8 +1,10 @@
 using System;
+using System.Collections;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 using Utility;
+using Debug = UnityEngine.Debug;
 
 public class AuthManager : Singleton<AuthManager>
 {
@@ -28,19 +30,23 @@ public class AuthManager : Singleton<AuthManager>
     private void Awake()
     {
         _tokenPath = Application.persistentDataPath + REFRESH_TOKEN_PATH;
-
-        LoadRefreshToken();
+        StartCoroutine(LoadRefreshToken());
     }
 
-    private void LoadRefreshToken()
+    private IEnumerator LoadRefreshToken()
     {
         if (!File.Exists(_tokenPath))
         {
             RefreshToken = string.Empty;
-            return;
+            yield break;
         }
 
-        string loadedJson = File.ReadAllText(_tokenPath);
+        string loadedJson = File.ReadAllText(_tokenPath); 
+        
+        // If Using Task -> await File.ReadAllTextAsync(_tokenPath);
+        // Attach to Main Thread by await
+        // Dispatch to Main Thread Again By UnitySynchronizationContext
+        
         var deserializedData = JsonConvert.DeserializeObject<TokenInfo>(loadedJson);
         RefreshToken = deserializedData.refreshToken;
         Username = deserializedData.userName;
