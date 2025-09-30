@@ -42,7 +42,7 @@ public class LobbyController : ControllerBase
     [HttpGet("info")]
     public async Task<IActionResult> GetGroupInfoById([FromBody] Guid groupId)
     {
-        var group = await _groupService.GetGroupInfoAsync(groupId);
+        Utils.Result<GroupDto?> group = await _groupService.GetGroupInfoAsync(groupId);
         if (group is null || !group.IsSuccess) return NotFound();
 
         return Ok(group.Value);
@@ -51,7 +51,7 @@ public class LobbyController : ControllerBase
     [HttpPost("join")]
     public async Task<IActionResult> JoinGroup([FromBody] JoinGroupRequestDto requestDto)
     {
-        var group = await _groupService.JoinGroupAsync(requestDto);
+        Utils.Result<GroupDto?> group = await _groupService.JoinGroupAsync(requestDto);
         if (group is null || !group.IsSuccess) return NotFound();
 
         return Ok(group.Value);
@@ -60,18 +60,9 @@ public class LobbyController : ControllerBase
     [HttpPost("leave")]
     public async Task<IActionResult> LeaveGroup([FromBody] DefaultGroupRequestDto requestDto)
     {
-        var group = await _groupService.LeaveGroupAsync(requestDto);
+        Utils.Result<GroupDto?> group = await _groupService.LeaveGroupAsync(requestDto);
         if (group is null || !group.IsSuccess) return NotFound();
 
         return Ok(group.Value);
-    }
-
-    [HttpDelete("plush")]
-    public async Task<IActionResult> FlushAllGroups([FromBody] UserDto requester)
-    {
-        if (!requester.Role.Equals(RoleCaching.Admin))
-            return NotFound();
-
-        return await _groupService.FlushGroupsAsync(requester) ? Ok("Flushed Complete") : NotFound();
     }
 }
