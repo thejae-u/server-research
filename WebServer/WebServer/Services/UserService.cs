@@ -50,6 +50,8 @@ public class UserService : IUserService
             return null; // 사용자가 없거나 비밀번호가 틀림
         }
 
+        // User Caching to Redis
+
         // Token Generate
         var accessTokenString = _tokenService.GenerateAccessToken(user); // Default 1 Hour expire time
         var refreshTokenString = await _tokenService.GenerateRefreshToken(user);
@@ -62,6 +64,11 @@ public class UserService : IUserService
             RefreshToken = refreshTokenString,
             User = userDto
         };
+    }
+
+    public Task<bool> LogoutAsync(UserSimpleDto userLogoutDto)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<UserResponseDto?> RefreshAsync(string refreshToken)

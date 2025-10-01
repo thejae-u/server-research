@@ -68,6 +68,7 @@ namespace WebServer
             builder.Services.AddSingleton<ITokenService, TokenService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IGroupService, GroupService>();
+            builder.Services.AddScoped<ICachingService, CachingService>();
 
             // DB Context
             var connectionString = builder.Configuration.GetConnectionString("PersistantDB");

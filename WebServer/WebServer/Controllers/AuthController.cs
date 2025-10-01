@@ -28,7 +28,6 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] UserRegisterDto userRegisterDto)
     {
         var userDto = await _userService.RegisterAsync(userRegisterDto);
-
         return userDto is not null ? Ok(new { Message = "회원가입 성공!" }) : BadRequest();
     }
 
@@ -37,6 +36,13 @@ public class AuthController : ControllerBase
     {
         var response = await _userService.LoginAsync(userLoginDto);
         return response is not null ? Ok(response) : BadRequest();
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] UserSimpleDto userLogoutDto)
+    {
+        var response = await _userService.LogoutAsync(userLogoutDto);
+        return response ? Ok(new { Message = "로그아웃 성공" }) : BadRequest();
     }
 
     [HttpPost("refresh")]

@@ -18,5 +18,5 @@ public interface IGroupService
     // Admin Method Area
     Task<bool> FlushGroupsAsync(UserDto requester);
 
-    Task<bool> FlushGroupAsyncTest();
+    Task FlushGroupAsyncTest();
 }

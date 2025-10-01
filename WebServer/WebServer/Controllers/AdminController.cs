@@ -37,10 +37,7 @@ public class AdminController : ControllerBase
     [HttpDelete("flush/groups")]
     public async Task<IActionResult> FlushAllCaching()
     {
-        bool commited = await _groupService.FlushGroupAsyncTest();
-        if (!commited) return NotFound();
-
-        // User Caching flush add
+        await _groupService.FlushGroupAsyncTest();
         return Ok();
     }
 

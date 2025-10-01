@@ -10,6 +10,8 @@ public interface IUserService
     // 로그인 성공 시 Token과 UserDto 반환, 실패 시 null 반환
     Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto);
 
+    Task<bool> LogoutAsync(UserSimpleDto userLogoutDto);
+
     // 리프레시 토큰으로 액세스 토큰 발급
     Task<UserResponseDto?> RefreshAsync(string refreshToken);
 
