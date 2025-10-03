@@ -82,7 +82,7 @@ namespace WebServer
             builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
             builder.Services.AddStackExchangeRedisCache(options =>
             {
-                options.Configuration = builder.Configuration.GetConnectionString("Redis");
+                options.Configuration = redisConnectionString;
                 options.InstanceName = "RedisCache";
             });
 

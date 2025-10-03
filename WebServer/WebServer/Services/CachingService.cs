@@ -11,7 +11,14 @@ public class CachingService : ICachingService
     private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _db;
 
-    // Group Key Prefix
+    #region Fields For User
+
+    private const string UserKeyPrefix = "user:";
+
+    #endregion Fields For User
+
+    #region Fields For Group
+
     private const string GroupKeyPrefix = "group:";
 
     private const string GroupNameField = "name";
@@ -19,7 +26,11 @@ public class CachingService : ICachingService
     private const string MembersField = "members";
     private const string CreatedAtField = "createdAt";
 
+    #endregion Fields For Group
+
     public string GetGroupKey(Guid groupId) => $"{GroupKeyPrefix}{groupId}";
+
+    public string GetUserKey(Guid userId) => $"{UserKeyPrefix}{userId}";
 
     public CachingService(IConnectionMultiplexer connectionMultiplexer)
     {
@@ -46,6 +57,26 @@ public class CachingService : ICachingService
     {
         return await _db.KeyDeleteAsync(key);
     }
+
+    #region User Methods
+
+    public async Task<bool> SetUserLoginStatusAsync(Guid userId, TimeSpan? expiry = null)
+    {
+        var userKey = GetUserKey(userId);
+        return await _db.StringSetAsync(userKey, "true", expiry);
+    }
+
+    public async Task<bool> IsUserLoggedInAsync(Guid userId)
+    {
+        return await _db.KeyExistsAsync(GetUserKey(userId));
+    }
+
+    public async Task<bool> ClearUserLoginStatusAsync(Guid userId)
+    {
+        return await _db.KeyDeleteAsync(GetUserKey(userId));
+    }
+
+    #endregion User Methods
 
     #region Group Method
 

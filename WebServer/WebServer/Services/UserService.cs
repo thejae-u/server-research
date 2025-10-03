@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 using WebServer.Data;
 using WebServer.Dtos;
 
@@ -9,11 +8,13 @@ public class UserService : IUserService
 {
     private readonly GameServerDbContext _gdbContext;
     private readonly ITokenService _tokenService;
+    private readonly ICachingService _cachingService;
 
-    public UserService(GameServerDbContext gdbContext, ITokenService tokenService)
+    public UserService(GameServerDbContext gdbContext, ITokenService tokenService, ICachingService cachingService)
     {
         _gdbContext = gdbContext;
         _tokenService = tokenService;
+        _cachingService = cachingService;
     }
 
     public async Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto)
@@ -50,7 +51,18 @@ public class UserService : IUserService
             return null; // 사용자가 없거나 비밀번호가 틀림
         }
 
-        // User Caching to Redis
+        // TODO : 이미 온라인인 사용자에 대해서 로그인 요청이 들어오면 어떻게 처리 할 것인가?
+        // 기존 로그인을 없애고 새로운 로그인으로 처리? 아니면 그냥 거부?
+        if (await _cachingService.IsUserLoggedInAsync(user.UID))
+        {
+            return null; // 이미 온라인인 사용자
+        }
+
+        // User Caching in Redis
+        if (!await _cachingService.SetUserLoginStatusAsync(user.UID))
+        {
+            throw new Exception("Internal error: user caching failed");
+        }
 
         // Token Generate
         var accessTokenString = _tokenService.GenerateAccessToken(user); // Default 1 Hour expire time
@@ -66,9 +78,9 @@ public class UserService : IUserService
         };
     }
 
-    public Task<bool> LogoutAsync(UserSimpleDto userLogoutDto)
+    public async Task<bool> LogoutAsync(UserSimpleDto userLogoutDto)
     {
-        throw new NotImplementedException();
+        return await _cachingService.ClearUserLoginStatusAsync(userLogoutDto.UID);
     }
 
     public async Task<UserResponseDto?> RefreshAsync(string refreshToken)
@@ -84,6 +96,12 @@ public class UserService : IUserService
 
         if (user is null) return null;
 
+        if (await _cachingService.IsUserLoggedInAsync(user.UID))
+        {
+            return null; // 이미 로그인 중인 사용자
+        }
+
+        await _cachingService.SetUserLoginStatusAsync(user.UID);
         var newAccessToken = _tokenService.GenerateAccessToken(user);
 
         return new UserResponseDto
