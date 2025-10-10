@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ using Utility;
 public class InRoomManager : MonoBehaviour
 {
     private readonly List<GameObject> _players = new(4);
-    
+
     [SerializeField] private Button _startButton;
     [SerializeField] private Button _exitButton;
     [SerializeField] private TMP_Text _roomName;
@@ -28,7 +28,7 @@ public class InRoomManager : MonoBehaviour
     private void Awake()
     {
         _authManager = AuthManager.Instance;
-        
+
         for (var i = 0; i < 4; ++i)
         {
             _players.Add(transform.GetChild(0).GetChild(i).gameObject);
@@ -47,7 +47,7 @@ public class InRoomManager : MonoBehaviour
         _startButton.interactable = _authManager.UserGuid == _currentGroup.owner.uid;
         UpdateRoomInfo();
     }
-    
+
     private void OnEnable()
     {
         UpdateRoomInfo();
@@ -56,7 +56,7 @@ public class InRoomManager : MonoBehaviour
     private void OnDisable()
     {
         if (_roomUpdateRoutine is null) return;
-        
+
         StopCoroutine(_roomUpdateRoutine);
         _roomUpdateRoutine = null;
 
@@ -100,7 +100,7 @@ public class InRoomManager : MonoBehaviour
         request.SetRequestHeader("Content-Type", "application/json");
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
-        
+
         yield return request.SendWebRequest();
 
         switch (request.result)
@@ -109,10 +109,11 @@ public class InRoomManager : MonoBehaviour
                 _lobbyCanvasController.ChangePanelToLobbyPanel();
                 _roomExitRoutine = null;
                 break;
+
             case UnityWebRequest.Result.ConnectionError:
                 Debug.LogError($"서버와 통신에 실패하였습니다.");
                 break;
-            
+
             case UnityWebRequest.Result.ProtocolError:
             case UnityWebRequest.Result.DataProcessingError:
             case UnityWebRequest.Result.InProgress:
@@ -128,7 +129,7 @@ public class InRoomManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(_authManager.AccessToken) || _currentGroup is null)
             yield break;
-        
+
         const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_GROUP_GET_INFO;
         while (true)
         {
@@ -137,29 +138,31 @@ public class InRoomManager : MonoBehaviour
             {
                 throw new ArgumentNullException($"requestString is Null");
             }
-        
+
             byte[] bodyRaw = Encoding.UTF8.GetBytes(requestString);
 
             using var request = UnityWebRequest.Get(apiUri);
             request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
             request.SetRequestHeader("Content-Type", "application/json");
-        
+
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
-            
+
             yield return request.SendWebRequest();
-            
+
             switch (request.result)
             {
                 case UnityWebRequest.Result.Success:
                     var response = JsonConvert.DeserializeObject<GroupDto>(request.downloadHandler.text);
-                    UpdatePlayersInfo(response.players);
+                    _currentGroup = response;
+
+                    UpdatePlayersInfo();
                     break;
-                
+
                 case UnityWebRequest.Result.ConnectionError:
                     Debug.Log("서버와 연결에 실패하였습니다.");
                     break;
-                
+
                 case UnityWebRequest.Result.ProtocolError:
                 case UnityWebRequest.Result.DataProcessingError:
                 case UnityWebRequest.Result.InProgress:
@@ -173,8 +176,9 @@ public class InRoomManager : MonoBehaviour
         }
     }
 
-    private void UpdatePlayersInfo(List<UserSimpleDto> users)
+    private void UpdatePlayersInfo()
     {
+        var users = _currentGroup.players;
         Debug.Assert(users.Count <= 4, "Inv");
         for (var i = 0; i < _players.Count; ++i)
         {
@@ -190,9 +194,14 @@ public class InRoomManager : MonoBehaviour
             return;
         }
 
+        string prefix = "";
+
         if (user.uid == _currentGroup.owner.uid)
-            _players[idx].transform.GetChild(0).GetComponent<TMP_Text>().text = $"(Owner) {user.username}";
-        else
-            _players[idx].transform.GetChild(0).GetComponent<TMP_Text>().text = user.uid == _authManager.UserGuid ? $"(You) {user.username}" : $"{user.username}";
+            prefix = "(Owner) ";
+
+        if (user.uid == _authManager.UserGuid)
+            prefix += "(You) ";
+
+        _players[idx].transform.GetChild(0).GetComponent<TMP_Text>().text = prefix + user.username;
     }
 }

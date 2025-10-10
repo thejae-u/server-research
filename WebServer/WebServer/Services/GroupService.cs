@@ -119,6 +119,16 @@ public class GroupService : IGroupService
 
         group.Players.Remove(userToRemove);
 
+        if (group.Players.Count > 0)
+        {
+            // Owner가 나간 경우 Owner 재배정
+            if (group.Owner.Uid == userToRemove.Uid)
+            {
+                var newOwner = group.Players.First();
+                group.Owner = newOwner;
+            }
+        }
+
         bool committed = await _cachingService.LeaveGroupInCacheAsync(group, requestDto);
         if (!committed)
             return Result<GroupDto?>.Failure("data race. try again");

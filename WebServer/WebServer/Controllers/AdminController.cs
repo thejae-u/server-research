@@ -49,4 +49,11 @@ public class AdminController : ControllerBase
         var group = await _groupService.CreateNewGroupAsync(request);
         return group is not null ? Ok(group) : BadRequest();
     }
+
+    [HttpPost("group/leave")]
+    public async Task<IActionResult> LeaveGroupAdminAsync([FromBody] DefaultGroupRequestDto request)
+    {
+        var group = await _groupService.LeaveGroupAsync(request);
+        return group is not null ? Ok(group) : BadRequest();
+    }
 }

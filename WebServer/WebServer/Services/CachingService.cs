@@ -146,7 +146,9 @@ public class CachingService : ICachingService
         else
         {
             var newMembersJson = JsonSerializer.Serialize(group.Players);
+            var newOwnerJson = JsonSerializer.Serialize(group.Owner);
             _ = trans.HashSetAsync(groupKey, MembersField, newMembersJson);
+            _ = trans.HashSetAsync(groupKey, OwnerUserField, newOwnerJson);
         }
 
         return await trans.ExecuteAsync();

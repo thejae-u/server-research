@@ -101,10 +101,12 @@ namespace WebServer
 
             var app = builder.Build();
 
-            // admin과 Internal의 계정 생성 (이미 있는경우 무시 됨)
+            // admin과 Internal의 계정 생성
             using (var scope = app.Services.CreateScope())
             {
                 var userService = scope.ServiceProvider.GetService<IUserService>() ?? throw new ArgumentNullException("User Service is null");
+
+                // 기존 데이터 삭제
                 await userService.FlushInternalUserAsync();
 
                 // Admin Register
@@ -115,6 +117,7 @@ namespace WebServer
                 if (string.IsNullOrEmpty(adminUsername) || string.IsNullOrEmpty(adminPassword))
                     throw new ArgumentNullException("Internal Admin Info is Null");
 
+                // Admin Role을 적용하여 등록
                 await userService.RegisterAsync(new Dtos.UserRegisterDto { Username = adminUsername, Password = adminPassword }, isAdmin: true);
 
                 // Internal Register
@@ -125,6 +128,7 @@ namespace WebServer
                 if (string.IsNullOrEmpty(internalUsername) || string.IsNullOrEmpty(internalPassword))
                     throw new ArgumentNullException("Internal Info is Null");
 
+                // Internal Role을 적용하여 등록
                 await userService.RegisterAsync(new Dtos.UserRegisterDto { Username = internalUsername, Password = internalPassword }, isInternal: true);
             }
 

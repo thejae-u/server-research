@@ -104,8 +104,6 @@ public class UserService : IUserService
         if ((internalUser.Role.Equals(RoleCaching.Admin) || internalUser.Role.Equals(RoleCaching.Internal)) == false) // if not internal user
             return null;
 
-        var role = internalUser.Role;
-
         // Internal은 RefreshToken을 발급하지 않음
         var accessTokenString = _tokenService.GenerateAccessToken(internalUser);
         return new InternalResponseDto

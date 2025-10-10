@@ -189,12 +189,24 @@
                 <h2>새 그룹 생성</h2>
                 <form id="create-group-form">
                     <div class="input-group">
-                        <label for="group-name">그룹 이름 (3~20자)</label>
+                        <label for="group-name">그룹 이름 (3 ~ 20자 제한)</label>
                         <input type="text" id="group-name" required minlength="3" maxlength="20">
                     </div>
                     <button type="submit" class="primary-button">그룹 생성</button>
                 </form>
                 <p id="create-group-message" class="message"></p>
+            </div>
+
+            <div class="card">
+                <h2>그룹 탈퇴 (관리자 본인)</h2>
+                <form id="leave-group-form">
+                    <div class="input-group">
+                        <label for="group-id">탈퇴할 그룹 ID (GroupId)</label>
+                        <input type="text" id="group-id" placeholder="탈퇴할 그룹의 ID를 입력하세요" required>
+                    </div>
+                    <button type="submit" class="danger-button">그룹 탈퇴</button>
+                </form>
+                <p id="leave-group-message" class="message"></p>
             </div>
 
             <div class="card">
@@ -210,8 +222,9 @@
         const API_ADMIN_BASE = `${API_BASE_URL}/api/admin`;
         const API_LOGIN_ENDPOINT = `${API_BASE_URL}/api/auth/internal-login`;
 
+        // ▼▼▼ 3. 현재 로그인 사용자 정보 저장 변수 ▼▼▼
         let currentToken = null;
-        let currentUser = null; // ▼▼▼ 3. 현재 로그인 사용자 정보 저장 변수 ▼▼▼
+        let currentUser = null;
 
         // 뷰 DOM 요소
         const loginView = document.getElementById('login-view');
@@ -226,6 +239,8 @@
         const getGroupsButton = document.getElementById('get-groups-button');
         const groupsResponse = document.getElementById('groups-response');
         const createGroupForm = document.getElementById('create-group-form');
+        const leaveGroupForm = document.getElementById('leave-group-form');
+        const leaveGroupMessage = document.getElementById('leave-group-message');
         const createGroupMessage = document.getElementById('create-group-message');
         const flushCacheButton = document.getElementById('flush-cache-button');
         const flushCacheMessage = document.getElementById('flush-cache-message');
@@ -276,13 +291,12 @@
             const payload = parseJwt(currentToken);
             if (payload) {
                 // ▼▼▼ 4. 로그인 시 사용자 정보와 토큰 만료 시간 저장 및 표시 ▼▼▼
-                // JWT 표준 클레임 'sub' (subject, 사용자 ID), 'name' (사용자 이름)을 사용한다고 가정
                 const userIdClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
                 currentUser = {
                     uid: payload[userIdClaim] || payload.sub,
                     username: payload.name
                 };
-                welcomeUser.textContent = `환영합니다, ${currentUser.username || '관리자'}님`;
+                welcomeUser.textContent = `관리자 계정으로 접속되었습니다.`;
 
                 const expiryDate = new Date(payload.exp * 1000);
                 tokenExpiryTime.textContent = expiryDate.toLocaleString('ko-KR');
@@ -348,7 +362,7 @@
             }
         });
 
-        // ▼▼▼ 5. 그룹 생성 로직 수정 ▼▼▼
+        // ▼▼▼ 5. 그룹 생성 로직 ▼▼▼
         createGroupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentUser) {
@@ -375,6 +389,35 @@
                 } else {
                     createGroupMessage.className = 'message error-message';
                     createGroupMessage.textContent = '그룹 생성 실패. (이름 중복 등)';
+                }
+            }
+        });
+
+        // ▼▼▼ 그룹 탈퇴 (관리자 본인) 이벤트 리스너 ▼▼▼
+        leaveGroupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || !currentUser.uid) {
+                alert('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+                return;
+            }
+
+            const groupId = document.getElementById('group-id').value;
+            const userId = currentUser.uid; // 현재 로그인된 관리자 ID 사용
+            leaveGroupMessage.textContent = '처리 중...';
+
+            const response = await fetchWithAuth(`${API_ADMIN_BASE}/group/leave`, {
+                method: 'POST',
+                body: JSON.stringify({ groupId, userId })
+            });
+
+            if (response) {
+                if (response.ok) {
+                    leaveGroupMessage.className = 'message success-message';
+                    leaveGroupMessage.textContent = '그룹에서 성공적으로 탈퇴했습니다.';
+                    leaveGroupForm.reset();
+                } else {
+                    leaveGroupMessage.className = 'message error-message';
+                    leaveGroupMessage.textContent = '작업 실패. (그룹 ID를 확인하거나 그룹에 속해있는지 확인하세요)';
                 }
             }
         });
