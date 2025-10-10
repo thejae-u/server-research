@@ -633,6 +633,7 @@ FodyWeavers.xsd
 *.msp
 
 .env
+InternalId.json
 # JetBrains Rider
 
 ### VisualStudio Patch ###

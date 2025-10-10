@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Claims;
 using WebServer.Dtos;
 using WebServer.Services;
@@ -17,8 +18,9 @@ public class AuthController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet("find/{userid}")]
-    public async Task<IActionResult> GetUserById(Guid userid)
+    [Authorize]
+    [HttpGet("find")]
+    public async Task<IActionResult> GetUserById([FromBody] Guid userid)
     {
         var user = await _userService.GetUSerByIdAsync(userid);
         return user is not null ? Ok(user) : NotFound();
@@ -38,6 +40,14 @@ public class AuthController : ControllerBase
         return response is not null ? Ok(response) : BadRequest();
     }
 
+    [HttpPost("internal-login")]
+    public async Task<IActionResult> InternalLogin([FromBody] UserLoginDto userLoginDto)
+    {
+        var response = await _userService.LoginInternalAsync(userLoginDto);
+        return response is not null ? Ok(response) : BadRequest();
+    }
+
+    [Authorize]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] UserSimpleDto userLogoutDto)
     {
@@ -52,6 +62,7 @@ public class AuthController : ControllerBase
         return response is not null ? Ok(response) : BadRequest();
     }
 
+    [Authorize]
     [HttpDelete("cancellation")]
     public async Task<IActionResult> Cancellation([FromBody] UserDeleteDto userDeleteDto)
     {
@@ -59,8 +70,8 @@ public class AuthController : ControllerBase
         return result ? Ok(new { Message = $"탈퇴 처리 완료" }) : BadRequest();
     }
 
-    [HttpGet("validate-token")]
     [Authorize]
+    [HttpGet("validate-token")]
     public IActionResult Validate()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

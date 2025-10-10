@@ -17,20 +17,42 @@ public class UserService : IUserService
         _cachingService = cachingService;
     }
 
-    public async Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto)
+    /// <summary>
+    /// Internal Method for Get UserData or Check User Exist
+    /// </summary>
+    /// <param name="username">username string</param>
+    /// <returns>User Data or Null</returns>
+    private async Task<UserData?> GetUserByUserName(string username)
     {
-        if (await _gdbContext.Users.AnyAsync(u => u.Username == userRegisterDto.Username))
-            return null; // Already Exsist
+        if (string.IsNullOrEmpty(username)) return null;
+        return await _gdbContext.Users.FirstOrDefaultAsync(u => u.Username == username);
+    }
+
+    public async Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto, bool isAdmin = false, bool isInternal = false)
+    {
+        if (await GetUserByUserName(userRegisterDto.Username) is not null)
+            return null; // Already Exist
 
         if (userRegisterDto.Password.Length < 8)
             return null; // password must be over 8 words
 
+        var role = RoleCaching.Player;
+
+        if (isAdmin)
+        {
+            role = RoleCaching.Admin;
+        }
+        else if (isInternal)
+        {
+            role = RoleCaching.Internal;
+        }
+
         var user = new UserData
         {
-            UID = Guid.NewGuid(),
+            Uid = Guid.NewGuid(),
             Username = userRegisterDto.Username,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(userRegisterDto.Password),
-            Role = RoleCaching.Player,
+            Role = role,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -44,25 +66,21 @@ public class UserService : IUserService
 
     public async Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto)
     {
-        var user = await _gdbContext.Users.FirstOrDefaultAsync(u => u.Username == userLoginDto.Username);
+        var user = await GetUserByUserName(userLoginDto.Username);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.PasswordHash))
         {
             return null; // 사용자가 없거나 비밀번호가 틀림
         }
 
-        // TODO : 이미 온라인인 사용자에 대해서 로그인 요청이 들어오면 어떻게 처리 할 것인가?
-        // 기존 로그인을 없애고 새로운 로그인으로 처리? 아니면 그냥 거부?
-        if (await _cachingService.IsUserLoggedInAsync(user.UID))
-        {
-            return null; // 이미 온라인인 사용자
-        }
-
         // User Caching in Redis
-        if (!await _cachingService.SetUserLoginStatusAsync(user.UID))
+        if (!await _cachingService.SetUserLoginStatusAsync(user.Uid))
         {
             throw new Exception("Internal error: user caching failed");
         }
+
+        // TODO : 이미 로그인 중인 사용자에 대한 처리 필요
+        // 로그인 사용자와 로그인을 사용자 모두 Token에 대한 정보를 삭제 -> 재 접속 하도록 유도
 
         // Token Generate
         var accessTokenString = _tokenService.GenerateAccessToken(user); // Default 1 Hour expire time
@@ -78,30 +96,53 @@ public class UserService : IUserService
         };
     }
 
+    public async Task<InternalResponseDto?> LoginInternalAsync(UserLoginDto userLoginDto)
+    {
+        var internalUser = await GetUserByUserName(userLoginDto.Username);
+        if (internalUser is null) return null;
+
+        if ((internalUser.Role.Equals(RoleCaching.Admin) || internalUser.Role.Equals(RoleCaching.Internal)) == false) // if not internal user
+            return null;
+
+        var role = internalUser.Role;
+
+        // Internal은 RefreshToken을 발급하지 않음
+        var accessTokenString = _tokenService.GenerateAccessToken(internalUser);
+        return new InternalResponseDto
+        {
+            AccessToken = accessTokenString,
+        };
+    }
+
+    public async Task FlushInternalUserAsync()
+    {
+        var internalList = await _gdbContext.Users.Where(u => u.Role == RoleCaching.Admin || u.Role == RoleCaching.Internal).ToListAsync();
+        foreach (var user in internalList)
+        {
+            _gdbContext.Remove(user);
+        }
+    }
+
     public async Task<bool> LogoutAsync(UserSimpleDto userLogoutDto)
     {
-        return await _cachingService.ClearUserLoginStatusAsync(userLogoutDto.UID);
+        if (await GetUserByUserName(userLogoutDto.Username) is null) return false;
+        return await _cachingService.ClearUserLoginStatusAsync(userLogoutDto.Uid);
     }
 
     public async Task<UserResponseDto?> RefreshAsync(string refreshToken)
     {
         var responseFromTokenService = await _tokenService.ValidateRefreshToken(refreshToken);
         if (responseFromTokenService is null ||
-            responseFromTokenService.UserId is null ||
+            responseFromTokenService.Uid is null ||
             responseFromTokenService.Principal is null) return null;
 
-        var userId = responseFromTokenService.UserId;
-        var principal = responseFromTokenService.Principal;
+        var userId = responseFromTokenService.Uid;
         var user = await _gdbContext.Users.FindAsync(userId);
 
         if (user is null) return null;
 
-        if (await _cachingService.IsUserLoggedInAsync(user.UID))
-        {
-            return null; // 이미 로그인 중인 사용자
-        }
-
-        await _cachingService.SetUserLoginStatusAsync(user.UID);
+        // 새로 로그인 처리
+        await _cachingService.SetUserLoginStatusAsync(user.Uid);
         var newAccessToken = _tokenService.GenerateAccessToken(user);
 
         return new UserResponseDto
@@ -121,7 +162,7 @@ public class UserService : IUserService
 
     public async Task<bool> DeleteUserAsync(UserDeleteDto userDeleteDto)
     {
-        var user = await _gdbContext.Users.FirstOrDefaultAsync(u => u.UID == userDeleteDto.UID);
+        var user = await _gdbContext.Users.FirstOrDefaultAsync(u => u.Uid == userDeleteDto.Uid);
         if (user == null || !BCrypt.Net.BCrypt.Verify(userDeleteDto.Password, user.PasswordHash))
             return false;
 

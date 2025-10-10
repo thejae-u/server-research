@@ -34,10 +34,15 @@ public class UserResponseDto
     public required UserDto User { get; set; } // 유저 정보
 }
 
+public class InternalResponseDto
+{
+    public required string AccessToken { get; set; }
+}
+
 public class UserDeleteDto
 {
     [Required]
-    public required Guid UID { get; set; }
+    public required Guid Uid { get; set; }
 
     [Required]
     public required string Password { get; set; }
@@ -49,7 +54,7 @@ public class UserDeleteDto
 // 유저에게 노출되는 안전한 유저 데이터 (패스워드 미포함)
 public class UserDto
 {
-    public Guid UID { get; set; }
+    public Guid Uid { get; set; }
     public required string Username { get; set; }
     public required string Role { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -61,9 +66,16 @@ public class UserDto
         Role = "Player";
     }
 
+    [SetsRequiredMembers]
+    public UserDto(string role)
+    {
+        Username = "None";
+        Role = role;
+    }
+
     public UserDto Mapping(UserData user)
     {
-        UID = user.UID;
+        Uid = user.Uid;
         Username = user.Username;
         Role = user.Role;
         CreatedAt = user.CreatedAt;
@@ -74,13 +86,13 @@ public class UserDto
 public class UserSimpleDto
 {
     [Required]
-    public required Guid UID { get; set; }
+    public required Guid Uid { get; set; }
 
     public required string Username { get; set; }
 }
 
 public class UserDtoForTokenResponse
 {
-    public Guid? UserId { get; set; }
+    public Guid? Uid { get; set; }
     public ClaimsPrincipal? Principal { get; set; }
 }

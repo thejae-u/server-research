@@ -2,17 +2,20 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Identity;
+
 using StackExchange.Redis;
 using System.Text;
 using WebServer.Data;
 using WebServer.Services;
 using WebServer.Settings;
+using System.Threading.Tasks;
 
 namespace WebServer
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var AllowSpecificOrigins = "_allowSpecificOrigins";
             var builder = WebApplication.CreateBuilder(args);
@@ -72,10 +75,7 @@ namespace WebServer
 
             // DB Context
             var connectionString = builder.Configuration.GetConnectionString("PersistantDB");
-            builder.Services.AddDbContext<GameServerDbContext>(options =>
-            {
-                options.UseNpgsql(connectionString);
-            });
+            builder.Services.AddDbContext<GameServerDbContext>(options => options.UseNpgsql(connectionString));
 
             // Distributed Cache
             var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? throw new ArgumentException("Failed to read RedisCache Connection String.");
@@ -100,6 +100,27 @@ namespace WebServer
             });
 
             var app = builder.Build();
+
+            // admin과 Internal의 계정 생성 (이미 있는경우 무시 됨)
+            using (var scope = app.Services.CreateScope())
+            {
+                var userService = scope.ServiceProvider.GetService<IUserService>();
+                await userService.FlushInternalUserAsync();
+
+                // Admin Register
+                var adminSection = builder.Configuration.GetSection("InternalLoginInfo:Admin");
+                var adminUsername = adminSection["Username"];
+                var adminPassword = adminSection["Password"];
+
+                await userService.RegisterAsync(new Dtos.UserRegisterDto { Username = adminUsername, Password = adminPassword }, isAdmin: true);
+
+                // Internal Register
+                var internalSection = builder.Configuration.GetSection("InternalLoginInfo:Internal");
+                var internalUsername = internalSection["Username"];
+                var internalPassword = internalSection["Password"];
+
+                await userService.RegisterAsync(new Dtos.UserRegisterDto { Username = internalUsername, Password = internalPassword }, isInternal: true);
+            }
 
             // Internal Error Handler
             app.UseExceptionHandler(appError =>

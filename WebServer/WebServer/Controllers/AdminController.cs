@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WebServer.Data;
 using WebServer.Dtos;
 using WebServer.Services;
@@ -6,6 +7,7 @@ using WebServer.Services;
 namespace WebServer.Controllers;
 
 [ApiController]
+[Authorize(Roles = RoleCaching.Admin + "," + RoleCaching.Internal)]
 [Route("api/admin")]
 public class AdminController : ControllerBase
 {

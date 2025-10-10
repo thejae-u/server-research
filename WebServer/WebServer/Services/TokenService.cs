@@ -29,7 +29,7 @@ public class TokenService : ITokenService
     {
         var claims = new Claim[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, user.UID.ToString()),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Uid.ToString()),
             new Claim(JwtRegisteredClaimNames.Name, user.Username),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(ClaimTypes.Role, user.Role)
@@ -44,7 +44,7 @@ public class TokenService : ITokenService
     {
         var claims = new Claim[]
         {
-            new(JwtRegisteredClaimNames.Sub, user.UID.ToString()),
+            new(JwtRegisteredClaimNames.Sub, user.Uid.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -52,7 +52,7 @@ public class TokenService : ITokenService
         var refreshToken = GenerateToken(claims, _jwtSettings.RefreshKey, expires);
 
         var db = _redis.GetDatabase();
-        var redisKey = $"{refreshKeyPrefix}{user.UID}{refreshKeySuffix}";
+        var redisKey = $"{refreshKeyPrefix}{user.Uid}{refreshKeySuffix}";
         var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
         var hashedToken = Convert.ToBase64String(hashBytes);
 
@@ -115,7 +115,7 @@ public class TokenService : ITokenService
 
         return new UserDtoForTokenResponse()
         {
-            UserId = userId,
+            Uid = userId,
             Principal = principal
         };
     }

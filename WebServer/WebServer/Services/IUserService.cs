@@ -5,7 +5,7 @@ namespace WebServer.Services;
 public interface IUserService
 {
     // 회원가입에 성공하면 UserDto 반환, 실패 시 null 반환
-    Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto);
+    Task<UserDto?> RegisterAsync(UserRegisterDto userRegisterDto, bool isAdmin = false, bool isInternal = false);
 
     // 로그인 성공 시 Token과 UserDto 반환, 실패 시 null 반환
     Task<UserResponseDto?> LoginAsync(UserLoginDto userLoginDto);
@@ -21,4 +21,8 @@ public interface IUserService
     Task<bool> DeleteUserAsync(UserDeleteDto userDeleteDto);
 
     Task<IEnumerable<UserDto>> GetAllUserAsync();
+
+    Task<InternalResponseDto?> LoginInternalAsync(UserLoginDto userLoginDto);
+
+    Task FlushInternalUserAsync();
 }

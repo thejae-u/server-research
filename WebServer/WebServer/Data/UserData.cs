@@ -4,15 +4,15 @@ namespace WebServer.Data;
 
 public static class RoleCaching
 {
-    public static readonly string Player = "Player";
-    public static readonly string Admin = "Admin";
-    public static readonly string Internal = "Internal";
+    public const string Player = "Player";
+    public const string Admin = "Admin";
+    public const string Internal = "Internal";
 }
 
 public class UserData
 {
     [Key]
-    public required Guid UID { get; set; }
+    public required Guid Uid { get; set; }
 
     [Required]
     public required string Username { get; set; }

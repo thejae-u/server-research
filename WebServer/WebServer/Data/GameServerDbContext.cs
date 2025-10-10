@@ -10,4 +10,6 @@ public class GameServerDbContext : DbContext
 
     public DbSet<UserData> Users { get; set; }
     public DbSet<UserGroupData> Groups { get; set; }
+
+    //public DbSet<GameData> Games { get; set; }
 }

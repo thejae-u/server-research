@@ -26,23 +26,23 @@ public class CreateGroupRequestDto
     public required string GroupName { get; set; }
 
     [Required]
-    public required UserSimpleDto requester { get; set; }
+    public required UserSimpleDto Requester { get; set; }
 }
 
 public class JoinGroupRequestDto
 {
     [Required]
-    public required Guid groupId { get; set; }
+    public required Guid GroupId { get; set; }
 
     [Required]
-    public required UserSimpleDto requester { get; set; }
+    public required UserSimpleDto Requester { get; set; }
 }
 
 public class DefaultGroupRequestDto
 {
     [Required]
-    public required Guid groupId { get; set; }
+    public required Guid GroupId { get; set; }
 
     [Required]
-    public required Guid userId { get; set; }
+    public required Guid UserId { get; set; }
 }

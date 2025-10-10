@@ -27,7 +27,7 @@ public class GroupService : IGroupService
     public async Task<GroupDto?> CreateNewGroupAsync(CreateGroupRequestDto createGroupRequestDto)
     {
         var groupName = createGroupRequestDto.GroupName;
-        var requester = createGroupRequestDto.requester;
+        var requester = createGroupRequestDto.Requester;
         var newGroupId = Guid.NewGuid();
         var now = DateTime.UtcNow;
         var initialMembers = new List<UserSimpleDto> { requester };
@@ -59,8 +59,8 @@ public class GroupService : IGroupService
 
     public async Task<Result<GroupDto?>> JoinGroupAsync(JoinGroupRequestDto requestDto)
     {
-        var groupId = requestDto.groupId;
-        var requester = requestDto.requester;
+        var groupId = requestDto.GroupId;
+        var requester = requestDto.Requester;
         var initialGroupInfo = await GetGroupInfoAsync(groupId);
 
         if (!initialGroupInfo.IsSuccess)
@@ -80,7 +80,7 @@ public class GroupService : IGroupService
             return Result<GroupDto?>.Failure("Invalid Group Member");
         }
 
-        if (group.Players.Any(p => p.UID == requester.UID))
+        if (group.Players.Any(p => p.Uid == requester.Uid))
         {
             return Result<GroupDto?>.Failure("Already exist user request");
         }
@@ -99,8 +99,8 @@ public class GroupService : IGroupService
 
     public async Task<Result<GroupDto?>> LeaveGroupAsync(DefaultGroupRequestDto requestDto)
     {
-        var groupId = requestDto.groupId;
-        var userId = requestDto.userId;
+        var groupId = requestDto.GroupId;
+        var userId = requestDto.UserId;
 
         var initialGroupResult = await GetGroupInfoAsync(groupId);
         if (!initialGroupResult.IsSuccess)
@@ -113,7 +113,7 @@ public class GroupService : IGroupService
             return Result<GroupDto?>.Failure("Invalid Group Info");
         }
 
-        var userToRemove = group.Players.FirstOrDefault(p => p.UID == userId);
+        var userToRemove = group.Players.FirstOrDefault(p => p.Uid == userId);
         if (userToRemove == null)
             return Result<GroupDto?>.Failure("User not exist in group");
 
@@ -129,7 +129,7 @@ public class GroupService : IGroupService
     // Admin Method Area
     public async Task<bool> FlushGroupsAsync(UserDto requester)
     {
-        var user = await _userService.GetUSerByIdAsync(requester.UID);
+        var user = await _userService.GetUSerByIdAsync(requester.Uid);
         if (user == null)
         {
             return false;

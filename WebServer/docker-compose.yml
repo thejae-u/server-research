@@ -7,11 +7,11 @@
     image: lockstep-web-server:${IMAGE_TAG:-latest}
     container_name: lockstep-web-server
     ports:
-      - "8080:8080" # 호스트의 8080 포트를 컨테이너의 8080 포트로 매핑
+      - "18080:18080" # 호스트의 18080 포트를 컨테이너의 18080 포트로 매핑
       # - "8081:8081" # 필요한 경우 HTTPS 포트 매핑
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080 #;https://+:8081
+      - ASPNETCORE_URLS=http://+:18080 #;https://+:8081
       - ConnectionStrings__PersistantDB=Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
       - ConnectionString__Redis=redis:6379,password=${REDIS_PASSWORD}
 
