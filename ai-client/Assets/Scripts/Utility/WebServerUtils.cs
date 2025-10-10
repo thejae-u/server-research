@@ -5,7 +5,7 @@ namespace Utility
 {
     public static class WebServerUtils
     {
-        public const string API_SERVER_IP = "http://localhost:8080";
+        public const string API_SERVER_IP = "http://localhost:18080";
         public const string API_AUTH_REGISTER = "/api/auth/register";
         public const string API_AUTH_LOGIN = "/api/auth/login";
         public const string API_AUTH_REFRESH = "/api/auth/refresh";
@@ -15,8 +15,7 @@ namespace Utility
         public const string API_GROUP_GET_ALL = "/api/group/info/lobby";
         public const string API_GROUP_GET_INFO = "/api/group/info";
     }
-    
-    
+
     [Serializable]
     public class RefreshRequest
     {
@@ -31,7 +30,7 @@ namespace Utility
         public string role;
         public string createdAt;
     }
-    
+
     [Serializable]
     public class UserSimpleDto
     {
@@ -47,7 +46,7 @@ namespace Utility
         public string refreshToken;
         public UserDto user;
     }
-    
+
     [Serializable]
     public class GroupDto
     {

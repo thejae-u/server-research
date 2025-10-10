@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -20,7 +20,7 @@ public class RegisterManager : MonoBehaviour
 
     private IEnumerator _toastRoutine;
     private IEnumerator _registerRoutine;
-    
+
     private void Awake()
     {
         _registerButton.onClick.AddListener(OnClickRegisterButton);
@@ -50,7 +50,7 @@ public class RegisterManager : MonoBehaviour
 
         if (password.Length < 8 || confirmPassword.Length < 8)
         {
-            SetStatusText($"비밀번호는 8자 이상이어야 합니다.",Color.red, 3.0f);
+            SetStatusText($"비밀번호는 8자 이상이어야 합니다.", Color.red, 3.0f);
             return;
         }
 
@@ -62,7 +62,7 @@ public class RegisterManager : MonoBehaviour
 
         if (_registerRoutine is not null)
             return;
-        
+
         _registerRoutine = RegisterRoutine(username, password);
         StartCoroutine(_registerRoutine);
     }
@@ -70,7 +70,7 @@ public class RegisterManager : MonoBehaviour
     private IEnumerator RegisterRoutine(string username, string password)
     {
         _registerButton.interactable = false;
-        
+
         var jsonBodyString = $"{{\"username\": \"{username}\", \"password\": \"{password}\"}}";
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBodyString);
         string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_AUTH_REGISTER;
@@ -92,7 +92,7 @@ public class RegisterManager : MonoBehaviour
                 // 로그인으로 유도 -> Login canvas로 변경
                 isSuccess = true;
             }
-            else if(request.result == UnityWebRequest.Result.ConnectionError)
+            else if (request.result == UnityWebRequest.Result.ConnectionError)
             {
                 SetStatusText($"서버와 연결에 실패했습니다.", Color.red, 5.0f);
             }
@@ -101,12 +101,12 @@ public class RegisterManager : MonoBehaviour
                 SetStatusText($"이미 존재하는 아이디입니다.", Color.blue, 3.0f);
             }
         }
-        
+
         _registerButton.interactable = true;
         _registerRoutine = null;
 
         if (!isSuccess) yield break;
-        
+
         // Switch Login Canvas
         ResetCanvas();
         transform.parent.gameObject.SetActive(false);
@@ -121,11 +121,11 @@ public class RegisterManager : MonoBehaviour
         {
             StopCoroutine(_toastRoutine);
         }
-        
+
         _toastRoutine = TextToastRoutine(duration);
         StartCoroutine(_toastRoutine);
     }
-    
+
     private IEnumerator TextToastRoutine(float duration)
     {
         float curTime = 0;

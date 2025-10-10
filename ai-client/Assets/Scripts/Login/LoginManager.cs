@@ -1,5 +1,4 @@
-using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +6,8 @@ using TMPro;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using Utility;
+using System.Threading.Tasks;
+using System.Threading;
 
 public class LoginManager : MonoBehaviour
 {
@@ -18,7 +19,6 @@ public class LoginManager : MonoBehaviour
     [SerializeField] private GameObject _registerCanvas;
     [SerializeField] private GameObject _accessCanvas;
 
-    
     [SerializeField] private TMP_Text _statusText;
 
     private IEnumerator _toastRoutine;
@@ -39,6 +39,14 @@ public class LoginManager : MonoBehaviour
     private void Start()
     {
         // 이미 인증 토큰이 있는 경우 접속 버튼이 있는 창을 띄움
+        StartCoroutine(WaitToken());
+    }
+
+    private IEnumerator WaitToken()
+    {
+        while (_authManager.LoadingTask is not null)
+            yield return null;
+
         if (_authManager.HasRefreshToken)
         {
             _accessCanvas.SetActive(true);
@@ -55,7 +63,7 @@ public class LoginManager : MonoBehaviour
             ToastStatusText($"모든 필드는 필수입니다.", Color.red, 3.0f);
             return;
         }
-        
+
         if (_loginRoutine is not null)
             return;
 
@@ -67,7 +75,7 @@ public class LoginManager : MonoBehaviour
     {
         SetStatusText($"로그인 중...", Color.black);
         _loginButton.interactable = false;
-        
+
         var jsonBodyString = $"{{\"username\": \"{username}\", \"password\": \"{password}\"}}";
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBodyString);
         const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_AUTH_LOGIN;
@@ -76,7 +84,7 @@ public class LoginManager : MonoBehaviour
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
-            
+
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success) // 200 (OK)
@@ -109,7 +117,7 @@ public class LoginManager : MonoBehaviour
     private IEnumerator ChangeToLobbyScene()
     {
         _loginButton.interactable = false;
-        
+
         while (_toastRoutine is not null)
         {
             yield return null;
@@ -117,7 +125,7 @@ public class LoginManager : MonoBehaviour
 
         SetStatusText("접속중...", Color.black);
         AsyncOperation loginTask = SceneManager.LoadSceneAsync("LobbyScene");
-        while(loginTask is { isDone: false })
+        while (loginTask is { isDone: false })
         {
             yield return null;
         }
@@ -145,7 +153,7 @@ public class LoginManager : MonoBehaviour
             StopCoroutine(_toastRoutine);
             _toastRoutine = null;
         }
-        
+
         _toastRoutine = ToastTextRoutine(duration);
         StartCoroutine(_toastRoutine);
     }
