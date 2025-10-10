@@ -104,20 +104,26 @@ namespace WebServer
             // admin과 Internal의 계정 생성 (이미 있는경우 무시 됨)
             using (var scope = app.Services.CreateScope())
             {
-                var userService = scope.ServiceProvider.GetService<IUserService>();
+                var userService = scope.ServiceProvider.GetService<IUserService>() ?? throw new ArgumentNullException("User Service is null");
                 await userService.FlushInternalUserAsync();
 
                 // Admin Register
-                var adminSection = builder.Configuration.GetSection("InternalLoginInfo:Admin");
+                var adminSection = builder.Configuration.GetSection("InternalLoginInfo:Admin") ?? throw new ArgumentNullException("Internal Section is Null: Admin");
                 var adminUsername = adminSection["Username"];
                 var adminPassword = adminSection["Password"];
+
+                if (string.IsNullOrEmpty(adminUsername) || string.IsNullOrEmpty(adminPassword))
+                    throw new ArgumentNullException("Internal Admin Info is Null");
 
                 await userService.RegisterAsync(new Dtos.UserRegisterDto { Username = adminUsername, Password = adminPassword }, isAdmin: true);
 
                 // Internal Register
-                var internalSection = builder.Configuration.GetSection("InternalLoginInfo:Internal");
+                var internalSection = builder.Configuration.GetSection("InternalLoginInfo:Internal") ?? throw new ArgumentNullException("Internal Section is Null: Internal");
                 var internalUsername = internalSection["Username"];
                 var internalPassword = internalSection["Password"];
+
+                if (string.IsNullOrEmpty(internalUsername) || string.IsNullOrEmpty(internalPassword))
+                    throw new ArgumentNullException("Internal Info is Null");
 
                 await userService.RegisterAsync(new Dtos.UserRegisterDto { Username = internalUsername, Password = internalPassword }, isInternal: true);
             }
