@@ -1,0 +1,52 @@
+﻿services:
+  # ASP.NET Core 웹 애플리케이션 서비스
+  webapp:
+    build:
+      context: .
+      dockerfile: WebServer/Dockerfile
+    image: lockstep-web-server:${IMAGE_TAG:-latest}
+    container_name: lockstep-web-server
+    ports:
+      - "18080:18080" # 호스트의 18080 포트를 컨테이너의 18080 포트로 매핑
+      # - "8081:8081" # 필요한 경우 HTTPS 포트 매핑
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:18080 #;https://+:8081
+      - ConnectionStrings__PersistantDB=Host=db;Port=5432;Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+      - ConnectionString__Redis=redis:6379,password=${REDIS_PASSWORD}
+
+      # Kestrel HTTPS 개발 인증서 설정 (필요할 경우 추가)
+      # - ASPNETCORE_Kestrel__Certificates__Default__Password=your_dev_cert_password
+      # - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/aspnetapp.pfx
+    # volumes:
+      # - ~/.aspnet/https:/https/:ro
+    depends_on:
+      - redis
+      - db
+
+  # PostgreSQL 데이터베이스 서비스
+  db:
+    image: postgres:latest
+    container_name: lockstep-server-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Persistant Data Path
+
+  redis:
+    image: 'redis:7-alpine'
+    container_name: lockstep-redis-cache
+    restart: always
+    ports:
+      - '6379:6379'
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

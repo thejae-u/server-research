@@ -1,0 +1,462 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 대시보드</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+        }
+
+        .card {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+            color: #1c1e21;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .primary-button {
+            background-color: #1877f2;
+            color: white;
+        }
+
+            .primary-button:hover:not(:disabled) {
+                background-color: #166fe5;
+            }
+
+        .danger-button {
+            background-color: #d93025;
+            color: white;
+        }
+
+            .danger-button:hover:not(:disabled) {
+                background-color: #c5221b;
+            }
+
+        .secondary-button {
+            background-color: #e4e6eb;
+            color: #4b4f56;
+        }
+
+            .secondary-button:hover:not(:disabled) {
+                background-color: #dadde1;
+            }
+
+        button:disabled {
+            background-color: #a0bdf1;
+            cursor: not-allowed;
+        }
+
+        input {
+            width: calc(100% - 24px);
+            padding: 12px;
+            border: 1px solid #dddfe2;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #606770;
+        }
+
+        .response-area {
+            background-color: #2d2d2d;
+            color: #f1f1f1;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: 'Courier New', Courier, monospace;
+            min-height: 50px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .message {
+            min-height: 20px;
+            font-weight: bold;
+        }
+
+        .error-message {
+            color: #d93025;
+        }
+
+        .success-message {
+            color: green;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            header div {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+        .info-text {
+            font-size: 12px;
+            color: #606770;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="login-view" class="card">
+            <h1>관리자 로그인</h1>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="login-username">관리자 아이디</label>
+                    <input type="text" id="login-username" value="Admin" required>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">비밀번호</label>
+                    <input type="password" id="login-password" value="testadminpassword" required>
+                </div>
+                <button type="submit" id="login-button" class="primary-button">로그인</button>
+            </form>
+            <p id="login-message" class="message error-message"></p>
+        </div>
+
+        <div id="dashboard-view" style="display: none;">
+            <header>
+                <div>
+                    <h1>관리자 대시보드</h1>
+                    <p class="info-text">(토큰 만료: <strong id="token-expiry-time"></strong>)</p>
+                </div>
+                <div>
+                    <span id="welcome-user" style="margin-right: 15px;"></span>
+                    <button id="reset-button" class="secondary-button">화면 초기화</button>
+                    <button id="logout-button" class="danger-button">로그아웃</button>
+                </div>
+            </header>
+
+            <div class="card">
+                <h2>모든 사용자 조회</h2>
+                <button id="get-users-button" class="primary-button">사용자 목록 가져오기</button>
+                <div id="users-response" class="response-area">API 응답이 여기에 표시됩니다.</div>
+            </div>
+
+            <div class="card">
+                <h2>모든 그룹 조회</h2>
+                <button id="get-groups-button" class="primary-button">그룹 목록 가져오기</button>
+                <div id="groups-response" class="response-area">API 응답이 여기에 표시됩니다.</div>
+            </div>
+
+            <div class="card">
+                <h2>새 그룹 생성</h2>
+                <form id="create-group-form">
+                    <div class="input-group">
+                        <label for="group-name">그룹 이름 (3 ~ 20자 제한)</label>
+                        <input type="text" id="group-name" required minlength="3" maxlength="20">
+                    </div>
+                    <button type="submit" class="primary-button">그룹 생성</button>
+                </form>
+                <p id="create-group-message" class="message"></p>
+            </div>
+
+            <div class="card">
+                <h2>그룹 탈퇴 (관리자 본인)</h2>
+                <form id="leave-group-form">
+                    <div class="input-group">
+                        <label for="group-id">탈퇴할 그룹 ID (GroupId)</label>
+                        <input type="text" id="group-id" placeholder="탈퇴할 그룹의 ID를 입력하세요" required>
+                    </div>
+                    <button type="submit" class="danger-button">그룹 탈퇴</button>
+                </form>
+                <p id="leave-group-message" class="message"></p>
+            </div>
+
+            <div class="card">
+                <h2>그룹 캐시 삭제</h2>
+                <button id="flush-cache-button" class="danger-button">모든 그룹 캐시 Flush</button>
+                <p id="flush-cache-message" class="message"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:18080';
+        const API_ADMIN_BASE = `${API_BASE_URL}/api/admin`;
+        const API_LOGIN_ENDPOINT = `${API_BASE_URL}/api/auth/internal-login`;
+
+        // ▼▼▼ 3. 현재 로그인 사용자 정보 저장 변수 ▼▼▼
+        let currentToken = null;
+        let currentUser = null;
+
+        // 뷰 DOM 요소
+        const loginView = document.getElementById('login-view');
+        const dashboardView = document.getElementById('dashboard-view');
+        const loginForm = document.getElementById('login-form');
+        const loginMessage = document.getElementById('login-message');
+        const welcomeUser = document.getElementById('welcome-user');
+        const logoutButton = document.getElementById('logout-button');
+        const tokenExpiryTime = document.getElementById('token-expiry-time'); // 만료 시간 UI 요소
+        const getUsersButton = document.getElementById('get-users-button');
+        const usersResponse = document.getElementById('users-response');
+        const getGroupsButton = document.getElementById('get-groups-button');
+        const groupsResponse = document.getElementById('groups-response');
+        const createGroupForm = document.getElementById('create-group-form');
+        const leaveGroupForm = document.getElementById('leave-group-form');
+        const leaveGroupMessage = document.getElementById('leave-group-message');
+        const createGroupMessage = document.getElementById('create-group-message');
+        const flushCacheButton = document.getElementById('flush-cache-button');
+        const flushCacheMessage = document.getElementById('flush-cache-message');
+        const resetButton = document.getElementById('reset-button');
+
+        const delayTimeMilliseconds = 2000;
+
+        function parseJwt(token) {
+            try {
+                const payload = atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+                return JSON.parse(payload);
+            } catch (e) { return null; }
+        }
+
+        async function fetchWithAuth(url, options = {}) {
+            if (!currentToken) {
+                alert('로그인이 필요합니다.');
+                showLoginView();
+                return;
+            }
+            const headers = { ...options.headers, 'Authorization': `Bearer ${currentToken}`, 'Content-Type': 'application/json' };
+            const response = await fetch(url, { ...options, headers });
+            if (response.status === 401 || response.status === 403) {
+                alert('세션이 만료되었거나 권한이 없습니다. 다시 로그인해주세요.');
+                showLoginView();
+                return null;
+            }
+            return response;
+        }
+
+        function initializeDashboard() {
+            usersResponse.textContent = '';
+            groupsResponse.textContent = '';
+            createGroupMessage.textContent = '';
+            flushCacheMessage.textContent = '';
+            createGroupMessage.className = 'message';
+            flushCacheMessage.className = 'message';
+            createGroupForm.reset();
+        }
+
+        function showLoginView() {
+            currentToken = null;
+            currentUser = null; // 로그아웃 시 사용자 정보 초기화
+            loginView.style.display = 'block';
+            dashboardView.style.display = 'none';
+            loginForm.reset();
+            loginMessage.textContent = '';
+        }
+
+        function showDashboardView() {
+            const payload = parseJwt(currentToken);
+            if (payload) {
+                // ▼▼▼ 4. 로그인 시 사용자 정보와 토큰 만료 시간 저장 및 표시 ▼▼▼
+                const userIdClaim = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier";
+                currentUser = {
+                    uid: payload[userIdClaim] || payload.sub,
+                    username: payload.name
+                };
+                welcomeUser.textContent = `관리자 계정으로 접속되었습니다.`;
+
+                const expiryDate = new Date(payload.exp * 1000);
+                tokenExpiryTime.textContent = expiryDate.toLocaleString('ko-KR');
+            }
+            loginView.style.display = 'none';
+            dashboardView.style.display = 'block';
+            initializeDashboard();
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            loginMessage.textContent = '로그인 중...';
+            try {
+                const response = await fetch(API_LOGIN_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    currentToken = data.accessToken;
+                    showDashboardView();
+                } else {
+                    loginMessage.textContent = '로그인 실패. 아이디/비밀번호나 권한을 확인하세요.';
+                }
+            } catch (error) {
+                loginMessage.textContent = '서버 연결 오류.';
+                console.error(error);
+            }
+        });
+
+        logoutButton.addEventListener('click', showLoginView);
+        resetButton.addEventListener('click', initializeDashboard);
+        getUsersButton.addEventListener('click', async () => {
+            usersResponse.textContent = '조회 중...';
+            const response = await fetchWithAuth(`${API_ADMIN_BASE}/retrieve/users`);
+            if (response) {
+                if (response.status === 204) {
+                    usersResponse.textContent = '사용자가 없습니다.';
+                    setTimeout(function () {
+                        usersResponse.textContent = '';
+                    }, delayTimeMilliseconds);
+                } else if (response.ok) {
+                    const data = await response.json();
+                    usersResponse.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    usersResponse.textContent = `오류 발생: ${response.status}`;
+                }
+            }
+        });
+
+        getGroupsButton.addEventListener('click', async () => {
+            groupsResponse.textContent = '조회 중...';
+            const response = await fetchWithAuth(`${API_ADMIN_BASE}/retrieve/groups`);
+            if (response) {
+                if (response.status === 204) {
+                    groupsResponse.textContent = '그룹이 없습니다.';
+                    setTimeout(function () {
+                        groupsResponse.textContent = '';
+                    }, delayTimeMilliseconds);
+                } else if (response.ok) {
+                    const data = await response.json();
+                    groupsResponse.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    groupsResponse.textContent = `오류 발생: ${response.status}`;
+                }
+            }
+        });
+
+        // ▼▼▼ 5. 그룹 생성 로직 ▼▼▼
+        createGroupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) {
+                alert('요청자 정보가 없습니다. 다시 로그인해주세요.');
+                return;
+            }
+
+            const groupName = document.getElementById('group-name').value;
+            createGroupMessage.textContent = '생성 중...';
+
+            const response = await fetchWithAuth(`${API_ADMIN_BASE}/group/create`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    groupName: groupName,
+                    requester: currentUser // 로그인 시 저장한 사용자 정보를 포함
+                })
+            });
+
+            if (response) {
+                if (response.ok) {
+                    createGroupMessage.className = 'message success-message';
+                    createGroupMessage.textContent = '그룹 생성 성공!';
+                    createGroupForm.reset();
+                } else {
+                    createGroupMessage.className = 'message error-message';
+                    createGroupMessage.textContent = '그룹 생성 실패. (이름 중복 등)';
+                }
+
+                setTimeout(function () {
+                    createGroupMessage.textContent = '';
+                }, delayTimeMilliseconds);
+            }
+        });
+
+        // ▼▼▼ 그룹 탈퇴 (관리자 본인) 이벤트 리스너 ▼▼▼
+        leaveGroupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || !currentUser.uid) {
+                alert('사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.');
+                return;
+            }
+
+            const groupId = document.getElementById('group-id').value;
+            const userId = currentUser.uid; // 현재 로그인된 관리자 ID 사용
+            leaveGroupMessage.textContent = '처리 중...';
+
+            const response = await fetchWithAuth(`${API_ADMIN_BASE}/group/leave`, {
+                method: 'POST',
+                body: JSON.stringify({ groupId, userId })
+            });
+
+            if (response) {
+                if (response.ok) {
+                    leaveGroupMessage.className = 'message success-message';
+                    leaveGroupMessage.textContent = '그룹에서 성공적으로 탈퇴했습니다.';
+                    leaveGroupForm.reset();
+                } else {
+                    leaveGroupMessage.className = 'message error-message';
+                    leaveGroupMessage.textContent = '작업 실패. (그룹 ID를 확인하거나 그룹에 속해있는지 확인하세요)';
+                }
+
+                setTimeout(function () {
+                    leaveGroupMessage.textContent = '';
+                }, delayTimeMilliseconds);
+            }
+        });
+
+        flushCacheButton.addEventListener('click', async () => {
+            if (!confirm('정말로 모든 그룹 캐시를 삭제하시겠습니까?')) return;
+            flushCacheMessage.textContent = '삭제 중...';
+            const response = await fetchWithAuth(`${API_ADMIN_BASE}/flush/groups`, { method: 'DELETE' });
+            if (response) {
+                if (response.ok) {
+                    flushCacheMessage.className = 'message success-message';
+                    flushCacheMessage.textContent = '캐시 삭제 완료!';
+                } else {
+                    flushCacheMessage.className = 'message error-message';
+                    flushCacheMessage.textContent = '캐시 삭제 실패.';
+                }
+
+                setTimeout(function () {
+                    flushCacheMessage.textContent = '';
+                }, delayTimeMilliseconds);
+            }
+        });
+    </script>
+</body>
+</html>

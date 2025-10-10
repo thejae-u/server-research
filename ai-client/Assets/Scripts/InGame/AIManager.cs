@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
+using Network;
 using NetworkData;
 using Random = UnityEngine.Random;
 

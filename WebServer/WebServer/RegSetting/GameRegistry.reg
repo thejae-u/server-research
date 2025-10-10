@@ -1,0 +1,12 @@
+﻿Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\mygame]
+@="URL:MyGame Protocol"
+"URL Protocol"=""
+
+[HKEY_CLASSES_ROOT\mygame\shell]
+
+[HKEY_CLASSES_ROOT\mygame\shell\open]
+
+[HKEY_CLASSES_ROOT\mygame\shell\open\command]
+@="\"C:\\Windows\\System32\\calc.exe\""

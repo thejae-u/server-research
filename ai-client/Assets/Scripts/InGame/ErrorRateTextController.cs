@@ -1,13 +1,15 @@
+using Network;
 using UnityEngine;
+using TMPro;
 
 public class ErrorRateTextController : MonoBehaviour
 {
     private NetworkManager _networkManager;
-    private TMPro.TMP_Text _errorRateText;
+    private TMP_Text _errorRateText;
 
     private void Awake()
     {
-        _errorRateText = GetComponent<TMPro.TMP_Text>();
+        _errorRateText = GetComponent<TMP_Text>();
     }
 
     private void Start()

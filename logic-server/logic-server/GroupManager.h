@@ -15,6 +15,7 @@
 
 class Session;
 class LockstepGroup;
+class ContextManager;
 
 using IoContext = boost::asio::io_context;
 using namespace boost::uuids;
@@ -22,18 +23,18 @@ using namespace boost::uuids;
 class GroupManager
 {
 public:
-    GroupManager(const IoContext::strand& strand, const std::shared_ptr<random_generator>& uuidGenerator);
-    void AddSession(const std::shared_ptr<Session>& newSession);
-    void RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyGroup);
+	GroupManager(const std::shared_ptr<ContextManager>& ctxManager, const std::shared_ptr<random_generator>& uuidGenerator);
+	void AddSession(const std::shared_ptr<Session>& newSession);
+	void RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyGroup);
 
 private:
-    IoContext::strand _strand;
-    std::shared_ptr<random_generator> _uuidGenerator;
+	std::shared_ptr<ContextManager> _ctxManager;
+	std::shared_ptr<random_generator> _uuidGenerator;
 
-    const std::int64_t _invalidRtt = -1;
+	const std::int64_t _invalidRtt = -1;
 
-    std::map<uuid, std::shared_ptr<LockstepGroup>> _groups;
-    std::mutex _groupMutex;
-    
-    std::shared_ptr<LockstepGroup> CreateNewGroup();
+	std::map<uuid, std::shared_ptr<LockstepGroup>> _groups;
+	std::mutex _groupMutex;
+
+	std::shared_ptr<LockstepGroup> CreateNewGroup();
 };

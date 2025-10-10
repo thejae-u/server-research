@@ -1,9 +1,10 @@
-#include <boost/asio.hpp>
+﻿#include <boost/asio.hpp>
 #include <memory>
 #include <thread>
 #include <vector>
 #include <iostream>
 
+#include "InternalConnector.h"
 #include "Server.h"
 #include "ContextManager.h"
 
@@ -16,12 +17,12 @@ int main()
 	const std::size_t rpcCtxThreadCount = ctxThreadCount / 5; // 20% of total threads for RPC
 	const std::size_t workCtxThreadCount = ctxThreadCount - rpcCtxThreadCount; // Remaining threads for work context
 
-	auto workThreadContext = std::make_shared<ContextManager>(workCtxThreadCount); // work thread for normal network callback
-	auto rpcThreadContext = std::make_shared<ContextManager>(rpcCtxThreadCount); // rpc thread for udp network callback
+	auto workThreadContext = std::make_shared<ContextManager>(workCtxThreadCount * 0.3f, workCtxThreadCount * 0.7f); // work thread for normal network callback
+	auto rpcThreadContext = std::make_shared<ContextManager>(rpcCtxThreadCount * 0.3f, rpcCtxThreadCount * 0.7f); // rpc thread for udp network callback
 
 	tcp::endpoint thisEndPoint(tcp::v4(), SERVER_PORT);
 	tcp::acceptor acceptor(workThreadContext->GetContext(), thisEndPoint);
-	
+
 	auto server = std::make_shared<Server>(workThreadContext, rpcThreadContext, acceptor);
 
 	server->Start();
@@ -33,6 +34,6 @@ int main()
 
 	workThreadContext->Stop();
 	rpcThreadContext->Stop();
-	
+
 	return 0;
 }
