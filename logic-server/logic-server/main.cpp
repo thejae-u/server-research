@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 
+#include "InternalConnector.h"
 #include "Server.h"
 #include "ContextManager.h"
 

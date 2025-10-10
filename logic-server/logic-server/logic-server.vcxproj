@@ -130,6 +130,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GroupManager.cpp" />
+    <ClCompile Include="InternalConnector.cpp" />
     <ClCompile Include="LockstepGroup.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NetworkData.pb.cc" />
@@ -141,6 +142,7 @@
     <ClInclude Include="Base.h" />
     <ClInclude Include="ContextManager.h" />
     <ClInclude Include="GroupManager.h" />
+    <ClInclude Include="InternalConnector.h" />
     <ClInclude Include="LockstepGroup.h" />
     <ClInclude Include="NetworkData.pb.h" />
     <ClInclude Include="Scheduler.h" />
@@ -148,6 +150,9 @@
     <ClInclude Include="Session.h" />
     <ClInclude Include="TokenValidator.h" />
     <ClInclude Include="Utility.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="InternalId.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
