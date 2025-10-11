@@ -34,7 +34,7 @@ public:
 		// also blocking thread
 		_blockingPool.join();
 
-		SPDLOG_INFO("ContextManager destroyed and all threads joined.");
+		spdlog::info("context manager destroyed and all threads joined.");
 	}
 
 	void Stop();
@@ -61,5 +61,5 @@ inline void ContextManager::Stop()
 	_workGuard.reset(); // Stop the context from running
 	_ctx.stop(); // Stop the io_context
 	_blockingPool.stop(); // Stop blocking pool
-	SPDLOG_INFO("ContextManager stopped.");
+	spdlog::info("context manager stopped.");
 }

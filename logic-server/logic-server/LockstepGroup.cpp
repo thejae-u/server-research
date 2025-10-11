@@ -21,10 +21,10 @@ void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallba
 void LockstepGroup::Start()
 {
 	_isRunning = true;
-	_tickTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_fixedDeltaMs), [this]()
-		{
-			Tick();
-		});
+	_tickTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_fixedDeltaMs), [this]() {
+		Tick();
+		}
+	);
 
 	_tickTimer->Start();
 }
@@ -41,27 +41,27 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 		std::lock_guard<std::mutex> lock(_memberMutex);
 		if (const auto& [it, success] = _members.insert(newSession); !success)
 		{
-			SPDLOG_ERROR("{} {} : Failed to add member to group {}", __func__, to_string(newSession->GetSessionUuid()), to_string(_groupId));
+			spdlog::error("{} : failed to add member to group {}", to_string(newSession->GetSessionUuid()), to_string(_groupId));
 		}
 	}
 
 	newSession->SetGroup(shared_from_this());
-	newSession->SetStopCallback([this](const std::shared_ptr<Session>& session)
-		{
-			RemoveMember(session);
-		});
+	newSession->SetStopCallback([this](const std::shared_ptr<Session>& session) {
+		RemoveMember(session);
+		}
+	);
 
-	newSession->SetCollectInputAction([this](const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest)
-		{
-			CollectInput(rpcRequest);
-		});
+	newSession->SetCollectInputAction([this](const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest) {
+		CollectInput(rpcRequest);
+		}
+	);
 
-	SPDLOG_INFO("{} {} : Added member {}", __func__, to_string(_groupId), to_string(newSession->GetSessionUuid()));
+	spdlog::info("{} : added member {}", to_string(_groupId), to_string(newSession->GetSessionUuid()));
 }
 
 void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
-	SPDLOG_INFO("{} {} : Removed from {}", __func__, to_string(session->GetSessionUuid()), to_string(_groupId));
+	spdlog::info("{} : removed from {}", to_string(session->GetSessionUuid()), to_string(_groupId));
 
 	{
 		std::lock_guard<std::mutex> lock(_memberMutex);
@@ -92,7 +92,7 @@ void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shar
 		_inputBuffer[_currentBucket][key] = request;
 	}
 
-	// SPDLOG_INFO("{} CollectInput: Session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
+	// spdlog::info("{} collect input: session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::ProcessStep()
@@ -129,16 +129,13 @@ void LockstepGroup::Tick()
 
 	auto self = shared_from_this();
 
-	boost::asio::post(_ctxManager->GetBlockingPool(), [self]()
-		{
-			self->ProcessStep();
+	boost::asio::post(_ctxManager->GetBlockingPool(), [self]() {
+		self->ProcessStep();
 
-			boost::asio::post(self->_ctxManager->GetStrand(), [self]()
-				{
-					self->_currentBucket++;
-					self->_inputIdCounter = 0;
-				}
-			);
+		boost::asio::post(self->_ctxManager->GetStrand(), [self]() {
+			self->_currentBucket++;
+			self->_inputIdCounter = 0;
+			});
 		}
 	);
 }

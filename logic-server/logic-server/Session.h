@@ -13,7 +13,9 @@
 #include "NetworkData.pb.h"
 
 using namespace NetworkData;
+
 using IoContext = boost::asio::io_context;
+using error_code = boost::system::error_code;
 using boost::asio::ip::tcp;
 using boost::asio::ip::udp;
 using boost::uuids::uuid;
@@ -34,7 +36,7 @@ public:
 	Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager, uuid guid);
 	~Session() override
 	{
-		SPDLOG_INFO("{} : Session destroyed", to_string(_sessionUuid));
+		spdlog::info("{} : session destoryed", to_string(_sessionUuid));
 	}
 
 	void Start() override;
@@ -50,8 +52,10 @@ public:
 	tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
 	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 	const uuid& GetSessionUuid() const { return _sessionUuid; }
+
 	bool ExchangeUdpPort();
 	void AsyncExchangeUdpPortWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
+
 	bool SendUuidToClient() const;
 	void AsyncSendUuidToClientWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
 

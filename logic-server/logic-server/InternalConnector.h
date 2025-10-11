@@ -6,26 +6,42 @@
 #include <thread>
 #include <cpr/cpr.h>
 
-#include "ContextManager.h"
+class ContextManager;
+class HttpStatus;
 
-constexpr unsigned short INTERNAL_WEB_SEVER_PORT = 18080;
-constexpr std::string_view INTERNAL_WEB_SERVER_IP = "localhost"; // String view can't change
+constexpr auto WEB_SERVER_IP = "localhost:18080";
 constexpr std::string_view INTERNAL_FILE_NAME = "InternalId.json";
 
 using json = nlohmann::json;
 
-class InternalConnector : std::enable_shared_from_this<InternalConnector>
+struct LoginDto
+{
+	std::string username;
+	std::string password;
+};
+
+struct InternalData
+{
+	LoginDto internal;
+};
+
+struct AccessToken
+{
+	std::string accessToken;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LoginDto, username, password);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(InternalData, internal);
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AccessToken, accessToken);
+
+class InternalConnector : public std::enable_shared_from_this<InternalConnector>
 {
 public:
-	InternalConnector(std::shared_ptr<ContextManager> ctxManagerPtr);
+	InternalConnector();
 
 private:
-	std::shared_ptr<ContextManager> _ctxManagerPtr;
-
-	std::string _username;
-	std::string _password;
-
-	std::string _accessToken;
+	InternalData loginData;
+	AccessToken _accessToken;
 
 	void GetAccessTokenFromInternal();
 };

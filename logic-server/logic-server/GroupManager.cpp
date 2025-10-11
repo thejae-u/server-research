@@ -18,7 +18,7 @@ void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
 			if (!group->IsFull())
 			{
 				group->AddMember(newSession);
-				SPDLOG_INFO("{} : Session {} is allocated to Group {}", __func__, to_string(newSession->GetSessionUuid()), to_string(groupId));
+				spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
 				newSession->Start();
 				return;
 			}
@@ -39,14 +39,15 @@ void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
 
 std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup()
 {
+	// UUID는 웹 서버로부터 생성된 데이터를 활용할 계획 -> 관련 로직 변경
 	const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, (*_uuidGenerator)());
-	newGroup->SetNotifyEmptyCallback(_ctxManager->GetStrand().wrap([this](const std::shared_ptr<LockstepGroup>& emptyGroup)
-		{
-			RemoveEmptyGroup(emptyGroup);
-		}));
+	newGroup->SetNotifyEmptyCallback(_ctxManager->GetStrand().wrap([this](const std::shared_ptr<LockstepGroup>& emptyGroup) {
+		RemoveEmptyGroup(emptyGroup);
+		})
+	);
 	newGroup->Start();
 
-	SPDLOG_INFO("{} : Created new group {}", __func__, to_string(newGroup->GetGroupId()));
+	spdlog::info("created new group {}", to_string(newGroup->GetGroupId()));
 
 	return newGroup;
 }
@@ -59,7 +60,7 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyG
 
 		if (it == _groups.end())
 		{
-			SPDLOG_ERROR("{} : Group {} not found in GroupManager", __func__, to_string(groupKey));
+			spdlog::error("group {} not found in group manager", to_string(groupKey));
 			return;
 		}
 
@@ -67,5 +68,5 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup>& emptyG
 		_groups.erase(it);
 	}
 
-	SPDLOG_INFO("{} : Removed empty group {}", __func__, to_string(emptyGroup->GetGroupId()));
+	spdlog::info("removed empty group {}", to_string(emptyGroup->GetGroupId()));
 }

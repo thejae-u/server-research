@@ -56,7 +56,7 @@ public:
 	LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const uuid groupId);
 	~LockstepGroup() override
 	{
-		SPDLOG_INFO("{} : LockstepGroup destroyed", to_string(_groupId));
+		spdlog::info("{} : lockstep group destroyed", to_string(_groupId));
 	}
 
 	using NotifyEmptyCallback = std::function<void(const std::shared_ptr<LockstepGroup>&)>;
