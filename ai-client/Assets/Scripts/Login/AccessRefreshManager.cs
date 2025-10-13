@@ -63,7 +63,6 @@ public class AccessRefreshManager : MonoBehaviour
         var jsonBody = $"\"{_authManager.RefreshToken}\"";
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
 
-        using var request = new UnityWebRequest(apiUri, "POST");
         var request = WebServerUtils.GetUnauthorizeRequestBase(apiUri, EHttpMethod.POST);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
