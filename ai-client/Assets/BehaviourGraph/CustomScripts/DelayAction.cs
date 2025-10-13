@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Network;
 using Unity.Behavior;
 using UnityEngine;
@@ -16,11 +16,11 @@ public partial class DelayAction : Action
     private float _delayTime;
     private float _elapsedTime;
 
-    private NetworkManager _networkManager;
+    private LogicServerConnector _networkManager;
 
     protected override Status OnStart()
     {
-        _networkManager = NetworkManager.Instance;
+        _networkManager = LogicServerConnector.Instance;
         
         if(_networkManager.IsManualMode)
             return Status.Failure;

@@ -1,10 +1,10 @@
-using Network;
+﻿using Network;
 using TMPro;
 using UnityEngine;
 
 public class RttTextController : MonoBehaviour
 {
-    private NetworkManager _networkManager;
+    private LogicServerConnector _networkManager;
     private TMP_Text _rttText;
     [SerializeField] private TMP_Text _averageRttText;
 
@@ -15,7 +15,7 @@ public class RttTextController : MonoBehaviour
 
     private void Start()
     {
-        _networkManager = NetworkManager.Instance;
+        _networkManager = LogicServerConnector.Instance;
     }
 
     private void Update()

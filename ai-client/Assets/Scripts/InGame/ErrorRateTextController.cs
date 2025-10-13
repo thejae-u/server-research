@@ -1,10 +1,10 @@
-using Network;
+﻿using Network;
 using UnityEngine;
 using TMPro;
 
 public class ErrorRateTextController : MonoBehaviour
 {
-    private NetworkManager _networkManager;
+    private LogicServerConnector _networkManager;
     private TMP_Text _errorRateText;
 
     private void Awake()
@@ -14,7 +14,7 @@ public class ErrorRateTextController : MonoBehaviour
 
     private void Start()
     {
-        _networkManager = NetworkManager.Instance;
+        _networkManager = LogicServerConnector.Instance;
     }
 
     private void Update()

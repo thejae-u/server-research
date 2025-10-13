@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Network;
@@ -16,11 +16,11 @@ public partial class SendPacketAction : Action
     [SerializeReference] public BlackboardVariable<AIManager> AiManager;
     private RpcPacket _sendPacket;
     private Vector3 _targetPosition;
-    private NetworkManager _networkManager;
+    private LogicServerConnector _networkManager;
     
     protected override Status OnStart()
     {
-        _networkManager = NetworkManager.Instance;
+        _networkManager = LogicServerConnector.Instance;
 
         float vertical = Random.Range(-1.0f, 1.0f);
         float horizontal = Random.Range(-1.0f, 1.0f);

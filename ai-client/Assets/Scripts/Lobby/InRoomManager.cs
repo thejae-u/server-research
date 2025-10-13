@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Text;
@@ -8,6 +7,7 @@ using TMPro;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using Utility;
+using Network;
 
 public class InRoomManager : MonoBehaviour
 {
@@ -25,20 +25,25 @@ public class InRoomManager : MonoBehaviour
     private IEnumerator _roomExitRoutine;
 
     private AuthManager _authManager;
-    private WaitForSeconds _waitSecond;
+    private LogicServerConnector _logicServerConnector;
+
+    private WaitForSeconds _waitRoomUpdate;
+    private WaitForSeconds _waitRoomStatus;
 
     private LobbyCanvasController _lobbyCanvasController;
 
     private void Awake()
     {
         _authManager = AuthManager.Instance;
+        _logicServerConnector = LogicServerConnector.Instance;
 
         for (var i = 0; i < 4; ++i)
         {
             _players.Add(transform.GetChild(0).GetChild(i).gameObject);
         }
 
-        _waitSecond = new WaitForSeconds(0.3f);
+        _waitRoomUpdate = new WaitForSeconds(0.3f);
+        _waitRoomStatus = new WaitForSeconds(5.0f);
         _exitButton.onClick.AddListener(OnClickExitButton);
         _startButton.onClick.AddListener(OnClickStartButton);
         _lobbyCanvasController = transform.parent.GetComponent<LobbyCanvasController>();
@@ -196,7 +201,7 @@ public class InRoomManager : MonoBehaviour
                 Debug.LogError($"Fatal Error in Room Update Response: {request.responseCode}");
             }
 
-            yield return _waitSecond;
+            yield return _waitRoomUpdate;
         }
     }
 
@@ -270,7 +275,7 @@ public class InRoomManager : MonoBehaviour
             if (request.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"오류 발생 {request.responseCode}");
-                yield return new WaitForSeconds(5);
+                yield return _waitRoomStatus;
                 continue;
             }
 
@@ -282,7 +287,10 @@ public class InRoomManager : MonoBehaviour
             }
 
             Debug.Log($"Success logic Server info {response.serverIp}:{response.port}");
-            yield break;
+            break;
         }
+
+        // 로직 서버 접속 시도 (접속 실패 시 예외 처리 필요)
+        _logicServerConnector.TryConnectToServer();
     }
 }

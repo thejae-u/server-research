@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Cysharp.Threading.Tasks;
 using Network;
 using NetworkData;
@@ -10,7 +10,7 @@ public class SyncObject : MonoBehaviour
     
     // Several Sync Data can be added to the SyncObject
     public Guid ObjectId { get; private set; }
-    private NetworkManager _networkManager;
+    private LogicServerConnector _networkManager;
     private MeshRenderer _meshRenderer;
 
     private readonly object _positionLock = new();
@@ -22,7 +22,7 @@ public class SyncObject : MonoBehaviour
     {
         ObjectId = objectId;
         _meshRenderer = GetComponent<MeshRenderer>();
-        _networkManager = NetworkManager.Instance;
+        _networkManager = LogicServerConnector.Instance;
 
         if (ObjectId == _networkManager.ConnectedUuid)
         {

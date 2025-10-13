@@ -1,32 +1,32 @@
-using System;
+﻿using System;
 using UnityEngine;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Network;
 using NetworkData;
 
-public class SyncManager : Singleton<SyncManager> 
+public class SyncManager : Singleton<SyncManager>
 {
     [SerializeField] private GameObject _syncObjectPrefab;
     [SerializeField] private GameObject _syncObjectNameTagPrefab;
     [SerializeField] private Transform _syncObjectCanvas;
-    
-    private NetworkManager _networkManager;
-    
+
+    private LogicServerConnector _networkManager;
+
     private Dictionary<Guid, GameObject> _syncObjects = new();
 
     private void OnEnable()
     {
-        NetworkManager.Instance.disconnectAction += OnDisconnected;
+        LogicServerConnector.Instance.disconnectAction += OnDisconnected;
     }
-    
+
     private void OnDisable()
     {
     }
 
     private void Start()
     {
-        _networkManager = NetworkManager.Instance;
+        _networkManager = LogicServerConnector.Instance;
     }
 
     private void OnDisconnected()
@@ -38,18 +38,18 @@ public class SyncManager : Singleton<SyncManager>
         }
     }
 
-    private GameObject CreateSyncObject(Guid objectId, Vector3 position) 
+    private GameObject CreateSyncObject(Guid objectId, Vector3 position)
     {
         GameObject syncObject = Instantiate(_syncObjectPrefab, position, Quaternion.identity); // Create the object
-        
+
         syncObject.transform.SetParent(transform); // Set parent to SyncManager (here)
         syncObject.name = objectId.ToString(); // Set the name to the objectId
         syncObject.GetComponent<SyncObject>().Init(objectId); // Initialize SyncObject
-        
+
         // Create the name tag
         GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
         nameTag.GetComponent<NameTagController>().Init(objectId, syncObject);
-        
+
         _syncObjects.Add(objectId, syncObject); // Add to dict
 
         return syncObject;
@@ -72,7 +72,7 @@ public class SyncManager : Singleton<SyncManager>
             syncObject = CreateSyncObject(objectId, startPosition);
             return;
         }
-        
+
         var syncObjectComponent = syncObject.GetComponent<SyncObject>();
         // Sync position
         syncObjectComponent.SyncPosition(moveData).Forget();
@@ -83,7 +83,7 @@ public class SyncManager : Singleton<SyncManager>
         // self packet check and return
         if (objectId == _networkManager.ConnectedUuid)
             return;
-        
+
         Debug.Log($"SyncObjectNone - {objectId}");
     }
 }

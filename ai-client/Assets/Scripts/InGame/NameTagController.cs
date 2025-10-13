@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Network;
 using TMPro;
 using UnityEngine;
@@ -49,7 +49,7 @@ public class NameTagController : MonoBehaviour
             Destroy(gameObject);
         }
 
-        if (ObjectId == NetworkManager.Instance.ConnectedUuid)
+        if (ObjectId == LogicServerConnector.Instance.ConnectedUuid)
             return false;
         
         Vector3 viewportPoint = _camera.WorldToViewportPoint(_syncObjectTransform.position);
