@@ -12,7 +12,7 @@ public partial class DelayAction : Action
 {
     [SerializeReference] public BlackboardVariable<int> IncludeA;
     [SerializeReference] public BlackboardVariable<int> IncludeB;
-    
+
     private float _delayTime;
     private float _elapsedTime;
 
@@ -21,15 +21,12 @@ public partial class DelayAction : Action
     protected override Status OnStart()
     {
         _networkManager = LogicServerConnector.Instance;
-        
-        if(_networkManager.IsManualMode)
-            return Status.Failure;
-        
+
         int min = IncludeA.Value;
         int max = IncludeB.Value;
         _delayTime = (float)Random.Range(min, max + 1) / 100;
         _elapsedTime = 0;
-        
+
         return Status.Running;
     }
 
@@ -39,7 +36,7 @@ public partial class DelayAction : Action
         {
             return Status.Running;
         }
-        
+
         _elapsedTime += Time.deltaTime;
         return _elapsedTime < _delayTime ? Status.Running : Status.Success;
     }
@@ -48,4 +45,3 @@ public partial class DelayAction : Action
     {
     }
 }
-
