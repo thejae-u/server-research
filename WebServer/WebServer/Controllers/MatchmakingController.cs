@@ -13,7 +13,7 @@ namespace WebServer.Controllers;
 public class MatchmakingController : ControllerBase
 {
     private readonly ICachingService _cachingService;
-    private static readonly ConcurrentDictionary<string, TaskCompletionSource<ValueTuple<string, ushort>>> _waitingGroups = new();
+    private static readonly ConcurrentDictionary<string, ConcurrentBag<TaskCompletionSource<ValueTuple<string, ushort>>>> _waitingGroups = new();
 
     public MatchmakingController(ICachingService cachingService)
     {
@@ -23,13 +23,13 @@ public class MatchmakingController : ControllerBase
     [HttpGet("checkstatus")]
     public async Task<IActionResult> CheckStatus([FromHeader] Guid groupId)
     {
-        var tcs = new TaskCompletionSource<ValueTuple<string, ushort>>();
+        var bag = _waitingGroups.GetOrAdd(groupId.ToString(), []);
+        var tcs = new TaskCompletionSource<(string, ushort)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        bag.Add(tcs);
 
-        _waitingGroups[groupId.ToString()] = tcs;
+        _waitingGroups[groupId.ToString()] = bag;
 
-        Task completedTask = await Task.WhenAny(tcs.Task, Task.Delay(30000));
-
-        if (completedTask == tcs.Task)
+        try
         {
             var serverInfo = await tcs.Task;
             var response = new GroupStatusResponseDto()
@@ -41,14 +41,9 @@ public class MatchmakingController : ControllerBase
 
             return Ok(response);
         }
-        else
+        catch (TaskCanceledException)
         {
-            _waitingGroups.TryRemove(groupId.ToString(), out _);
-            var response = new GroupStatusResponseDto()
-            {
-                Status = false
-            };
-            return Ok(response)
+            return Ok(new GroupStatusResponseDto { Status = false });
         }
     }
 
@@ -58,17 +53,22 @@ public class MatchmakingController : ControllerBase
         if (requester is null)
             return BadRequest();
 
-        GroupDto? group = await _cachingService.GetGroupInfoInCacheAsync(groupId));
+        GroupDto? group = await _cachingService.GetGroupInfoInCacheAsync(groupId);
 
         if (group == null || group.Owner.Uid != requester.Uid)
             return BadRequest();
 
-        if (_waitingGroups.TryRemove(groupId.ToString(), out var tcs))
+        if (_waitingGroups.TryRemove(groupId.ToString(), out var bag))
         {
             // TODO : Utility 등으로 빼야됨
             ValueTuple<string, ushort> serverInfo = ("127.0.0.1", 53200);
-            tcs.SetResult(serverInfo);
-            return Ok("Signal sent.");
+
+            foreach (var tcs in bag)
+            {
+                tcs.TrySetResult(serverInfo);
+            }
+
+            return Ok($"{bag.Count} clients signaled");
         }
 
         return NotFound("No clients waiting for this group");
