@@ -18,8 +18,12 @@ public class InRoomManager : MonoBehaviour
     [SerializeField] private TMP_Text _roomName;
 
     private GroupDto _currentGroup = null;
+
     private IEnumerator _roomUpdateRoutine;
+    private IEnumerator _waitSignalRoutine;
+    private IEnumerator _startGameRoutine;
     private IEnumerator _roomExitRoutine;
+
     private AuthManager _authManager;
     private WaitForSeconds _waitSecond;
 
@@ -36,6 +40,7 @@ public class InRoomManager : MonoBehaviour
 
         _waitSecond = new WaitForSeconds(0.3f);
         _exitButton.onClick.AddListener(OnClickExitButton);
+        _startButton.onClick.AddListener(OnClickStartButton);
         _lobbyCanvasController = transform.parent.GetComponent<LobbyCanvasController>();
     }
 
@@ -46,35 +51,44 @@ public class InRoomManager : MonoBehaviour
 
         _startButton.interactable = _authManager.UserGuid == _currentGroup.owner.uid;
         UpdateRoomInfo();
+        WaitStartSignal();
     }
 
     private void OnEnable()
     {
         UpdateRoomInfo();
+        WaitStartSignal();
     }
 
     private void OnDisable()
     {
-        if (_roomUpdateRoutine is null) return;
+        if (_roomUpdateRoutine is not null)
+        {
+            StopCoroutine(_roomUpdateRoutine);
+            _roomUpdateRoutine = null;
+        }
 
-        StopCoroutine(_roomUpdateRoutine);
-        _roomUpdateRoutine = null;
+        if (_waitSignalRoutine is not null)
+        {
+            StopCoroutine(_waitSignalRoutine);
+            _waitSignalRoutine = null;
+        }
 
         _currentGroup = null;
+    }
+
+    private void OnClickStartButton()
+    {
+        if (_startGameRoutine is not null)
+            return;
+
+        _startGameRoutine = StartGameRoutine();
+        StartCoroutine(_startGameRoutine);
     }
 
     private void OnClickExitButton()
     {
         ExitRoom();
-    }
-
-    private void UpdateRoomInfo()
-    {
-        if (_roomUpdateRoutine is not null || _currentGroup is null)
-            return;
-
-        _roomUpdateRoutine = RoomUpdateRoutine();
-        StartCoroutine(_roomUpdateRoutine);
     }
 
     private void ExitRoom()
@@ -86,6 +100,31 @@ public class InRoomManager : MonoBehaviour
         StartCoroutine(_roomExitRoutine);
     }
 
+    private IEnumerator StartGameRoutine()
+    {
+        if (string.IsNullOrEmpty(_authManager.AccessToken) || _currentGroup is null || _currentGroup.owner.uid != _authManager.UserGuid)
+            yield break;
+
+        const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_MATCHMAKING_START;
+
+        var requestString = JsonConvert.SerializeObject(_currentGroup.owner);
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(requestString);
+
+        // Header, Simple User Dto Body
+        var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.POST, _authManager.AccessToken);
+        request.SetRequestHeader("groupId", _currentGroup.groupId.ToString());
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.ConnectionError)
+        {
+            Debug.LogError("서버와 연결할 수 없음");
+            yield break;
+        }
+    }
+
     private IEnumerator ExitRoutine()
     {
         if (string.IsNullOrEmpty(_authManager.AccessToken) || _currentGroup is null)
@@ -95,9 +134,7 @@ public class InRoomManager : MonoBehaviour
         var requestString = $"{{\"groupId\":\"{_currentGroup.groupId}\",\"userId\":\"{_authManager.UserGuid}\"}}";
         byte[] bodyRaw = Encoding.UTF8.GetBytes(requestString);
 
-        using var request = new UnityWebRequest(apiUri, "POST");
-        request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
-        request.SetRequestHeader("Content-Type", "application/json");
+        var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.POST, _authManager.AccessToken);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
 
@@ -134,17 +171,9 @@ public class InRoomManager : MonoBehaviour
         while (true)
         {
             var requestString = $"\"{_currentGroup.groupId}\"";
-            if (string.IsNullOrEmpty(requestString))
-            {
-                throw new ArgumentNullException($"requestString is Null");
-            }
-
             byte[] bodyRaw = Encoding.UTF8.GetBytes(requestString);
 
-            using var request = UnityWebRequest.Get(apiUri);
-            request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
-            request.SetRequestHeader("Content-Type", "application/json");
-
+            var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.GET, _authManager.AccessToken);
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
 
@@ -176,6 +205,15 @@ public class InRoomManager : MonoBehaviour
         }
     }
 
+    private void UpdateRoomInfo()
+    {
+        if (_roomUpdateRoutine is not null || _currentGroup is null)
+            return;
+
+        _roomUpdateRoutine = RoomUpdateRoutine();
+        StartCoroutine(_roomUpdateRoutine);
+    }
+
     private void UpdatePlayersInfo()
     {
         var users = _currentGroup.players;
@@ -203,5 +241,50 @@ public class InRoomManager : MonoBehaviour
             prefix += "(You) ";
 
         _players[idx].transform.GetChild(0).GetComponent<TMP_Text>().text = prefix + user.username;
+    }
+
+    private void WaitStartSignal()
+    {
+        if (_waitSignalRoutine is not null || _currentGroup is null)
+            return;
+
+        _waitSignalRoutine = WaitSignalRoutine();
+        StartCoroutine(_waitSignalRoutine);
+    }
+
+    private IEnumerator WaitSignalRoutine()
+    {
+        Debug.Assert(_currentGroup is not null);
+
+        const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_MATCHMAKING_CHECKSTATUS;
+        var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.GET, _authManager.AccessToken);
+        request.SetRequestHeader("groupId", _currentGroup.groupId.ToString());
+
+        while (_currentGroup is not null)
+        {
+            yield return request.SendWebRequest(); // Long-Polling
+
+            switch (request.result)
+            {
+                case UnityWebRequest.Result.Success:
+                    var response = JsonConvert.DeserializeObject<GroupStatusResponseDto>(request.downloadHandler.text);
+                    if (response.status)
+                    {
+                        // 서버 정보 가공해서 Scene 넘기기
+                    }
+                    break;
+
+                case UnityWebRequest.Result.ConnectionError:
+                    Debug.Log("서버에 연결 할 수 없음");
+                    yield break;
+
+                case UnityWebRequest.Result.ProtocolError:
+                case UnityWebRequest.Result.DataProcessingError:
+                case UnityWebRequest.Result.InProgress:
+                default:
+                    Debug.LogError($"알 수 없는 오류 {request.responseCode} : {request.downloadHandler.text}");
+                    yield break;
+            }
+        }
     }
 }

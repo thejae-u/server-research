@@ -80,10 +80,8 @@ public class LoginManager : MonoBehaviour
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBodyString);
         const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_AUTH_LOGIN;
 
-        using var request = new UnityWebRequest(apiUri, "POST");
+        var request = WebServerUtils.GetUnauthorizeRequestBase(apiUri, EHttpMethod.POST);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
 
         yield return request.SendWebRequest();
 

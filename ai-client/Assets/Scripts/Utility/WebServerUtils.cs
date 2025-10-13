@@ -1,8 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine.Networking;
 
 namespace Utility
 {
+    public enum EHttpMethod
+    {
+        GET,
+        POST,
+        PUT,
+        DELETE
+    }
+
     public static class WebServerUtils
     {
         public const string API_SERVER_IP = "http://localhost:18080";
@@ -14,6 +23,31 @@ namespace Utility
         public const string API_GROUP_CREATE = "/api/group/create";
         public const string API_GROUP_GET_ALL = "/api/group/info/lobby";
         public const string API_GROUP_GET_INFO = "/api/group/info";
+
+        public const string API_MATCHMAKING_START = "/api/matchmaking/start";
+        public const string API_MATCHMAKING_CHECKSTATUS = "/api/matchmaking/checkstatus";
+
+        public static UnityWebRequest GetAuthorizeRequestBase(string uri, EHttpMethod method, string accessToken)
+        {
+            if (string.IsNullOrEmpty(uri) || string.IsNullOrEmpty(accessToken))
+                return null;
+
+            using var request = new UnityWebRequest(uri, method.ToString());
+            request.SetRequestHeader("Authorization", $"Bearer {accessToken}");
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.downloadHandler = new DownloadHandlerBuffer();
+            return request;
+        }
+
+        public static UnityWebRequest GetUnauthorizeRequestBase(string uri, EHttpMethod method)
+        {
+            if (string.IsNullOrEmpty(uri)) return null;
+
+            using var request = new UnityWebRequest(method.ToString());
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            return request;
+        }
     }
 
     [Serializable]
@@ -74,5 +108,14 @@ namespace Utility
         public Guid groupId { get; set; }
 
         public UserSimpleDto requester { get; set; }
+    }
+
+    [Serializable]
+    public class GroupStatusResponseDto
+    {
+        public bool status { get; set; }
+
+        public string ip { get; set; }
+        public ushort port { get; set; }
     }
 }

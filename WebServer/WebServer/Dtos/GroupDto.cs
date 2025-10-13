@@ -46,3 +46,12 @@ public class DefaultGroupRequestDto
     [Required]
     public required Guid UserId { get; set; }
 }
+
+public class GroupStatusResponseDto
+{
+    [Required]
+    public required bool Status { get; set; }
+
+    public string? ServerIp { get; set; }
+    public ushort? Port { get; set; }
+}
