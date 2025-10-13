@@ -63,31 +63,30 @@ public class AccessRefreshManager : MonoBehaviour
         var jsonBody = $"\"{_authManager.RefreshToken}\"";
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
 
-        var request = WebServerUtils.GetUnauthorizeRequestBase(apiUri, EHttpMethod.POST);
+        using var request = new UnityWebRequest(apiUri, "POST");
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.downloadHandler = new DownloadHandlerBuffer();
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
         yield return request.SendWebRequest();
 
-        switch (request.result)
+        if (request.result == UnityWebRequest.Result.Success)
         {
-            // 200 OK
-            case UnityWebRequest.Result.Success:
-                {
-                    var response = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
-                    _authManager.UpdateAccessToken(response);
+            var response = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
+            _authManager.UpdateAccessToken(response);
 
-                    StartCoroutine(ChangeToLobbyScene());
-                    break;
-                }
-            case UnityWebRequest.Result.ConnectionError:
-                ToastStatusText("서버와 연결에 실패했습니다.", Color.red, 5.0f);
-                break;
-
-            default:
-                ToastStatusText("로그인 정보가 만료되었습니다.\n다시 로그인 해주세요.", Color.black, 3.0f);
-                _backToLoginRoutine = BackToLoginRoutine();
-                StartCoroutine(_backToLoginRoutine);
-                break;
+            StartCoroutine(ChangeToLobbyScene());
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError)
+        {
+            Debug.Log($"error: {request.responseCode}, {request.error}");
+            ToastStatusText("서버와 연결에 실패했습니다.", Color.red, 5.0f);
+        }
+        else
+        {
+            ToastStatusText("로그인 정보가 만료되었습니다.\n다시 로그인 해주세요.", Color.black, 3.0f);
+            _backToLoginRoutine = BackToLoginRoutine();
+            StartCoroutine(_backToLoginRoutine);
         }
     }
 

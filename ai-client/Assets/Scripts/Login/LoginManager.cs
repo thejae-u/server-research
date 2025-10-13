@@ -6,8 +6,6 @@ using TMPro;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 using Utility;
-using System.Threading.Tasks;
-using System.Threading;
 
 public class LoginManager : MonoBehaviour
 {
@@ -80,7 +78,9 @@ public class LoginManager : MonoBehaviour
         byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBodyString);
         const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_AUTH_LOGIN;
 
-        var request = WebServerUtils.GetUnauthorizeRequestBase(apiUri, EHttpMethod.POST);
+        using var request = new UnityWebRequest(apiUri, "POST");
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.downloadHandler = new DownloadHandlerBuffer();
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
         yield return request.SendWebRequest();

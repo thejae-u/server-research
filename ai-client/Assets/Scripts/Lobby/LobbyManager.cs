@@ -101,27 +101,26 @@ public class LobbyManager : MonoBehaviour
 
         while (true)
         {
-            var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.GET, _authManager.AccessToken);
+            using var request = new UnityWebRequest(apiUri, "GET");
+            request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
+            request.SetRequestHeader("Content-Type", "application/json");
+            request.downloadHandler = new DownloadHandlerBuffer();
+
             yield return request.SendWebRequest();
 
-            switch (request.result)
+            if (request.result == UnityWebRequest.Result.Success)
             {
-                case UnityWebRequest.Result.Success:
-                    List<GroupDto> response = request.responseCode == 204 ?
-                        new List<GroupDto>() : JsonConvert.DeserializeObject<List<GroupDto>>(request.downloadHandler.text);
-                    UpdateRooms(response);
-                    break;
-
-                case UnityWebRequest.Result.ConnectionError:
-                    Debug.Log($"서버와 연결에 실패하였습니다.");
-                    break;
-
-                case UnityWebRequest.Result.ProtocolError:
-                case UnityWebRequest.Result.DataProcessingError:
-                case UnityWebRequest.Result.InProgress:
-                default:
-                    Debug.LogError($"Fatal Error in Update Lobby Response");
-                    break;
+                List<GroupDto> response = request.responseCode == 204 ?
+                    new List<GroupDto>() : JsonConvert.DeserializeObject<List<GroupDto>>(request.downloadHandler.text);
+                UpdateRooms(response);
+            }
+            else if (request.result == UnityWebRequest.Result.ConnectionError)
+            {
+                Debug.Log($"서버와 연결에 실패하였습니다.");
+            }
+            else
+            {
+                Debug.LogError($"Fatal Error in Update Lobby Response : {request.responseCode}");
             }
 
             yield return _waitSecond;
@@ -183,31 +182,27 @@ public class LobbyManager : MonoBehaviour
         string requestJson = JsonConvert.SerializeObject(requestDto);
         byte[] bodyRaw = Encoding.UTF8.GetBytes(requestJson);
 
-        var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.POST, _authManager.AccessToken);
+        using var request = new UnityWebRequest(apiUri, "POST");
+        request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.downloadHandler = new DownloadHandlerBuffer();
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
         yield return request.SendWebRequest();
 
-        switch (request.result)
+        if (request.result == UnityWebRequest.Result.Success)
         {
-            case UnityWebRequest.Result.Success:
-                // Parsing GroupDto
-                var response = JsonConvert.DeserializeObject<GroupDto>(request.downloadHandler.text);
-                _lobbyCanvasController.ChangePanelToRoomPanel(response);
-                break;
-
-            case UnityWebRequest.Result.ConnectionError:
-                Debug.Log($"서버와 연결에 실패하였습니다.");
-                break;
-
-            case UnityWebRequest.Result.ProtocolError:
-            case UnityWebRequest.Result.InProgress:
-            case UnityWebRequest.Result.DataProcessingError:
-            default:
-                Debug.LogError($"Fatal Error in Create Room Response: {request.responseCode}");
-                break;
+            var response = JsonConvert.DeserializeObject<GroupDto>(request.downloadHandler.text);
+            _lobbyCanvasController.ChangePanelToRoomPanel(response);
         }
-
+        else if (request.result == UnityWebRequest.Result.ConnectionError)
+        {
+            Debug.Log($"서버와 연결에 실패하였습니다.");
+        }
+        else
+        {
+            Debug.LogError($"Fatal Error in Create Room Response: {request.responseCode}");
+        }
         _createRoomRoutine = null;
         _createRoomButton.interactable = true;
     }

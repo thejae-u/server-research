@@ -26,28 +26,6 @@ namespace Utility
 
         public const string API_MATCHMAKING_START = "/api/matchmaking/start";
         public const string API_MATCHMAKING_CHECKSTATUS = "/api/matchmaking/checkstatus";
-
-        public static UnityWebRequest GetAuthorizeRequestBase(string uri, EHttpMethod method, string accessToken)
-        {
-            if (string.IsNullOrEmpty(uri) || string.IsNullOrEmpty(accessToken))
-                return null;
-
-            using var request = new UnityWebRequest(uri, method.ToString());
-            request.SetRequestHeader("Authorization", $"Bearer {accessToken}");
-            request.SetRequestHeader("Content-Type", "application/json");
-            request.downloadHandler = new DownloadHandlerBuffer();
-            return request;
-        }
-
-        public static UnityWebRequest GetUnauthorizeRequestBase(string uri, EHttpMethod method)
-        {
-            if (string.IsNullOrEmpty(uri)) return null;
-
-            using var request = new UnityWebRequest(method.ToString());
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            return request;
-        }
     }
 
     [Serializable]
@@ -115,7 +93,7 @@ namespace Utility
     {
         public bool status { get; set; }
 
-        public string ip { get; set; }
+        public string serverIp { get; set; }
         public ushort port { get; set; }
     }
 }

@@ -111,10 +111,12 @@ public class InRoomManager : MonoBehaviour
         byte[] bodyRaw = Encoding.UTF8.GetBytes(requestString);
 
         // Header, Simple User Dto Body
-        var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.POST, _authManager.AccessToken);
+        using var request = new UnityWebRequest(apiUri, "POST");
+        request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
+        request.SetRequestHeader("Content-Type", "application/json");
         request.SetRequestHeader("groupId", _currentGroup.groupId.ToString());
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
         yield return request.SendWebRequest();
 
@@ -134,29 +136,26 @@ public class InRoomManager : MonoBehaviour
         var requestString = $"{{\"groupId\":\"{_currentGroup.groupId}\",\"userId\":\"{_authManager.UserGuid}\"}}";
         byte[] bodyRaw = Encoding.UTF8.GetBytes(requestString);
 
-        var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.POST, _authManager.AccessToken);
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        using var request = new UnityWebRequest(apiUri, "POST");
+        request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
+        request.SetRequestHeader("Content-Type", "application/json");
         request.downloadHandler = new DownloadHandlerBuffer();
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
         yield return request.SendWebRequest();
 
-        switch (request.result)
+        if (request.result == UnityWebRequest.Result.Success)
         {
-            case UnityWebRequest.Result.Success:
-                _lobbyCanvasController.ChangePanelToLobbyPanel();
-                _roomExitRoutine = null;
-                break;
-
-            case UnityWebRequest.Result.ConnectionError:
-                Debug.LogError($"서버와 통신에 실패하였습니다.");
-                break;
-
-            case UnityWebRequest.Result.ProtocolError:
-            case UnityWebRequest.Result.DataProcessingError:
-            case UnityWebRequest.Result.InProgress:
-            default:
-                Debug.LogError($"Fatal Error in Exit Room Response: {request.responseCode}");
-                break;
+            _lobbyCanvasController.ChangePanelToLobbyPanel();
+            _roomExitRoutine = null;
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError)
+        {
+            Debug.LogError($"서버와 통신에 실패하였습니다.");
+        }
+        else
+        {
+            Debug.LogError($"Fatal Error in Exit Room Response: {request.responseCode}");
         }
 
         _roomExitRoutine = null;
@@ -173,32 +172,28 @@ public class InRoomManager : MonoBehaviour
             var requestString = $"\"{_currentGroup.groupId}\"";
             byte[] bodyRaw = Encoding.UTF8.GetBytes(requestString);
 
-            var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.GET, _authManager.AccessToken);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            using var request = new UnityWebRequest(apiUri, "GET");
+            request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
+            request.SetRequestHeader("Content-Type", "application/json");
             request.downloadHandler = new DownloadHandlerBuffer();
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
             yield return request.SendWebRequest();
 
-            switch (request.result)
+            if (request.result == UnityWebRequest.Result.Success)
             {
-                case UnityWebRequest.Result.Success:
-                    var response = JsonConvert.DeserializeObject<GroupDto>(request.downloadHandler.text);
-                    _currentGroup = response;
+                var response = JsonConvert.DeserializeObject<GroupDto>(request.downloadHandler.text);
+                _currentGroup = response;
 
-                    UpdatePlayersInfo();
-                    break;
-
-                case UnityWebRequest.Result.ConnectionError:
-                    Debug.Log("서버와 연결에 실패하였습니다.");
-                    break;
-
-                case UnityWebRequest.Result.ProtocolError:
-                case UnityWebRequest.Result.DataProcessingError:
-                case UnityWebRequest.Result.InProgress:
-                default:
-                    Debug.LogError($"Fatal Error in Room Update Response: {request.responseCode}");
-                    Debug.Log($"Current room Info: {_currentGroup.name}, {_currentGroup.groupId}");
-                    break;
+                UpdatePlayersInfo();
+            }
+            else if (request.result == UnityWebRequest.Result.ConnectionError)
+            {
+                Debug.Log("서버와 연결에 실패하였습니다.");
+            }
+            else
+            {
+                Debug.LogError($"Fatal Error in Room Update Response: {request.responseCode}");
             }
 
             yield return _waitSecond;
@@ -255,36 +250,39 @@ public class InRoomManager : MonoBehaviour
     private IEnumerator WaitSignalRoutine()
     {
         Debug.Assert(_currentGroup is not null);
+        Debug.Assert(!string.IsNullOrEmpty(_authManager.AccessToken));
 
         const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_MATCHMAKING_CHECKSTATUS;
-        var request = WebServerUtils.GetAuthorizeRequestBase(apiUri, EHttpMethod.GET, _authManager.AccessToken);
+
+        using var request = new UnityWebRequest(apiUri, "GET");
+        request.SetRequestHeader("Authorization", $"Bearer {_authManager.AccessToken}");
+        request.SetRequestHeader("Content-Type", "application/json");
         request.SetRequestHeader("groupId", _currentGroup.groupId.ToString());
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.timeout = 30;
 
         while (_currentGroup is not null)
         {
             yield return request.SendWebRequest(); // Long-Polling
+            var response = JsonConvert.DeserializeObject<GroupStatusResponseDto>(request.downloadHandler.text);
 
-            switch (request.result)
+            // 성공 응답 이외의 모든 응답은 오류로 처리
+            if (request.result != UnityWebRequest.Result.Success)
             {
-                case UnityWebRequest.Result.Success:
-                    var response = JsonConvert.DeserializeObject<GroupStatusResponseDto>(request.downloadHandler.text);
-                    if (response.status)
-                    {
-                        // 서버 정보 가공해서 Scene 넘기기
-                    }
-                    break;
-
-                case UnityWebRequest.Result.ConnectionError:
-                    Debug.Log("서버에 연결 할 수 없음");
-                    yield break;
-
-                case UnityWebRequest.Result.ProtocolError:
-                case UnityWebRequest.Result.DataProcessingError:
-                case UnityWebRequest.Result.InProgress:
-                default:
-                    Debug.LogError($"알 수 없는 오류 {request.responseCode} : {request.downloadHandler.text}");
-                    yield break;
+                Debug.LogError($"오류 발생 {request.responseCode}");
+                yield return new WaitForSeconds(5);
+                continue;
             }
+
+            // timeout 여부 파악
+            if (!response.status)
+            {
+                Debug.Log("timeout. wait again");
+                continue;
+            }
+
+            Debug.Log($"Success logic Server info {response.serverIp}:{response.port}");
+            yield break;
         }
     }
 }
