@@ -19,8 +19,6 @@ InternalConnector::InternalConnector()
 		buffer << f.rdbuf();
 		f.close();
 
-		spdlog::info("file info: {}", buffer.str());
-
 		auto status = google::protobuf::util::JsonStringToMessage(buffer.str(), &_loginData);
 		if (status.message().size() > 0)
 		{
@@ -104,7 +102,6 @@ bool InternalConnector::GetAccessTokenFromInternal()
 			return false;
 		}
 
-		spdlog::info("(DEL) access token parsed complete {}", _accessToken.accesstoken());
 		spdlog::info("internal connector intialize complete");
 		return true;
 

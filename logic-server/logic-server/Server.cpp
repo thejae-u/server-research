@@ -78,7 +78,16 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession) cons
 				spdlog::error("new session failed to exchange user info");
 				newSession->Stop();
 				return;
-			}}
+			}
+
+			newSession->AysncReceiveGroupInfo([self, newSession](bool success) {
+				if (!success)
+				{
+					spdlog::error("new session failed to exchange user info");
+					newSession->Stop();
+					return;
+				}}
+			); }
 		); }
 	);
 }
