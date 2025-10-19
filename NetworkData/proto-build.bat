@@ -8,11 +8,9 @@ cd /d %~dp0
 set PROTOC=C:\vcpkg\installed\x64-windows\tools\protobuf\protoc.exe
 set PROTO_FILE=NetworkData.proto
 set OUTPUT_DIR=.\Generated
-set COPY_TARGET1=..\db-server\db-server
-set COPY_TARGET2=..\login-server\login-server
-set COPY_TARGET3=..\logic-server\logic-server
-set COPY_TARGET4=..\ai-client\Assets\Scripts\Network
-set COPY_TARGET5=..\multi-client-test\multi-client-test
+
+set COPY_TARGET1=..\logic-server\logic-server
+set COPY_TARGET2=..\ai-client\Assets\Scripts\Network
 
 if not exist "%OUTPUT_DIR%" mkdir "%OUTPUT_DIR%"
 del /Q Generated\*
@@ -24,7 +22,6 @@ echo [C++ Compile Success]
 echo [Compiling %PROTO_FILE% for c#...]
 "%PROTOC%" --csharp_out="%OUTPUT_DIR%" "%PROTO_FILE%
 echo [C# Compile Success]
-
 
 :: 생성된 파일 이름 추출
 for %%F in ("%PROTO_FILE%") do set FILE_BASE=%%~nF
@@ -38,22 +35,10 @@ echo [COPY to %COPY_TARGET1%]
 copy /Y "%GENERATED_H%" "%COPY_TARGET1%"
 copy /Y "%GENERATED_CC%" "%COPY_TARGET1%"
 
-echo [COPY to %COPY_TARGET2%]
-copy /Y "%GENERATED_H%" "%COPY_TARGET2%"
-copy /Y "%GENERATED_CC%" "%COPY_TARGET2%"
-
-echo [COPY to %COPY_TARGET3%]
-copy /Y "%GENERATED_H%" "%COPY_TARGET3%"
-copy /Y "%GENERATED_CC%" "%COPY_TARGET3%"
-
 echo [C# COPY]
-if not exist %COPY_TARGET4% mkdir echo [Not EXIST DIR: MKDIR...] "%COPY_TARGET%"
-echo [COPY %GENERATED_CS% to %COPY_TARGET4%]
-copy /Y "%GENERATED_CS%" "%COPY_TARGET4%"
-
-echo [COPY to %COPY_TARGET5%]
-echo [COPY %GENERATED_CS% to %COPY_TARGET5%]
-copy /Y "%GENERATED_CS%" "%COPY_TARGET5%"
+if not exist %COPY_TARGET2% mkdir echo [Not EXIST DIR: MKDIR...] "%COPY_TARGET%"
+echo [COPY %GENERATED_CS% to %COPY_TARGET2%]
+copy /Y "%GENERATED_CS%" "%COPY_TARGET2%"
 
 echo [ALL Done!]
 endlocal
