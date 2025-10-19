@@ -4,21 +4,21 @@
 #include "LockstepGroup.h"
 #include "Utility.h"
 
-Session::Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager, const uuid guid)
+Session::Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager)
 	: _ctxManager(contextManager), _rpcCtxManager(rpcContextManager),
 	_tcpSocketPtr(std::make_shared<TcpSocket>(_ctxManager->GetStrand().context())),
 	_udpSocketPtr(std::make_shared<UdpSocket>(_rpcCtxManager->GetStrand().context(), udp::endpoint(udp::v4(), 0))),
-	_sessionUuid(guid),
 	_lastRtt(0)
 {
 	_pingTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_pingDelay), [this]() {
 		SendPingPacket();
-		});
+		}
+	);
 }
 
 void Session::Start()
 {
-	spdlog::info("session {} started", to_string(_sessionUuid));
+	spdlog::info("session {} started", _sessionInfo.uid());
 
 	// Async Functions Start
 	TcpAsyncReadSize();
@@ -30,7 +30,7 @@ void Session::Start()
 
 void Session::Stop()
 {
-	spdlog::info("{} session stopped", to_string(_sessionUuid));
+	spdlog::info("{} session stopped", _sessionInfo.uid());
 	_isConnected = false;
 
 	_tcpSocketPtr->close();
@@ -56,10 +56,10 @@ void Session::AsyncExchangeUdpPortWork(std::function<void(bool success)> onCompl
 
 bool Session::ExchangeUdpPort()
 {
+	const std::string connectedIp = _tcpSocketPtr->remote_endpoint().address().to_string();
+
 	const std::uint16_t udpPort = _udpSocketPtr->local_endpoint().port();
 	std::string udpPortString = std::to_string(udpPort);
-
-	spdlog::info("UDP port {} for session {}", udpPortString, to_string(_sessionUuid));
 
 	RpcPacket packet;
 	packet.set_method(UDP_PORT);
@@ -68,7 +68,7 @@ bool Session::ExchangeUdpPort()
 	std::string udpPortPacket;
 	if (!packet.SerializeToString(&udpPortPacket))
 	{
-		spdlog::error("{} : failed to serialize UDP port packet", to_string(_sessionUuid));
+		spdlog::error("failed to serialize UDP port packet {}", connectedIp);
 		return false;
 	}
 
@@ -76,7 +76,7 @@ bool Session::ExchangeUdpPort()
 	auto sendNetSize = htonl(sendDataSize);
 
 	std::vector<char> receiveBuffer;
-	uint32_t receiveNetSize;
+	uint32_t receiveNetSize = 0;
 
 	// 예외 처리를 위한 system::error_code
 	error_code ec;
@@ -92,16 +92,16 @@ bool Session::ExchangeUdpPort()
 	}
 
 	// 어느 지점에서든 error_code가 있을 때 -> 비정상 작동 종료
-	if (ec)
+	if (ec || receiveDataSize == 0)
 	{
-		spdlog::error("{} : network error occured ({})", to_string(_sessionUuid), ec.message());
+		spdlog::error("{} : network error occured ({})", connectedIp, ec.message());
 		return false;
 	}
 
 	RpcPacket receivePacket;
 	if (!receivePacket.ParseFromArray(receiveBuffer.data(), static_cast<int>(receiveDataSize)))
 	{
-		spdlog::error("{} : failed to parse UDP port packet", to_string(_sessionUuid));
+		spdlog::error("{} : failed to parse UDP port packet", connectedIp);
 		return false;
 	}
 
@@ -110,7 +110,7 @@ bool Session::ExchangeUdpPort()
 		// Invalid Method 확인
 		const auto* descriptor = RpcMethod_descriptor();
 		const auto& methodName = descriptor->FindValueByNumber(receivePacket.method())->name();
-		spdlog::error("{} : invalid method ({})", to_string(_sessionUuid), methodName);
+		spdlog::error("{} : invalid method ({})", connectedIp, methodName);
 		return false;
 	}
 
@@ -124,13 +124,69 @@ bool Session::ExchangeUdpPort()
 	return true;
 }
 
-// warpping SendUUidToClient, Using BlockingPool
-void Session::AsyncSendUuidToClientWork(std::function<void(bool success)> onComplete)
+bool Session::ReceiveUserInfo()
+{
+	const std::string connectedIp = _tcpSocketPtr->remote_endpoint().address().to_string();
+
+	RpcPacket packet;
+	packet.set_method(USER_INFO);
+
+	auto serializedData = packet.SerializeAsString();
+	const uint32_t sendDataSize = static_cast<uint32_t>(serializedData.size());
+	const uint32_t sendNetSize = htonl(sendDataSize);
+
+	uint32_t receiveNetSize = 0;
+	std::vector<char> receiveBuffer;
+
+	// 순차적으로 error_code가 없는 경우 다음 스텝을 진행
+	error_code ec;
+	boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
+	if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(serializedData), ec);
+	if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(&receiveNetSize, sizeof(uint32_t)), ec);
+
+	const auto receiveDataSize = ntohl(receiveNetSize);
+	if (!ec && receiveNetSize > 0)
+	{
+		receiveBuffer.resize(receiveDataSize);
+		boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(receiveBuffer), ec);
+	}
+
+	// 어느 시점이든 오류가 나면 처리
+	if (ec || receiveNetSize == 0)
+	{
+		spdlog::error("{} : network error occured ({})", connectedIp, ec.message());
+		return false;
+	}
+
+	RpcPacket receivePacket;
+	if (!receivePacket.ParseFromArray(receiveBuffer.data(), static_cast<int>(receiveDataSize)))
+	{
+		spdlog::error("{} : parsing error occured (recieve packet)", connectedIp);
+		return false;
+	}
+
+	if (receivePacket.method() != USER_INFO)
+	{
+		// Invalid Method Check
+		const auto* descriptor = RpcMethod_descriptor();
+		const auto& methodName = descriptor->FindValueByNumber(receivePacket.method())->name();
+		spdlog::error("{} : invalid method ({})", connectedIp, methodName);
+		return false;
+	}
+
+	_sessionInfo.set_uid(receivePacket.uid());
+	_sessionInfo.set_username(receivePacket.data().data());
+
+	spdlog::info("{} : sessio user info exchanged complete", _sessionInfo.uid());
+	return true;
+}
+
+// warpping ReceiveUserInfo, Using BlockingPool
+void Session::AsyncReceiveUserInfo(std::function<void(bool success)> onComplete)
 {
 	auto self(shared_from_this());
-
 	boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]() {
-		bool success = self->SendUuidToClient();
+		bool success = self->ReceiveUserInfo();
 
 		boost::asio::post(self->_ctxManager->GetStrand(), [self, success, onComplete]() {
 			onComplete(success);
@@ -139,29 +195,74 @@ void Session::AsyncSendUuidToClientWork(std::function<void(bool success)> onComp
 	);
 }
 
-bool Session::SendUuidToClient() const
+bool Session::ReceiveGroupInfo()
 {
-	// Send uuid to client
+	const auto connectedIp = _tcpSocketPtr->remote_endpoint().address().to_string();
 	RpcPacket packet;
-	packet.set_uuid(Utility::GuidToBytes(_sessionUuid));
-	packet.set_method(UUID);
+	packet.set_method(GROUP_INFO);
 
-	auto serializedGuid = packet.SerializeAsString();
-	const uint32_t sendNetSize = static_cast<uint32_t>(serializedGuid.size());
-	const uint32_t sendDataSize = htonl(sendNetSize);
+	const auto serializedData = packet.SerializeAsString();
+	const auto sendDataSize = static_cast<std::uint32_t>(serializedData.size());
+	const auto sendNetSize = htonl(sendDataSize);
+
+	std::uint32_t receiveNetSize = 0;
+	std::vector<char> receiveBuffer;
 
 	error_code ec;
-	boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendDataSize, sizeof(sendDataSize)), ec);
-	if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(serializedGuid), ec);
+	boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
+	if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(serializedData), ec);
+	if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(&receiveNetSize, sizeof(std::uint32_t)), ec);
 
-	// error occured
-	if (ec)
+	const auto receiveDataSize = ntohl(receiveNetSize);
+	if (!ec && receiveDataSize > 0)
 	{
-		spdlog::error("{} : network error occured ({})", to_string(_sessionUuid), ec.message());
+		receiveBuffer.resize(receiveDataSize);
+		boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(receiveBuffer), ec);
+	}
+
+	if (ec || receiveDataSize == 0)
+	{
+		spdlog::error("{} : network error occured ({})", connectedIp, ec.message());
+		return false;
+	}
+
+	RpcPacket receivePacket;
+	if (!receivePacket.ParseFromArray(&receiveBuffer, receiveDataSize))
+	{
+		spdlog::error("{} : parsing error occured", connectedIp);
+		return false;
+	}
+
+	if (receivePacket.method() != GROUP_INFO)
+	{
+		const auto* descriptor = RpcMethod_descriptor();
+		const auto& methodName = descriptor->FindValueByNumber(receivePacket.method())->name();
+		spdlog::error("{} : invalid method ({})", connectedIp, methodName);
+		return false;
+	}
+
+	// Group Dto Json Parsing
+	auto status = google::protobuf::util::JsonStringToMessage(receivePacket.data().data(), &_groupDto);
+	if (status.message().size() > 0)
+	{
+		spdlog::error("{} : protobuf json parsing error occured ({})", connectedIp, status.message());
 		return false;
 	}
 
 	return true;
+}
+
+void Session::AysncReceiveGroupInfo(std::function<void(bool success)> onComplete)
+{
+	auto self(shared_from_this());
+	boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]() {
+		bool success = self->ReceiveGroupInfo();
+
+		boost::asio::post(self->_ctxManager->GetStrand(), [self, success, onComplete]() {
+			onComplete(success);
+			});
+		}
+	);
 }
 
 void Session::SetStopCallback(StopCallback stopCallback)
@@ -187,7 +288,7 @@ void Session::SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_
 		const auto serializedData = std::make_shared<std::string>();
 		if (packet.SerializeToString(serializedData.get()))
 		{
-			spdlog::error("{} : rpc packet serialize failed for key {}", to_string(_sessionUuid), to_string(key.guid));
+			spdlog::error("{} : rpc packet serialize failed for key {}", _sessionInfo.uid(), to_string(key.guid));
 			return;
 		}
 
@@ -212,7 +313,7 @@ void Session::SendPingPacket()
 	// error occured
 	if (ec)
 	{
-		spdlog::error("{} : network error occured ({})", to_string(_sessionUuid), ec.message());
+		spdlog::error("{} : network error occured ({})", _sessionInfo.uid(), ec.message());
 	}
 }
 
@@ -234,7 +335,7 @@ void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet)
 	}
 	else
 	{
-		spdlog::error("{} : invalid packet method ({})", to_string(_sessionUuid), Utility::MethodToString(packet->method()));
+		spdlog::error("{} : invalid packet method ({})", _sessionInfo.uid(), Utility::MethodToString(packet->method()));
 	}
 }
 
@@ -249,7 +350,7 @@ void Session::TcpAsyncWrite(const std::shared_ptr<std::string>& data)
 		_ctxManager->GetStrand().wrap([self, data](const boost::system::error_code& sizeEc, std::size_t) {
 			if (sizeEc)
 			{
-				spdlog::error("{} : TCP error sending size ({})", to_string(self->_sessionUuid), sizeEc.message());
+				spdlog::error("{} : TCP error sending size ({})", self->_sessionInfo.uid(), sizeEc.message());
 				return;
 			}
 
@@ -257,7 +358,7 @@ void Session::TcpAsyncWrite(const std::shared_ptr<std::string>& data)
 				self->_ctxManager->GetStrand().wrap([self, data](const boost::system::error_code& dataEc, std::size_t) {
 					if (dataEc)
 					{
-						spdlog::error("TCP error sending data to {} : {}", to_string(self->_sessionUuid), dataEc.message());
+						spdlog::error("TCP error sending data to {} : {}", self->_sessionInfo.uid(), dataEc.message());
 						return;
 					}}
 				));
@@ -280,12 +381,12 @@ void Session::TcpAsyncReadSize()
 					|| sizeEc == boost::asio::error::connection_aborted
 					|| sizeEc == boost::asio::error::operation_aborted)
 				{
-					spdlog::info("session {} : TcpaSyncRead aborted", to_string(self->_sessionUuid));
+					spdlog::info("session {} : TcpaSyncRead aborted", self->_sessionInfo.uid());
 					self->Stop();
 					return;
 				}
 
-				spdlog::error("{} : TCP error receiving size ({})", to_string(self->_sessionUuid), sizeEc.message());
+				spdlog::error("{} : TCP error receiving size ({})", self->_sessionInfo.uid(), sizeEc.message());
 				return;
 			}
 
@@ -294,7 +395,7 @@ void Session::TcpAsyncReadSize()
 
 			if (self->_tcpDataSize > MAX_PACKET_SIZE)
 			{
-				spdlog::error("{} : TCP error receiving data size ({})", to_string(self->_sessionUuid), self->_tcpDataSize);
+				spdlog::error("{} : TCP error receiving data size ({})", self->_sessionInfo.uid(), self->_tcpDataSize);
 				self->TcpAsyncReadSize();
 				return;
 			}
@@ -318,7 +419,7 @@ void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuf
 					return;
 				}
 
-				spdlog::error("{} : TCP error receiving data ({})", to_string(self->_sessionUuid), dataEc.message());
+				spdlog::error("{} : TCP error receiving data ({})", self->_sessionInfo.uid(), dataEc.message());
 				self->TcpAsyncReadSize();
 				return;
 			}
@@ -326,7 +427,7 @@ void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuf
 			RpcPacket deserializeRpcPacket;
 			if (!deserializeRpcPacket.ParseFromArray(dataBuffer->data(), static_cast<int>(dataBuffer->size())))
 			{
-				spdlog::error("{} : error parsing rpc packet", to_string(self->_sessionUuid));
+				spdlog::error("{} : error parsing rpc packet", self->_sessionInfo.uid());
 				self->TcpAsyncReadSize();
 				return;
 			}
@@ -361,21 +462,21 @@ void Session::UdpAsyncRead()
 					return;
 				}
 
-				spdlog::error("{} : UDP read error ({})", to_string(self->_sessionUuid), ec.message());
+				spdlog::error("{} : UDP read error ({})", self->_sessionInfo.uid(), ec.message());
 				self->UdpAsyncRead();
 				return;
 			}
 
 			if (bytesRead < sizeof(std::uint16_t))
 			{
-				spdlog::error("{} : invalid packet received (bytes read under 2bytes)", to_string(self->_sessionUuid));
+				spdlog::error("{} : invalid packet received (bytes read under 2bytes)", self->_sessionInfo.uid());
 				self->UdpAsyncRead();
 				return;
 			}
 
 			if (buf->data() == nullptr)
 			{
-				spdlog::error("{} : invalid packet received (buffer->data() is null)", to_string(self->_sessionUuid));
+				spdlog::error("{} : invalid packet received (buffer->data() is null)", self->_sessionInfo.uid());
 				self->UdpAsyncRead();
 				return;
 			}
@@ -387,7 +488,7 @@ void Session::UdpAsyncRead()
 
 			if (payloadSize == 0 || payloadSize + sizeof(std::uint16_t) > bytesRead)
 			{
-				spdlog::error("{} : invalid payload size (payloadSize is 0 or over bytesRead)", to_string(self->_sessionUuid));
+				spdlog::error("{} : invalid payload size (payloadSize is 0 or over bytesRead)", self->_sessionInfo.uid());
 				self->UdpAsyncRead();
 				return;
 			}
@@ -395,7 +496,7 @@ void Session::UdpAsyncRead()
 			RpcPacket packet;
 			if (!packet.ParseFromArray(buf->data() + sizeof(std::uint16_t), payloadSize))
 			{
-				spdlog::error("{} : error parsing rpc packet", to_string(self->_sessionUuid));
+				spdlog::error("{} : error parsing rpc packet", self->_sessionInfo.uid());
 				self->UdpAsyncRead();
 				return;
 			}
@@ -406,7 +507,7 @@ void Session::UdpAsyncRead()
 			if (self->_inputAction)
 			{
 				const auto rpcRequest =
-					std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->_sessionUuid, std::make_shared<RpcPacket>(packet));
+					std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->_toUuid(self->_sessionInfo.uid()), std::make_shared<RpcPacket>(packet));
 				self->_inputAction(rpcRequest);
 			}}
 		)
@@ -428,13 +529,13 @@ void Session::UdpAsyncWrite(const std::shared_ptr<std::string>& data)
 		_rpcCtxManager->GetStrand().wrap([self(shared_from_this()), payload](const boost::system::error_code& ec, std::size_t) {
 			if (ec)
 			{
-				spdlog::error("{} : UDP error sending data ({})", to_string(self->_sessionUuid), ec.message());
+				spdlog::error("{} : UDP error sending data ({})", self->_sessionInfo.uid(), ec.message());
 				return;
 			}
 
 			std::string addressStr = self->_udpSendEp.address().to_string();
 			std::string portStr = std::to_string(self->_udpSendEp.port());
-			// spdlog::info("{} : send packet to {} {}", to_string(_sessionUuid), addressStr, portStr);
+			// spdlog::info("{} : send packet to {} {}", self->_sessionInfo.uid(), addressStr, portStr);
 			}
 		)
 	);

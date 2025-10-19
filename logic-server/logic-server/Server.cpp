@@ -7,7 +7,7 @@ Server::Server(const std::shared_ptr<ContextManager>& mainCtxManager, const std:
 	: _mainCtxManager(mainCtxManager), _rpcCtxManager(rpcCtxManager), _acceptor(acceptor)
 {
 	_uuidGenerator = std::make_shared<random_generator>();
-	_groupManager = std::make_unique<GroupManager>(_mainCtxManager, _uuidGenerator);
+	_groupManager = std::make_unique<GroupManager>(_mainCtxManager);
 	_isRunning = false;
 }
 
@@ -15,6 +15,8 @@ void Server::Start()
 {
 	_isRunning = true;
 	AcceptClientAsync();
+
+	spdlog::info("server start complete");
 }
 
 void Server::Stop()
@@ -35,7 +37,7 @@ void Server::AcceptClientAsync()
 		return;
 
 	auto self(shared_from_this());
-	auto newSession = std::make_shared<Session>(_mainCtxManager, _rpcCtxManager, (*_uuidGenerator)());
+	auto newSession = std::make_shared<Session>(_mainCtxManager, _rpcCtxManager);
 
 	_acceptor.async_accept(newSession->GetSocket(), _mainCtxManager->GetStrand().wrap([this, newSession](const boost::system::error_code& ec) {
 		if (ec)
@@ -69,16 +71,14 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession) cons
 			return;
 		}
 
-		newSession->AsyncSendUuidToClientWork([self, newSession](bool uuidSuccess) {
-			if (!uuidSuccess)
+		// User info and group info
+		newSession->AsyncReceiveUserInfo([self, newSession](bool success) {
+			if (!success)
 			{
-				spdlog::error("new session failed to send uuid to client");
+				spdlog::error("new session failed to exchange user info");
 				newSession->Stop();
 				return;
-			}
-
-			self->_groupManager->AddSession(newSession);
-			});
-		}
+			}}
+		); }
 	);
 }

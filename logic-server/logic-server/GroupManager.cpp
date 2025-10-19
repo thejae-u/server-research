@@ -5,28 +5,38 @@
 #include "ContextManager.h"
 #include "Utility.h"
 
-GroupManager::GroupManager(const std::shared_ptr<ContextManager>& ctxManager, const std::shared_ptr<random_generator>& uuidGenerator) : _ctxManager(ctxManager), _uuidGenerator(uuidGenerator)
+GroupManager::GroupManager(const std::shared_ptr<ContextManager>& ctxManager) : _ctxManager(ctxManager)
 {
 }
 
-void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
+void GroupManager::AddSession(const GroupDto& groupDto, const std::shared_ptr<Session>& newSession)
 {
+	uuid joinGroupId = _toUuid(groupDto.groupid());
+
 	{
 		std::lock_guard<std::mutex> lock(_groupMutex);
 		for (const auto& [groupId, group] : _groups)
 		{
-			if (!group->IsFull())
+			if (groupId != joinGroupId)
 			{
-				group->AddMember(newSession);
-				spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
-				newSession->Start();
+				continue;
+			}
+
+			if (group->IsFull())
+			{
+				spdlog::error("fatal error: {} is full (invalid situation)", to_string(groupId));
 				return;
 			}
+
+			group->AddMember(newSession);
+			spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
+			newSession->Start();
+			return;
 		}
 	}
 
-	// If no group is found, create a new group
-	const auto newGroup = CreateNewGroup();
+	const auto newGroupDtoPtr = std::make_shared<GroupDto>(groupDto);
+	const auto newGroup = CreateNewGroup(newGroupDtoPtr);
 	newGroup->AddMember(newSession);
 	newGroup->Start();
 	newSession->Start();
@@ -37,14 +47,14 @@ void GroupManager::AddSession(const std::shared_ptr<Session>& newSession)
 	}
 }
 
-std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup()
+std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup(const std::shared_ptr<GroupDto>& groupDtoPtr)
 {
-	// UUID는 웹 서버로부터 생성된 데이터를 활용할 계획 -> 관련 로직 변경
-	const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, (*_uuidGenerator)());
+	const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, groupDtoPtr);
 	newGroup->SetNotifyEmptyCallback(_ctxManager->GetStrand().wrap([this](const std::shared_ptr<LockstepGroup>& emptyGroup) {
 		RemoveEmptyGroup(emptyGroup);
 		})
 	);
+
 	newGroup->Start();
 
 	spdlog::info("created new group {}", to_string(newGroup->GetGroupId()));

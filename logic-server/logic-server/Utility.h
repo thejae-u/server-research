@@ -1,11 +1,21 @@
 ﻿#pragma once
 #include <string>
 #include <chrono>
+
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include "NetworkData.pb.h"
 using namespace NetworkData;
 
 namespace Utility
 {
+	struct UserSimpleDto
+	{
+		boost::uuids::uuid userId;
+		std::string name;
+	};
+
 	static std::string GuidToBytes(boost::uuids::uuid uuid)
 	{
 		std::string bytes(uuid.begin(), uuid.end());
@@ -46,24 +56,24 @@ namespace Utility
 		std::string result;
 		switch (method)
 		{
-		case NONE:
-			result = "NONE";
-			break;
-
 		case UDP_PORT:
-			result = "UDP_PORT";
+			result = "UdpPort";
 			break;
 
 		case PING:
-			result = "PING";
+			result = "Ping";
 			break;
 
 		case PONG:
-			result = "PONG";
+			result = "Pong";
 			break;
 
-		case UUID:
-			result = "UUID";
+		case USER_INFO:
+			result = "UserInfoGet";
+			break;
+
+		case GROUP_INFO:
+			result = "GroupInfo";
 			break;
 
 		case MOVE:

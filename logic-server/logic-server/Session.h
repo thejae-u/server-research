@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/string_generator.hpp>
 
 #include "Base.h"
 #include "Scheduler.h"
@@ -33,10 +34,13 @@ class Session final : public Base<Session>
 {
 public:
 
-	Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager, uuid guid);
+	Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager);
 	~Session() override
 	{
-		spdlog::info("{} : session destoryed", to_string(_sessionUuid));
+		if (_sessionInfo.uid() != "")
+			spdlog::info("{} : session destoryed", _sessionInfo.uid());
+		else
+			spdlog::info("empty session destroyed");
 	}
 
 	void Start() override;
@@ -51,15 +55,18 @@ public:
 	void SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs);
 	tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
 	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
-	const uuid& GetSessionUuid() const { return _sessionUuid; }
 
 	bool ExchangeUdpPort();
 	void AsyncExchangeUdpPortWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
 
-	bool SendUuidToClient() const;
-	void AsyncSendUuidToClientWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
+	bool ReceiveUserInfo();
+	void AsyncReceiveUserInfo(std::function<void(bool success)> onComplete);
+
+	bool ReceiveGroupInfo();
+	void AysncReceiveGroupInfo(std::function<void(bool success)> onComlete);
 
 	bool IsValid() const { return _isConnected; }
+	uuid GetSessionUuid() { return _toUuid(_sessionInfo.uid()); }
 
 private:
 	using TcpSocket = tcp::socket;
@@ -74,7 +81,10 @@ private:
 
 	bool _isConnected = false;
 
-	uuid _sessionUuid;
+	boost::uuids::string_generator _toUuid;
+	UserSimpleDto _sessionInfo;
+	GroupDto _groupDto;
+
 	std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
 
 	std::shared_ptr<Scheduler> _pingTimer;

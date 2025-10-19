@@ -7,8 +7,8 @@
 #include "Scheduler.h"
 #include "ContextManager.h"
 
-LockstepGroup::LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const uuid groupId)
-	: _groupId(groupId), _ctxManager(ctxManager)
+LockstepGroup::LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const std::shared_ptr<GroupDto>& newGroupDtoPtr)
+	: _ctxManager(ctxManager), _groupInfo(newGroupDtoPtr)
 {
 	_fixedDeltaMs = TICK_TIME; // Delay Time
 }
@@ -41,7 +41,7 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 		std::lock_guard<std::mutex> lock(_memberMutex);
 		if (const auto& [it, success] = _members.insert(newSession); !success)
 		{
-			spdlog::error("{} : failed to add member to group {}", to_string(newSession->GetSessionUuid()), to_string(_groupId));
+			spdlog::error("{} : failed to add member to group {}", to_string(newSession->GetSessionUuid()), _groupInfo->groupid());
 		}
 	}
 
@@ -56,12 +56,12 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 		}
 	);
 
-	spdlog::info("{} : added member {}", to_string(_groupId), to_string(newSession->GetSessionUuid()));
+	spdlog::info("{} : added member {}", _groupInfo->groupid(), to_string(newSession->GetSessionUuid()));
 }
 
 void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
-	spdlog::info("{} : removed from {}", to_string(session->GetSessionUuid()), to_string(_groupId));
+	spdlog::info("{} : removed from {}", to_string(session->GetSessionUuid()), _groupInfo->groupid());
 
 	{
 		std::lock_guard<std::mutex> lock(_memberMutex);
@@ -78,7 +78,7 @@ void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 
 void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest)
 {
-	auto [guid, request] = *rpcRequest;
+	const auto& [guid, request] = *rpcRequest;
 
 	SSessionKey key;
 	{
@@ -92,7 +92,7 @@ void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shar
 		_inputBuffer[_currentBucket][key] = request;
 	}
 
-	// spdlog::info("{} collect input: session {} - {}", to_string(_groupId), to_string(guid), Utility::MethodToString(request->method()));
+	// spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::ProcessStep()

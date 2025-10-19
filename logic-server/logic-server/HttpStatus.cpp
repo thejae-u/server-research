@@ -7,6 +7,9 @@ HttpStatusCodeCategory GetStatusCodeCategory(long statusCode) {
 	if (statusCode >= 300 && statusCode < 400) {
 		return HttpStatusCodeCategory::Redirection;
 	}
+	if (statusCode == 401) {
+		return HttpStatusCodeCategory::Unautorized;
+	}
 	if (statusCode >= 400 && statusCode < 500) {
 		return HttpStatusCodeCategory::ClientError;
 	}
@@ -26,6 +29,8 @@ std::string ToString(HttpStatusCodeCategory category) {
 		return "Client Error";
 	case HttpStatusCodeCategory::ServerError:
 		return "Server Error";
+	case HttpStatusCodeCategory::Unautorized:
+		return "Unauthorized";
 	case HttpStatusCodeCategory::Unknown:
 	default:
 		return "Unknown";

@@ -6,10 +6,13 @@
 #include <unordered_map>
 #include <set>
 #include <functional>
+
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_hash.hpp>
+#include <boost/uuid/string_generator.hpp>
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -53,10 +56,10 @@ namespace std
 class LockstepGroup final : public Base<LockstepGroup>
 {
 public:
-	LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const uuid groupId);
+	LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const std::shared_ptr<GroupDto>& newGroupDtoPtr);
 	~LockstepGroup() override
 	{
-		spdlog::info("{} : lockstep group destroyed", to_string(_groupId));
+		spdlog::info("{} : lockstep group destroyed", _groupInfo->groupid());
 	}
 
 	using NotifyEmptyCallback = std::function<void(const std::shared_ptr<LockstepGroup>&)>;
@@ -70,7 +73,7 @@ public:
 	void ProcessStep();
 	void Tick();
 
-	uuid GetGroupId() const { return _groupId; }
+	uuid GetGroupId() const { return _toUuid(_groupInfo->groupid()); }
 
 	bool IsFull()
 	{
@@ -79,7 +82,9 @@ public:
 	}
 
 private:
-	uuid _groupId;
+	boost::uuids::string_generator _toUuid;
+	std::shared_ptr<GroupDto> _groupInfo;
+
 	std::shared_ptr<ContextManager> _ctxManager;
 	std::set<std::shared_ptr<Session>> _members;
 	const std::size_t _maxSessionCount = 4;

@@ -7,7 +7,7 @@ InternalConnector::InternalConnector()
 {
 	std::fstream f(INTERNAL_FILE_NAME.data());
 
-	if (!f.is_open())
+	if (!f.is_open() || f.bad() || f.eof() || f.fail())
 	{
 		spdlog::error("file open failed");
 		return;
@@ -15,73 +15,113 @@ InternalConnector::InternalConnector()
 
 	try
 	{
-		auto config = json::parse(f);
-		loginData = config.get<InternalData>();
-	}
-	catch (const json::exception& e)
-	{
-		std::string msg = e.what();
-		spdlog::error("json parsing error: " + msg);
-	}
+		std::stringstream buffer;
+		buffer << f.rdbuf();
+		f.close();
 
-	GetAccessTokenFromInternal();
+		spdlog::info("file info: {}", buffer.str());
+
+		auto status = google::protobuf::util::JsonStringToMessage(buffer.str(), &_loginData);
+		if (status.message().size() > 0)
+		{
+			spdlog::error("protobuf deserialize error: {}", status.message());
+			return;
+		}
+	}
+	catch (std::exception& ex)
+	{
+		spdlog::error("{}", ex.what());
+		return;
+	}
 }
 
-void InternalConnector::GetAccessTokenFromInternal()
+bool InternalConnector::GetAccessTokenFromInternal()
 {
 	std::string postUrl = WEB_SERVER_IP;
-	postUrl += "/api/auth/internal-login";
+	postUrl += API_GET_TOKEN;
 
-	// TODO : Throw 는 임시 조치 -> 실패 시 다시 시도 하거나 예외 케이스가 있으면 서버를 종료하도록
-	// 서버 연결과 관련한 처리는 일정 횟수를 다시 시도하고 마지막에 종료 처리
+	// TODO : 웹 서버가 문제가 있는 경우 일부 기능을 비활성화 해야함
 
-	try
+	//json bodyJson = _loginData.internal; // LoginDto to_json() 호출
+	const auto& loginInfo = _loginData.internal();
+	std::string jsonString;
+	auto status = google::protobuf::util::MessageToJsonString(loginInfo, &jsonString);
+
+	if (status.message().size() > 0)
 	{
-		json bodyJson = loginData.internal; // LoginDto to_json() 호출
+		spdlog::error("error parsing login info to json string: {}", status.message());
+		return false;
+	}
 
-		spdlog::info("request access token");
+	spdlog::info("request access token");
 
+	int retryCount = 3;
+	cpr::Response r;
+	while (retryCount)
+	{
 		// Request to Web server
-		auto r = cpr::Post(cpr::Url{ postUrl },
+		r = cpr::Post(cpr::Url{ postUrl },
 			cpr::Header{ {"Content-Type", "application/json"} },
-			cpr::Body{ bodyJson.dump() });
+			cpr::Body{ jsonString });
 
+		// network failed retrying
 		if (r.error)
 		{
-			throw std::runtime_error(r.error.message);
+			if (r.error.code == cpr::ErrorCode::COULDNT_CONNECT)
+			{
+				spdlog::error("{}, retrying...{}", r.error.message, retryCount--);
+				continue;
+			}
+
+			spdlog::error("{}, retrying...{}", r.error.message, retryCount--);
+			continue;
 		}
 
-		std::string statusCodeStr = "(code: " + std::to_string(r.status_code) + ")";
-		auto result = GetStatusCodeCategory(r.status_code);
-		json responseJson;
+		// success
+		break;
+	}
 
-		switch (result)
+	if (retryCount == 0)
+	{
+		spdlog::error("network failed request http");
+		return false;
+	}
+
+	std::string statusCodeStr = "(code: " + std::to_string(r.status_code) + ")";
+	auto result = GetStatusCodeCategory(r.status_code);
+
+	switch (result)
+	{
+	case HttpStatusCodeCategory::Success:
+	case HttpStatusCodeCategory::Redirection:
+		// Access Token parsing
+		spdlog::info("get access token success");
+
+		status = google::protobuf::util::JsonStringToMessage(r.text, &_accessToken);
+		if (status.message().size() > 0)
 		{
-		case HttpStatusCodeCategory::Success:
-		case HttpStatusCodeCategory::Redirection:
-			// Access Token parsing
-			spdlog::info("get access token success");
-			responseJson = json::parse(r.text);
-			_accessToken = responseJson.get<AccessToken>(); // AccessToken from_json() 호출
-			spdlog::info("internal connector intialize complete");
-			break;
-
-		case HttpStatusCodeCategory::ClientError:
-			throw std::runtime_error("invalid request" + statusCodeStr);
-		case HttpStatusCodeCategory::ServerError:
-			throw std::runtime_error("internal error " + statusCodeStr);
-		default:
-			throw std::runtime_error("unknown error " + statusCodeStr);
+			spdlog::error("parsing error occured: access token");
+			return false;
 		}
+
+		spdlog::info("(DEL) access token parsed complete {}", _accessToken.accesstoken());
+		spdlog::info("internal connector intialize complete");
+		return true;
+
+	case HttpStatusCodeCategory::ClientError:
+		spdlog::error("internal request error {}", statusCodeStr);
+		return false;
+	case HttpStatusCodeCategory::ServerError:
+		spdlog::error("internal response error {}", statusCodeStr);
+		return false;
+	default:
+		spdlog::error("unknown error {}", statusCodeStr);
+		return false;
 	}
-	catch (const json::exception& e)
-	{
-		std::string msg = e.what();
-		spdlog::error("json error: " + msg);
-	}
-	catch (const std::exception& e)
-	{
-		std::string msg = e.what();
-		spdlog::error("http error: " + msg);
-	}
+}
+
+void InternalConnector::SaveGameDataToDB()
+{
+	std::string postUrl = WEB_SERVER_IP;
+	postUrl = API_SAVE_GAME;
 }
