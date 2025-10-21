@@ -9,6 +9,7 @@ using Utility;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine.UI;
+using NetworkData;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -110,8 +111,8 @@ public class LobbyManager : MonoBehaviour
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                List<GroupDto> response = request.responseCode == 204 ?
-                    new List<GroupDto>() : JsonConvert.DeserializeObject<List<GroupDto>>(request.downloadHandler.text);
+                List<InternalGroupDto> response = request.responseCode == 204 ?
+                    new List<InternalGroupDto>() : JsonConvert.DeserializeObject<List<InternalGroupDto>>(request.downloadHandler.text);
                 UpdateRooms(response);
             }
             else if (request.result == UnityWebRequest.Result.ConnectionError)
@@ -127,9 +128,9 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private void UpdateRooms(List<GroupDto> rooms)
+    private void UpdateRooms(List<InternalGroupDto> rooms)
     {
-        HashSet<Guid> serverRoomIds = rooms.Select(r => r.groupId).ToHashSet();
+        HashSet<Guid> serverRoomIds = rooms.Select(r => r.GroupId).ToHashSet();
         List<Guid> localRoomIds = _rooms.Keys.ToList();
 
         foreach (Guid roomId in localRoomIds.Where(roomId => !serverRoomIds.Contains(roomId)))
@@ -139,9 +140,9 @@ public class LobbyManager : MonoBehaviour
             _rooms.Remove(roomId);
         }
 
-        foreach (GroupDto room in rooms)
+        foreach (var room in rooms)
         {
-            if (_rooms.TryGetValue(room.groupId, out LobbyRoomObjectController roomController))
+            if (_rooms.TryGetValue(room.GroupId, out LobbyRoomObjectController roomController))
             {
                 roomController.UpdateRoomState(room);
             }
@@ -149,7 +150,7 @@ public class LobbyManager : MonoBehaviour
             {
                 var newRoomController = Instantiate(_roomPrefab, _contentTr).GetComponent<LobbyRoomObjectController>();
                 newRoomController.UpdateRoomState(room);
-                _rooms.Add(room.groupId, newRoomController);
+                _rooms.Add(room.GroupId, newRoomController);
             }
         }
     }
@@ -167,10 +168,10 @@ public class LobbyManager : MonoBehaviour
     {
         _createRoomButton.interactable = false;
         const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_GROUP_CREATE;
-        var requester = new UserSimpleDto
+        var requester = new Utility.UserSimpleDto
         {
-            username = _authManager.Username,
-            uid = _authManager.UserGuid
+            Username = _authManager.Username,
+            Uid = _authManager.UserGuid
         };
 
         var requestDto = new CreateGroupRequestDto
@@ -192,7 +193,8 @@ public class LobbyManager : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            var response = JsonConvert.DeserializeObject<GroupDto>(request.downloadHandler.text);
+            // Json to Protobuf GroupDto
+            var response = JsonConvert.DeserializeObject<InternalGroupDto>(request.downloadHandler.text);
             _lobbyCanvasController.ChangePanelToRoomPanel(response);
         }
         else if (request.result == UnityWebRequest.Result.ConnectionError)

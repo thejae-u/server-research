@@ -93,10 +93,10 @@ public class AuthManager : Singleton<AuthManager>
 
     public async void InitTokens(LoginResponse response)
     {
-        RefreshToken = response.refreshToken;
-        AccessToken = response.accessToken;
-        UserGuid = Guid.Parse(response.user.uid);
-        Username = response.user.username;
+        RefreshToken = response.RefreshToken;
+        AccessToken = response.AccessToken;
+        UserGuid = Guid.Parse(response.User.Uid);
+        Username = response.User.Username;
 
         await UpdateRefreshToken();
     }
@@ -108,9 +108,9 @@ public class AuthManager : Singleton<AuthManager>
 
     public void UpdateAccessToken(LoginResponse response)
     {
-        AccessToken = response.accessToken;
-        UserGuid = Guid.Parse(response.user.uid);
-        Username = response.user.username;
+        AccessToken = response.AccessToken;
+        UserGuid = Guid.Parse(response.User.Uid);
+        Username = response.User.Username;
     }
 
     private async Task UpdateRefreshToken()

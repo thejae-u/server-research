@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Newtonsoft.Json;
+using System.Collections;
 using System.Text;
 using TMPro;
 using UnityEngine;
@@ -72,7 +73,7 @@ public class AccessRefreshManager : MonoBehaviour
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            var response = JsonUtility.FromJson<LoginResponse>(request.downloadHandler.text);
+            var response = JsonConvert.DeserializeObject<LoginResponse>(request.downloadHandler.text);
             _authManager.UpdateAccessToken(response);
 
             StartCoroutine(ChangeToLobbyScene());

@@ -17,23 +17,23 @@ public class ProtoSerializer
         return data.TakeWhile(c => c == 0).Any() ? null : RpcPacket.Parser.ParseFrom(data);
     }
 
-    public static Guid ConvertUuidToGuid(ByteString uuid)
+    public static Guid ConvertUuidToGuid(string uid)
     {
-        return uuid.Length != 16 ? Guid.Empty : new Guid(uuid.ToByteArray());
+        return uid.Length != 16 ? Guid.Empty : new Guid(uid.ToString());
     }
-    
-    public static ByteString SerializeUuid(Guid guid)
+
+    public static string SerializeUuid(Guid guid)
     {
-        return ByteString.CopyFrom(guid.ToByteArray());
+        return guid.ToString();
     }
-    
+
     public static string ConvertTimestampToString(Timestamp timestamp)
     {
         if (timestamp == null)
         {
             return string.Empty;
         }
-        
+
         var dateTime = timestamp.ToDateTime();
         return dateTime.ToString("yyyy-MM-dd HH:mm:ss");
     }

@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using NetworkData;
 using Utility;
 
 public class LobbyCanvasController : MonoBehaviour
@@ -19,14 +20,15 @@ public class LobbyCanvasController : MonoBehaviour
 
         _backToLoginPageButton = transform.GetChild(2).GetComponent<Button>();
         _backToLoginPageButton.onClick.AddListener(OnClickBackToLoginPageButton);
-        
+
         _roomPanel = transform.GetChild(3).gameObject;
     }
 
-    public void ChangePanelToRoomPanel(GroupDto groupDto)
+    public void ChangePanelToRoomPanel(InternalGroupDto groupDto)
     {
         _lobbyMainPanel.SetActive(false);
         _roomPanel.SetActive(true);
+
         _roomPanel.GetComponent<InRoomManager>().InitRoom(groupDto);
     }
 
@@ -35,12 +37,12 @@ public class LobbyCanvasController : MonoBehaviour
         _roomPanel.SetActive(false);
         _lobbyMainPanel.SetActive(true);
     }
-    
+
     private void OnClickBackToLoginPageButton()
     {
         if (_backToLoginPageTask is not null)
             return;
-        
+
         _backToLoginPageTask = BackToLoginPageAsync();
     }
 

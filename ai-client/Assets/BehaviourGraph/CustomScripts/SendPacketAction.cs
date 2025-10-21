@@ -17,7 +17,7 @@ public partial class SendPacketAction : Action
     private RpcPacket _sendPacket;
     private Vector3 _targetPosition;
     private LogicServerConnector _networkManager;
-    
+
     protected override Status OnStart()
     {
         _networkManager = LogicServerConnector.Instance;
@@ -25,9 +25,9 @@ public partial class SendPacketAction : Action
         float vertical = Random.Range(-1.0f, 1.0f);
         float horizontal = Random.Range(-1.0f, 1.0f);
         float speed = Random.Range(3.0f, 8.0f);
-        
+
         Vector3 position = AiManager.Value.transform.position;
-        
+
         var moveData = new MoveData
         {
             X = position.x,
@@ -37,14 +37,14 @@ public partial class SendPacketAction : Action
             Horizontal = horizontal,
             Speed = speed
         };
-        
+
         _sendPacket = new RpcPacket
         {
             Method = RpcMethod.Move,
-            Data = moveData.ToByteString(),
+            Data = moveData.ToString(),
             Timestamp = Timestamp.FromDateTime(DateTime.UtcNow),
         };
-        
+
         return Status.Running;
     }
 
@@ -59,4 +59,3 @@ public partial class SendPacketAction : Action
     {
     }
 }
-

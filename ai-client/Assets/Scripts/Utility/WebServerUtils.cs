@@ -37,40 +37,36 @@ namespace Utility
     [Serializable]
     public class UserDto
     {
-        public string uid;
-        public string username;
-        public string role;
-        public string createdAt;
+        public string Uid;
+        public string Username;
+        public string Role;
+        public string CreatedAt;
     }
 
     [Serializable]
     public class UserSimpleDto
     {
-        public Guid uid { get; set; }
+        public Guid Uid { get; set; }
 
-        public string username { get; set; }
+        public string Username { get; set; }
     }
 
     [Serializable]
     public class LoginResponse
     {
-        public string accessToken;
-        public string refreshToken;
-        public UserDto user;
+        public string AccessToken;
+        public string RefreshToken;
+        public UserDto User;
     }
 
     [Serializable]
-    public class GroupDto
+    public class InternalGroupDto
     {
-        public Guid groupId { get; set; }
-
-        public string name { get; set; }
-
-        public UserSimpleDto owner { get; set; }
-
-        public List<UserSimpleDto> players { get; set; }
-
-        public DateTime createdAt { get; set; }
+        public Guid GroupId { get; set; }
+        public string Name { get; set; }
+        public UserSimpleDto Owner { get; set; }
+        public List<UserSimpleDto> Players { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 
     [Serializable]

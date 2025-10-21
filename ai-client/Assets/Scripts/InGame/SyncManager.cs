@@ -12,6 +12,7 @@ public class SyncManager : Singleton<SyncManager>
     [SerializeField] private Transform _syncObjectCanvas;
 
     private LogicServerConnector _networkManager;
+    private AuthManager _authManager;
 
     private Dictionary<Guid, GameObject> _syncObjects = new();
 
@@ -26,6 +27,7 @@ public class SyncManager : Singleton<SyncManager>
 
     private void Start()
     {
+        _authManager = AuthManager.Instance;
         _networkManager = LogicServerConnector.Instance;
     }
 
@@ -81,7 +83,7 @@ public class SyncManager : Singleton<SyncManager>
     public void SyncObjectNone(Guid objectId)
     {
         // self packet check and return
-        if (objectId == _networkManager.ConnectedUuid)
+        if (objectId == _authManager.UserGuid)
             return;
 
         Debug.Log($"SyncObjectNone - {objectId}");

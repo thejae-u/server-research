@@ -18,15 +18,15 @@ public class NameTagController : MonoBehaviour
         ObjectId = objectId;
         _syncObject = syncObject;
         _syncObjectTransform = syncObject.transform;
-        
+
         _camera = Camera.main;
-        
+
         _nameTagText = transform.GetComponentInChildren<TMP_Text>();
         Debug.Assert(_nameTagText is not null, "NameTagController.Init - _nameTagText is null");
         _nameTagText.text = ObjectId.ToString();
         _nameTag = transform.GetChild(0).gameObject;
     }
-    
+
     private void Update()
     {
         if (!IsVisible())
@@ -34,7 +34,7 @@ public class NameTagController : MonoBehaviour
             _nameTag.SetActive(false);
             return;
         }
-        
+
         _nameTag.SetActive(true);
         Vector3 screenPoint = _camera.WorldToScreenPoint(_syncObjectTransform.position);
         screenPoint.y += 50; // Offset the name tag above the object
@@ -49,12 +49,12 @@ public class NameTagController : MonoBehaviour
             Destroy(gameObject);
         }
 
-        if (ObjectId == LogicServerConnector.Instance.ConnectedUuid)
+        if (ObjectId == AuthManager.Instance.UserGuid)
             return false;
-        
+
         Vector3 viewportPoint = _camera.WorldToViewportPoint(_syncObjectTransform.position);
-        
-        return viewportPoint.x is > 0.0f and < 1.0f 
+
+        return viewportPoint.x is > 0.0f and < 1.0f
                && viewportPoint.y is > 0.0f and < 1.0f;
     }
 }

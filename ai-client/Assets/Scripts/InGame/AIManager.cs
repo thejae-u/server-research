@@ -35,11 +35,7 @@ public class AIManager : MonoBehaviour
         Speed = 0.0f
     };
 
-    private readonly RpcPacket _sendPacket = new()
-    {
-        Method = RpcMethod.None,
-        Data = ByteString.Empty,
-    };
+    private readonly RpcPacket _sendPacket = new();
 
     private void Start()
     {
@@ -91,7 +87,7 @@ public class AIManager : MonoBehaviour
         _moveData.Z = transform.position.z;
 
         _sendPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
-        _sendPacket.Data = _moveData.ToByteString();
+        _sendPacket.Data = _moveData.ToString();
 
         var task = _networkManager.AsyncWriteRpcPacket(_sendPacket);
     }
