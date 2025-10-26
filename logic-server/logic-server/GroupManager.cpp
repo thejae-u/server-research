@@ -1,4 +1,4 @@
-﻿#include "GroupManager.h"
+#include "GroupManager.h"
 
 #include "LockstepGroup.h"
 #include "Session.h"
@@ -9,9 +9,9 @@ GroupManager::GroupManager(const std::shared_ptr<ContextManager>& ctxManager) : 
 {
 }
 
-void GroupManager::AddSession(const GroupDto& groupDto, const std::shared_ptr<Session>& newSession)
+void GroupManager::AddSession(const std::shared_ptr<GroupDto>& groupDto, const std::shared_ptr<Session>& newSession)
 {
-	uuid joinGroupId = _toUuid(groupDto.groupid());
+	uuid joinGroupId = _toUuid(groupDto->groupid());
 
 	{
 		std::lock_guard<std::mutex> lock(_groupMutex);
@@ -35,7 +35,7 @@ void GroupManager::AddSession(const GroupDto& groupDto, const std::shared_ptr<Se
 		}
 	}
 
-	const auto newGroupDtoPtr = std::make_shared<GroupDto>(groupDto);
+	const auto& newGroupDtoPtr = groupDto;
 	const auto newGroup = CreateNewGroup(newGroupDtoPtr);
 	newGroup->AddMember(newSession);
 	newGroup->Start();

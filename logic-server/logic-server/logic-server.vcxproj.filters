@@ -77,5 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="InternalId.json" />
+    <None Include=".editorconfig" />
   </ItemGroup>
 </Project>

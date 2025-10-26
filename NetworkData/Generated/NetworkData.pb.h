@@ -1585,11 +1585,28 @@ class GroupDto final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
+    kPlayerListFieldNumber = 4,
     kGroupIdFieldNumber = 1,
     kNameFieldNumber = 2,
-    kPlayerListFieldNumber = 4,
     kOwnerFieldNumber = 3,
   };
+  // repeated .NetworkData.UserSimpleDto playerList = 4;
+  int playerlist_size() const;
+  private:
+  int _internal_playerlist_size() const;
+
+  public:
+  void clear_playerlist() ;
+  ::NetworkData::UserSimpleDto* mutable_playerlist(int index);
+  ::google::protobuf::RepeatedPtrField<::NetworkData::UserSimpleDto>* mutable_playerlist();
+
+  private:
+  const ::google::protobuf::RepeatedPtrField<::NetworkData::UserSimpleDto>& _internal_playerlist() const;
+  ::google::protobuf::RepeatedPtrField<::NetworkData::UserSimpleDto>* _internal_mutable_playerlist();
+  public:
+  const ::NetworkData::UserSimpleDto& playerlist(int index) const;
+  ::NetworkData::UserSimpleDto* add_playerlist();
+  const ::google::protobuf::RepeatedPtrField<::NetworkData::UserSimpleDto>& playerlist() const;
   // string groupId = 1;
   void clear_groupid() ;
   const std::string& groupid() const;
@@ -1622,22 +1639,6 @@ class GroupDto final : public ::google::protobuf::Message
   std::string* _internal_mutable_name();
 
   public:
-  // string playerList = 4;
-  void clear_playerlist() ;
-  const std::string& playerlist() const;
-  template <typename Arg_ = const std::string&, typename... Args_>
-  void set_playerlist(Arg_&& arg, Args_... args);
-  std::string* mutable_playerlist();
-  PROTOBUF_NODISCARD std::string* release_playerlist();
-  void set_allocated_playerlist(std::string* value);
-
-  private:
-  const std::string& _internal_playerlist() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_playerlist(
-      const std::string& value);
-  std::string* _internal_mutable_playerlist();
-
-  public:
   // .NetworkData.UserSimpleDto owner = 3;
   bool has_owner() const;
   void clear_owner() ;
@@ -1658,8 +1659,8 @@ class GroupDto final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      2, 4, 1,
-      50, 2>
+      2, 4, 2,
+      40, 2>
       _table_;
 
   friend class ::google::protobuf::MessageLite;
@@ -1678,9 +1679,9 @@ class GroupDto final : public ::google::protobuf::Message
                           const GroupDto& from_msg);
     ::google::protobuf::internal::HasBits<1> _has_bits_;
     ::google::protobuf::internal::CachedSize _cached_size_;
+    ::google::protobuf::RepeatedPtrField< ::NetworkData::UserSimpleDto > playerlist_;
     ::google::protobuf::internal::ArenaStringPtr groupid_;
     ::google::protobuf::internal::ArenaStringPtr name_;
-    ::google::protobuf::internal::ArenaStringPtr playerlist_;
     ::NetworkData::UserSimpleDto* owner_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -2545,52 +2546,53 @@ inline void GroupDto::set_allocated_owner(::NetworkData::UserSimpleDto* value) {
   // @@protoc_insertion_point(field_set_allocated:NetworkData.GroupDto.owner)
 }
 
-// string playerList = 4;
+// repeated .NetworkData.UserSimpleDto playerList = 4;
+inline int GroupDto::_internal_playerlist_size() const {
+  return _internal_playerlist().size();
+}
+inline int GroupDto::playerlist_size() const {
+  return _internal_playerlist_size();
+}
 inline void GroupDto::clear_playerlist() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.playerlist_.ClearToEmpty();
+  _impl_.playerlist_.Clear();
 }
-inline const std::string& GroupDto::playerlist() const
+inline ::NetworkData::UserSimpleDto* GroupDto::mutable_playerlist(int index)
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable:NetworkData.GroupDto.playerList)
+  return _internal_mutable_playerlist()->Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField<::NetworkData::UserSimpleDto>* GroupDto::mutable_playerlist()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:NetworkData.GroupDto.playerList)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_playerlist();
+}
+inline const ::NetworkData::UserSimpleDto& GroupDto::playerlist(int index) const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
   // @@protoc_insertion_point(field_get:NetworkData.GroupDto.playerList)
+  return _internal_playerlist().Get(index);
+}
+inline ::NetworkData::UserSimpleDto* GroupDto::add_playerlist() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::NetworkData::UserSimpleDto* _add = _internal_mutable_playerlist()->Add();
+  // @@protoc_insertion_point(field_add:NetworkData.GroupDto.playerList)
+  return _add;
+}
+inline const ::google::protobuf::RepeatedPtrField<::NetworkData::UserSimpleDto>& GroupDto::playerlist() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:NetworkData.GroupDto.playerList)
   return _internal_playerlist();
 }
-template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void GroupDto::set_playerlist(Arg_&& arg,
-                                                     Args_... args) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.playerlist_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.GroupDto.playerList)
-}
-inline std::string* GroupDto::mutable_playerlist() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_playerlist();
-  // @@protoc_insertion_point(field_mutable:NetworkData.GroupDto.playerList)
-  return _s;
-}
-inline const std::string& GroupDto::_internal_playerlist() const {
+inline const ::google::protobuf::RepeatedPtrField<::NetworkData::UserSimpleDto>&
+GroupDto::_internal_playerlist() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.playerlist_.Get();
+  return _impl_.playerlist_;
 }
-inline void GroupDto::_internal_set_playerlist(const std::string& value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.playerlist_.Set(value, GetArena());
-}
-inline std::string* GroupDto::_internal_mutable_playerlist() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.playerlist_.Mutable( GetArena());
-}
-inline std::string* GroupDto::release_playerlist() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.GroupDto.playerList)
-  return _impl_.playerlist_.Release();
-}
-inline void GroupDto::set_allocated_playerlist(std::string* value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.playerlist_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.playerlist_.IsDefault()) {
-    _impl_.playerlist_.Set("", GetArena());
-  }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.GroupDto.playerList)
+inline ::google::protobuf::RepeatedPtrField<::NetworkData::UserSimpleDto>*
+GroupDto::_internal_mutable_playerlist() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.playerlist_;
 }
 
 // -------------------------------------------------------------------

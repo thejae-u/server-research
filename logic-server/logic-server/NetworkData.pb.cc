@@ -203,13 +203,11 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
 inline constexpr GroupDto::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : _cached_size_{0},
+        playerlist_{},
         groupid_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
         name_(
-            &::google::protobuf::internal::fixed_address_empty_string,
-            ::_pbi::ConstantInitialized()),
-        playerlist_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
         owner_{nullptr} {}
@@ -359,15 +357,16 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "\022\020\n\010username\030\002 \001(\t\"7\n\014InternalData\022\'\n\010in"
     "ternal\030\001 \001(\0132\025.NetworkData.LoginDto\".\n\010L"
     "oginDto\022\020\n\010username\030\001 \001(\t\022\020\n\010password\030\002 "
-    "\001(\t\"h\n\010GroupDto\022\017\n\007groupId\030\001 \001(\t\022\014\n\004name"
-    "\030\002 \001(\t\022)\n\005owner\030\003 \001(\0132\032.NetworkData.User"
-    "SimpleDto\022\022\n\nplayerList\030\004 \001(\t\"\"\n\013AccessT"
-    "oken\022\023\n\013accessToken\030\001 \001(\t*\277\001\n\tRpcMethod\022"
-    "\020\n\014IN_GAME_NONE\020\000\022\010\n\004MOVE\020\001\022\r\n\tMoveStart"
-    "\020\002\022\014\n\010MoveStop\020\003\022\021\n\014NETWORK_NONE\020\364\003\022\r\n\010U"
-    "DP_PORT\020\365\003\022\016\n\tUSER_INFO\020\366\003\022\017\n\nGROUP_INFO"
-    "\020\367\003\022\t\n\004PING\020\370\003\022\t\n\004PONG\020\371\003\022\021\n\014PACKET_COUN"
-    "T\020\372\003\022\r\n\010LAST_RTT\020\373\003b\006proto3"
+    "\001(\t\"\204\001\n\010GroupDto\022\017\n\007groupId\030\001 \001(\t\022\014\n\004nam"
+    "e\030\002 \001(\t\022)\n\005owner\030\003 \001(\0132\032.NetworkData.Use"
+    "rSimpleDto\022.\n\nplayerList\030\004 \003(\0132\032.Network"
+    "Data.UserSimpleDto\"\"\n\013AccessToken\022\023\n\013acc"
+    "essToken\030\001 \001(\t*\277\001\n\tRpcMethod\022\020\n\014IN_GAME_"
+    "NONE\020\000\022\010\n\004MOVE\020\001\022\r\n\tMoveStart\020\002\022\014\n\010MoveS"
+    "top\020\003\022\021\n\014NETWORK_NONE\020\364\003\022\r\n\010UDP_PORT\020\365\003\022"
+    "\016\n\tUSER_INFO\020\366\003\022\017\n\nGROUP_INFO\020\367\003\022\t\n\004PING"
+    "\020\370\003\022\t\n\004PONG\020\371\003\022\021\n\014PACKET_COUNT\020\372\003\022\r\n\010LAS"
+    "T_RTT\020\373\003b\006proto3"
 };
 static const ::_pbi::DescriptorTable* const descriptor_table_NetworkData_2eproto_deps[1] =
     {
@@ -377,7 +376,7 @@ static ::absl::once_flag descriptor_table_NetworkData_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2eproto = {
     false,
     false,
-    787,
+    816,
     descriptor_table_protodef_NetworkData_2eproto,
     "NetworkData.proto",
     &descriptor_table_NetworkData_2eproto_once,
@@ -1868,9 +1867,9 @@ inline PROTOBUF_NDEBUG_INLINE GroupDto::Impl_::Impl_(
     const Impl_& from, const ::NetworkData::GroupDto& from_msg)
       : _has_bits_{from._has_bits_},
         _cached_size_{0},
+        playerlist_{visibility, arena, from.playerlist_},
         groupid_(arena, from.groupid_),
-        name_(arena, from.name_),
-        playerlist_(arena, from.playerlist_) {}
+        name_(arena, from.name_) {}
 
 GroupDto::GroupDto(
     ::google::protobuf::Arena* arena,
@@ -1896,9 +1895,9 @@ inline PROTOBUF_NDEBUG_INLINE GroupDto::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility,
     ::google::protobuf::Arena* arena)
       : _cached_size_{0},
+        playerlist_{visibility, arena},
         groupid_(arena),
-        name_(arena),
-        playerlist_(arena) {}
+        name_(arena) {}
 
 inline void GroupDto::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -1914,7 +1913,6 @@ inline void GroupDto::SharedDtor(MessageLite& self) {
   ABSL_DCHECK(this_.GetArena() == nullptr);
   this_._impl_.groupid_.Destroy();
   this_._impl_.name_.Destroy();
-  this_._impl_.playerlist_.Destroy();
   delete this_._impl_.owner_;
   this_._impl_.~Impl_();
 }
@@ -1924,8 +1922,20 @@ inline void* GroupDto::PlacementNew_(const void*, void* mem,
   return ::new (mem) GroupDto(arena);
 }
 constexpr auto GroupDto::InternalNewImpl_() {
-  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(GroupDto),
-                                            alignof(GroupDto));
+  constexpr auto arena_bits = ::google::protobuf::internal::EncodePlacementArenaOffsets({
+      PROTOBUF_FIELD_OFFSET(GroupDto, _impl_.playerlist_) +
+          decltype(GroupDto::_impl_.playerlist_)::
+              InternalGetArenaOffset(
+                  ::google::protobuf::Message::internal_visibility()),
+  });
+  if (arena_bits.has_value()) {
+    return ::google::protobuf::internal::MessageCreator::CopyInit(
+        sizeof(GroupDto), alignof(GroupDto), *arena_bits);
+  } else {
+    return ::google::protobuf::internal::MessageCreator(&GroupDto::PlacementNew_,
+                                 sizeof(GroupDto),
+                                 alignof(GroupDto));
+  }
 }
 PROTOBUF_CONSTINIT
 PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
@@ -1955,7 +1965,7 @@ const ::google::protobuf::internal::ClassData* GroupDto::GetClassData() const {
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<2, 4, 1, 50, 2> GroupDto::_table_ = {
+const ::_pbi::TcParseTable<2, 4, 2, 40, 2> GroupDto::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(GroupDto, _impl_._has_bits_),
     0, // no _extensions_
@@ -1964,7 +1974,7 @@ const ::_pbi::TcParseTable<2, 4, 1, 50, 2> GroupDto::_table_ = {
     4294967280,  // skipmap
     offsetof(decltype(_table_), field_entries),
     4,  // num_field_entries
-    1,  // num_aux_entries
+    2,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     _class_data_.base(),
     nullptr,  // post_loop_handler
@@ -1973,9 +1983,9 @@ const ::_pbi::TcParseTable<2, 4, 1, 50, 2> GroupDto::_table_ = {
     ::_pbi::TcParser::GetTable<::NetworkData::GroupDto>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // string playerList = 4;
-    {::_pbi::TcParser::FastUS1,
-     {34, 63, 0, PROTOBUF_FIELD_OFFSET(GroupDto, _impl_.playerlist_)}},
+    // repeated .NetworkData.UserSimpleDto playerList = 4;
+    {::_pbi::TcParser::FastMtR1,
+     {34, 63, 1, PROTOBUF_FIELD_OFFSET(GroupDto, _impl_.playerlist_)}},
     // string groupId = 1;
     {::_pbi::TcParser::FastUS1,
      {10, 63, 0, PROTOBUF_FIELD_OFFSET(GroupDto, _impl_.groupid_)}},
@@ -1997,17 +2007,17 @@ const ::_pbi::TcParseTable<2, 4, 1, 50, 2> GroupDto::_table_ = {
     // .NetworkData.UserSimpleDto owner = 3;
     {PROTOBUF_FIELD_OFFSET(GroupDto, _impl_.owner_), _Internal::kHasBitsOffset + 0, 0,
     (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
-    // string playerList = 4;
-    {PROTOBUF_FIELD_OFFSET(GroupDto, _impl_.playerlist_), -1, 0,
-    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
+    // repeated .NetworkData.UserSimpleDto playerList = 4;
+    {PROTOBUF_FIELD_OFFSET(GroupDto, _impl_.playerlist_), -1, 1,
+    (0 | ::_fl::kFcRepeated | ::_fl::kMessage | ::_fl::kTvTable)},
   }}, {{
     {::_pbi::TcParser::GetTable<::NetworkData::UserSimpleDto>()},
+    {::_pbi::TcParser::GetTable<::NetworkData::UserSimpleDto>()},
   }}, {{
-    "\24\7\4\0\12\0\0\0"
+    "\24\7\4\0\0\0\0\0"
     "NetworkData.GroupDto"
     "groupId"
     "name"
-    "playerList"
   }},
 };
 
@@ -2018,9 +2028,9 @@ PROTOBUF_NOINLINE void GroupDto::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  _impl_.playerlist_.Clear();
   _impl_.groupid_.ClearToEmpty();
   _impl_.name_.ClearToEmpty();
-  _impl_.playerlist_.ClearToEmpty();
   cached_has_bits = _impl_._has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
     ABSL_DCHECK(_impl_.owner_ != nullptr);
@@ -2069,12 +2079,15 @@ PROTOBUF_NOINLINE void GroupDto::Clear() {
                 stream);
           }
 
-          // string playerList = 4;
-          if (!this_._internal_playerlist().empty()) {
-            const std::string& _s = this_._internal_playerlist();
-            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "NetworkData.GroupDto.playerList");
-            target = stream->WriteStringMaybeAliased(4, _s, target);
+          // repeated .NetworkData.UserSimpleDto playerList = 4;
+          for (unsigned i = 0, n = static_cast<unsigned>(
+                                   this_._internal_playerlist_size());
+               i < n; i++) {
+            const auto& repfield = this_._internal_playerlist().Get(i);
+            target =
+                ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+                    4, repfield, repfield.GetCachedSize(),
+                    target, stream);
           }
 
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -2102,6 +2115,15 @@ PROTOBUF_NOINLINE void GroupDto::Clear() {
 
           ::_pbi::Prefetch5LinesFrom7Lines(&this_);
            {
+            // repeated .NetworkData.UserSimpleDto playerList = 4;
+            {
+              total_size += 1UL * this_._internal_playerlist_size();
+              for (const auto& msg : this_._internal_playerlist()) {
+                total_size += ::google::protobuf::internal::WireFormatLite::MessageSize(msg);
+              }
+            }
+          }
+           {
             // string groupId = 1;
             if (!this_._internal_groupid().empty()) {
               total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -2111,11 +2133,6 @@ PROTOBUF_NOINLINE void GroupDto::Clear() {
             if (!this_._internal_name().empty()) {
               total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
                                               this_._internal_name());
-            }
-            // string playerList = 4;
-            if (!this_._internal_playerlist().empty()) {
-              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
-                                              this_._internal_playerlist());
             }
           }
            {
@@ -2139,14 +2156,13 @@ void GroupDto::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google
   ::uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  _this->_internal_mutable_playerlist()->MergeFrom(
+      from._internal_playerlist());
   if (!from._internal_groupid().empty()) {
     _this->_internal_set_groupid(from._internal_groupid());
   }
   if (!from._internal_name().empty()) {
     _this->_internal_set_name(from._internal_name());
-  }
-  if (!from._internal_playerlist().empty()) {
-    _this->_internal_set_playerlist(from._internal_playerlist());
   }
   cached_has_bits = from._impl_._has_bits_[0];
   if (cached_has_bits & 0x00000001u) {
@@ -2176,9 +2192,9 @@ void GroupDto::InternalSwap(GroupDto* PROTOBUF_RESTRICT other) {
   ABSL_DCHECK_EQ(arena, other->GetArena());
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  _impl_.playerlist_.InternalSwap(&other->_impl_.playerlist_);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.groupid_, &other->_impl_.groupid_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.name_, &other->_impl_.name_, arena);
-  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.playerlist_, &other->_impl_.playerlist_, arena);
   swap(_impl_.owner_, other->_impl_.owner_);
 }
 

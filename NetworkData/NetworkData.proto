@@ -44,7 +44,7 @@ message GroupDto
 	string groupId = 1;
 	string name = 2;
 	UserSimpleDto owner = 3;
-	string playerList = 4;
+	repeated UserSimpleDto playerList = 4;
 }
 
 message AccessToken

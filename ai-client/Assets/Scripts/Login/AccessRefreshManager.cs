@@ -103,11 +103,7 @@ public class AccessRefreshManager : MonoBehaviour
         _statusText.text = "접속중...";
         _statusText.color = Color.black;
 
-        AsyncOperation loginTask = SceneManager.LoadSceneAsync("LobbyScene");
-        while (loginTask is { isDone: false })
-        {
-            yield return null;
-        }
+        SceneController.Instance.LoadSceneAsync(SceneController.EScene.LobbyScene);
     }
 
     private IEnumerator BackToLoginRoutine(bool isLogout = false)

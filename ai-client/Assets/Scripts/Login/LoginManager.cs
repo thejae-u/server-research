@@ -93,6 +93,7 @@ public class LoginManager : MonoBehaviour
 
             _authManager.InitTokens(response);
             ToastStatusText("로그인 성공, 게임에 접속합니다.", new Color(0, 128, 0), 1.0f);
+
             StartCoroutine(ChangeToLobbyScene());
         }
         else if (request.result == UnityWebRequest.Result.ConnectionError)
@@ -123,11 +124,7 @@ public class LoginManager : MonoBehaviour
         }
 
         SetStatusText("접속중...", Color.black);
-        AsyncOperation loginTask = SceneManager.LoadSceneAsync("LobbyScene");
-        while (loginTask is { isDone: false })
-        {
-            yield return null;
-        }
+        SceneController.Instance.LoadSceneAsync(SceneController.EScene.LobbyScene);
     }
 
     private void SetStatusText(string text, Color color)

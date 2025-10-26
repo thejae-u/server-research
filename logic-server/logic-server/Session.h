@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -34,78 +34,78 @@ class Session final : public Base<Session>
 {
 public:
 
-	Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager);
-	~Session() override
-	{
-		if (_sessionInfo.uid() != "")
-			spdlog::info("{} : session destoryed", _sessionInfo.uid());
-		else
-			spdlog::info("empty session destroyed");
-	}
+    Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager);
+    ~Session() override
+    {
+        if (_sessionInfo.uid() != "")
+            spdlog::info("{} : session destoryed", _sessionInfo.uid());
+        else
+            spdlog::info("empty session destroyed");
+    }
 
-	void Start() override;
-	void Stop() override;
+    void Start() override;
+    void Stop() override;
 
-	using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
-	void SetStopCallback(StopCallback stopCallback);
+    using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
+    void SetStopCallback(StopCallback stopCallback);
 
-	using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
-	void SetCollectInputAction(SessionInput inputAction);
+    using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
+    void SetCollectInputAction(SessionInput inputAction);
 
-	void SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs);
-	tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
-	void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
+    void SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs);
+    tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
+    void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 
-	bool ExchangeUdpPort();
-	void AsyncExchangeUdpPortWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
+    bool ExchangeUdpPort();
+    void AsyncExchangeUdpPortWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
 
-	bool ReceiveUserInfo();
-	void AsyncReceiveUserInfo(std::function<void(bool success)> onComplete);
+    bool ReceiveUserInfo();
+    void AsyncReceiveUserInfo(std::function<void(bool success)> onComplete);
 
-	bool ReceiveGroupInfo();
-	void AysncReceiveGroupInfo(std::function<void(bool success)> onComlete);
+    bool ReceiveGroupInfo(std::shared_ptr<GroupDto>& groupInfo);
+    void AysncReceiveGroupInfo(std::function<void(bool success, std::shared_ptr<GroupDto> groupInfo)> onComlete);
 
-	bool IsValid() const { return _isConnected; }
-	uuid GetSessionUuid() { return _toUuid(_sessionInfo.uid()); }
+    bool IsValid() const { return _isConnected; }
+    uuid GetSessionUuid() { return _toUuid(_sessionInfo.uid()); }
 
 private:
-	using TcpSocket = tcp::socket;
-	using UdpSocket = udp::socket;
+    using TcpSocket = tcp::socket;
+    using UdpSocket = udp::socket;
 
-	std::shared_ptr<ContextManager> _ctxManager;
-	std::shared_ptr<ContextManager> _rpcCtxManager;
+    std::shared_ptr<ContextManager> _ctxManager;
+    std::shared_ptr<ContextManager> _rpcCtxManager;
 
-	std::shared_ptr<TcpSocket> _tcpSocketPtr;
-	std::shared_ptr<UdpSocket> _udpSocketPtr;
-	udp::endpoint _udpSendEp;
+    std::shared_ptr<TcpSocket> _tcpSocketPtr;
+    std::shared_ptr<UdpSocket> _udpSocketPtr;
+    udp::endpoint _udpSendEp;
 
-	bool _isConnected = false;
+    bool _isConnected = false;
 
-	boost::uuids::string_generator _toUuid;
-	UserSimpleDto _sessionInfo;
-	GroupDto _groupDto;
+    boost::uuids::string_generator _toUuid;
+    UserSimpleDto _sessionInfo;
+    NetworkData::GroupDto _groupDto;
 
-	std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
+    std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
 
-	std::shared_ptr<Scheduler> _pingTimer;
-	const std::uint32_t _pingDelay = 500;
-	std::chrono::high_resolution_clock::time_point _pingTime;
-	std::uint64_t _lastRtt;
+    std::shared_ptr<Scheduler> _pingTimer;
+    const std::uint32_t _pingDelay = 500;
+    std::chrono::high_resolution_clock::time_point _pingTime;
+    std::uint64_t _lastRtt;
 
-	StopCallback _onStopCallback;
-	SessionInput _inputAction;
+    StopCallback _onStopCallback;
+    SessionInput _inputAction;
 
-	std::uint32_t _tcpNetSize = 0;
-	std::uint32_t _tcpDataSize = 0;
+    std::uint32_t _tcpNetSize = 0;
+    std::uint32_t _tcpDataSize = 0;
 
-	void SendPingPacket();
-	void ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet);
+    void SendPingPacket();
+    void ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet);
 
-	void TcpAsyncWrite(const std::shared_ptr<std::string>& data);
+    void TcpAsyncWrite(const std::shared_ptr<std::string>& data);
 
-	void TcpAsyncReadSize();
-	void TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer);
+    void TcpAsyncReadSize();
+    void TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer);
 
-	void UdpAsyncRead();
-	void UdpAsyncWrite(const std::shared_ptr<std::string>& data);
+    void UdpAsyncRead();
+    void UdpAsyncWrite(const std::shared_ptr<std::string>& data);
 };

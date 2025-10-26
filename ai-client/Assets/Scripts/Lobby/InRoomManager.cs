@@ -10,6 +10,7 @@ using Utility;
 using Network;
 using NetworkData;
 using System;
+using Google.Protobuf;
 
 public class InRoomManager : MonoBehaviour
 {
@@ -63,15 +64,23 @@ public class InRoomManager : MonoBehaviour
             Username = groupDto.Owner.Username
         };
 
-        var playerListJsonString = JsonConvert.SerializeObject(groupDto.Players);
-
         _externalGroupInfo = new GroupDto()
         {
             GroupId = groupDto.GroupId.ToString(),
             Name = groupDto.Name,
             Owner = owner,
-            PlayerList = playerListJsonString
         };
+
+        foreach (var item in groupDto.Players)
+        {
+            var player = new NetworkData.UserSimpleDto()
+            {
+                Uid = item.Uid.ToString(),
+                Username = item.Username,
+            };
+
+            _externalGroupInfo.PlayerList.Add(player);
+        }
 
         _roomName.text = groupDto.Name;
 
@@ -321,7 +330,7 @@ public class InRoomManager : MonoBehaviour
 
         Debug.Log($"Connect to Logic Server");
         // 로직 서버 접속 시도 (접속 실패 시 예외 처리 필요)
-        _logicServerConnector.TryConnectToServer(this, _externalGroupInfo, ip, port);
+        yield return _logicServerConnector.TryConnectToServer(this, _externalGroupInfo, ip, port);
 
         if (_startGameRoutine is not null)
         {

@@ -33,15 +33,16 @@ namespace NetworkData {
             "ZS5wcm90b2J1Zi5UaW1lc3RhbXAiLgoNVXNlclNpbXBsZUR0bxILCgN1aWQY",
             "ASABKAkSEAoIdXNlcm5hbWUYAiABKAkiNwoMSW50ZXJuYWxEYXRhEicKCGlu",
             "dGVybmFsGAEgASgLMhUuTmV0d29ya0RhdGEuTG9naW5EdG8iLgoITG9naW5E",
-            "dG8SEAoIdXNlcm5hbWUYASABKAkSEAoIcGFzc3dvcmQYAiABKAkiaAoIR3Jv",
-            "dXBEdG8SDwoHZ3JvdXBJZBgBIAEoCRIMCgRuYW1lGAIgASgJEikKBW93bmVy",
-            "GAMgASgLMhouTmV0d29ya0RhdGEuVXNlclNpbXBsZUR0bxISCgpwbGF5ZXJM",
-            "aXN0GAQgASgJIiIKC0FjY2Vzc1Rva2VuEhMKC2FjY2Vzc1Rva2VuGAEgASgJ",
-            "Kr8BCglScGNNZXRob2QSEAoMSU5fR0FNRV9OT05FEAASCAoETU9WRRABEg0K",
-            "CU1vdmVTdGFydBACEgwKCE1vdmVTdG9wEAMSEQoMTkVUV09SS19OT05FEPQD",
-            "Eg0KCFVEUF9QT1JUEPUDEg4KCVVTRVJfSU5GTxD2AxIPCgpHUk9VUF9JTkZP",
-            "EPcDEgkKBFBJTkcQ+AMSCQoEUE9ORxD5AxIRCgxQQUNLRVRfQ09VTlQQ+gMS",
-            "DQoITEFTVF9SVFQQ+wNiBnByb3RvMw=="));
+            "dG8SEAoIdXNlcm5hbWUYASABKAkSEAoIcGFzc3dvcmQYAiABKAkihAEKCEdy",
+            "b3VwRHRvEg8KB2dyb3VwSWQYASABKAkSDAoEbmFtZRgCIAEoCRIpCgVvd25l",
+            "chgDIAEoCzIaLk5ldHdvcmtEYXRhLlVzZXJTaW1wbGVEdG8SLgoKcGxheWVy",
+            "TGlzdBgEIAMoCzIaLk5ldHdvcmtEYXRhLlVzZXJTaW1wbGVEdG8iIgoLQWNj",
+            "ZXNzVG9rZW4SEwoLYWNjZXNzVG9rZW4YASABKAkqvwEKCVJwY01ldGhvZBIQ",
+            "CgxJTl9HQU1FX05PTkUQABIICgRNT1ZFEAESDQoJTW92ZVN0YXJ0EAISDAoI",
+            "TW92ZVN0b3AQAxIRCgxORVRXT1JLX05PTkUQ9AMSDQoIVURQX1BPUlQQ9QMS",
+            "DgoJVVNFUl9JTkZPEPYDEg8KCkdST1VQX0lORk8Q9wMSCQoEUElORxD4AxIJ",
+            "CgRQT05HEPkDEhEKDFBBQ0tFVF9DT1VOVBD6AxINCghMQVNUX1JUVBD7A2IG",
+            "cHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { global::Google.Protobuf.WellKnownTypes.TimestampReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::NetworkData.RpcMethod), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -1510,7 +1511,7 @@ namespace NetworkData {
       groupId_ = other.groupId_;
       name_ = other.name_;
       owner_ = other.owner_ != null ? other.owner_.Clone() : null;
-      playerList_ = other.playerList_;
+      playerList_ = other.playerList_.Clone();
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1558,14 +1559,13 @@ namespace NetworkData {
 
     /// <summary>Field number for the "playerList" field.</summary>
     public const int PlayerListFieldNumber = 4;
-    private string playerList_ = "";
+    private static readonly pb::FieldCodec<global::NetworkData.UserSimpleDto> _repeated_playerList_codec
+        = pb::FieldCodec.ForMessage(34, global::NetworkData.UserSimpleDto.Parser);
+    private readonly pbc::RepeatedField<global::NetworkData.UserSimpleDto> playerList_ = new pbc::RepeatedField<global::NetworkData.UserSimpleDto>();
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string PlayerList {
+    public pbc::RepeatedField<global::NetworkData.UserSimpleDto> PlayerList {
       get { return playerList_; }
-      set {
-        playerList_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1586,7 +1586,7 @@ namespace NetworkData {
       if (GroupId != other.GroupId) return false;
       if (Name != other.Name) return false;
       if (!object.Equals(Owner, other.Owner)) return false;
-      if (PlayerList != other.PlayerList) return false;
+      if(!playerList_.Equals(other.playerList_)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1597,7 +1597,7 @@ namespace NetworkData {
       if (GroupId.Length != 0) hash ^= GroupId.GetHashCode();
       if (Name.Length != 0) hash ^= Name.GetHashCode();
       if (owner_ != null) hash ^= Owner.GetHashCode();
-      if (PlayerList.Length != 0) hash ^= PlayerList.GetHashCode();
+      hash ^= playerList_.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1628,10 +1628,7 @@ namespace NetworkData {
         output.WriteRawTag(26);
         output.WriteMessage(Owner);
       }
-      if (PlayerList.Length != 0) {
-        output.WriteRawTag(34);
-        output.WriteString(PlayerList);
-      }
+      playerList_.WriteTo(output, _repeated_playerList_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1654,10 +1651,7 @@ namespace NetworkData {
         output.WriteRawTag(26);
         output.WriteMessage(Owner);
       }
-      if (PlayerList.Length != 0) {
-        output.WriteRawTag(34);
-        output.WriteString(PlayerList);
-      }
+      playerList_.WriteTo(ref output, _repeated_playerList_codec);
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1677,9 +1671,7 @@ namespace NetworkData {
       if (owner_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Owner);
       }
-      if (PlayerList.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(PlayerList);
-      }
+      size += playerList_.CalculateSize(_repeated_playerList_codec);
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -1704,9 +1696,7 @@ namespace NetworkData {
         }
         Owner.MergeFrom(other.Owner);
       }
-      if (other.PlayerList.Length != 0) {
-        PlayerList = other.PlayerList;
-      }
+      playerList_.Add(other.playerList_);
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
 
@@ -1742,7 +1732,7 @@ namespace NetworkData {
             break;
           }
           case 34: {
-            PlayerList = input.ReadString();
+            playerList_.AddEntriesFrom(input, _repeated_playerList_codec);
             break;
           }
         }
@@ -1780,7 +1770,7 @@ namespace NetworkData {
             break;
           }
           case 34: {
-            PlayerList = input.ReadString();
+            playerList_.AddEntriesFrom(ref input, _repeated_playerList_codec);
             break;
           }
         }

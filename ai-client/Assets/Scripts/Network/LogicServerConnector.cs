@@ -49,7 +49,7 @@ namespace Network
         public uint ErrorCount { get; set; }
         private object _errorCountLock = new();
 
-        private NetworkData.GroupDto _currentGroupDto = null;
+        private GroupDto _currentGroupDto = null;
         private AuthManager _authManager;
 
         private Task _tcpReadTask;
@@ -99,7 +99,7 @@ namespace Network
             ProcessRpc();
         }
 
-        public async void TryConnectToServer(InRoomManager roomManager, GroupDto groupInfo, string ip, ushort port)
+        public async Task TryConnectToServer(InRoomManager roomManager, GroupDto groupInfo, string ip, ushort port)
         {
             if (IsOnline)
             {
@@ -124,7 +124,11 @@ namespace Network
             {
                 roomManager.InitByFailedConnection();
                 IsTryingToConnect = false;
+                return;
             }
+
+            // Scene Change
+            SceneController.Instance.LoadSceneAsync(SceneController.EScene.GameScene);
         }
 
         private async Task<bool> ConnectToServer()
@@ -154,6 +158,7 @@ namespace Network
                     }
                     else
                     {
+                        Debug.Log($"서버 연결 실패: {ex.Message}");
                         _currentGroupDto = null;
                         return false;
                     }
@@ -197,6 +202,9 @@ namespace Network
             _udpReadTask = UdpAsyncReadData(_globalCancellationToken);
 
             IsTryingToConnect = false;
+
+            // Scene Change Call Here
+
             return true;
         }
 
@@ -361,6 +369,8 @@ namespace Network
 
                 var sendDtoString = JsonFormatter.Default.Format(_currentGroupDto);
 
+                Debug.Log($"Send Dto String : {sendDtoString}");
+
                 RpcPacket sendPacket = new()
                 {
                     Method = RpcMethod.GroupInfo,
@@ -369,7 +379,7 @@ namespace Network
                 };
 
                 byte[] sendPacketData = ProtoSerializer.SerializeNetworkData(sendPacket);
-                byte[] sendPacketSize = BitConverter.GetBytes(sendPacket.Data.Length);
+                byte[] sendPacketSize = BitConverter.GetBytes(sendPacketData.Length);
 
                 if (BitConverter.IsLittleEndian)
                     Array.Reverse(sendPacketSize);
