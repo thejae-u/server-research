@@ -41,7 +41,7 @@ public partial class SendPacketAction : Action
         _sendPacket = new RpcPacket
         {
             Method = RpcMethod.Move,
-            Data = moveData.ToString(),
+            Data = moveData.ToByteString(),
             Timestamp = Timestamp.FromDateTime(DateTime.UtcNow),
         };
 

@@ -17,7 +17,7 @@ public class AIManager : MonoBehaviour
     [SerializeField] private PlayerStatData _playerStatData;
     [SerializeField] private float _movePacketSendInterval = 16.6f; // in milliseconds
 
-    private LogicServerConnector _networkManager;
+    private LogicServerConnector _connector;
 
     private bool _isMoving;
 
@@ -39,7 +39,7 @@ public class AIManager : MonoBehaviour
 
     private void Start()
     {
-        _networkManager = LogicServerConnector.Instance;
+        _connector = LogicServerConnector.Instance;
         _isMoving = false;
     }
 
@@ -59,7 +59,7 @@ public class AIManager : MonoBehaviour
 
     private void Update()
     {
-        if (!_networkManager.IsOnline)
+        if (!_connector.IsOnline)
             return;
 
         _lastSendDeltaTime += Time.deltaTime * 1000.0f; // Convert to milliseconds
@@ -87,9 +87,9 @@ public class AIManager : MonoBehaviour
         _moveData.Z = transform.position.z;
 
         _sendPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
-        _sendPacket.Data = _moveData.ToString();
+        _sendPacket.Data = _moveData.ToByteString();
 
-        var task = _networkManager.AsyncWriteRpcPacket(_sendPacket);
+        var task = _connector.AsyncWriteRpcPacketByUdp(_sendPacket, _connector.CToken);
     }
 
     public void MoveTo()

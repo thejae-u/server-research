@@ -50,7 +50,11 @@ namespace Network
         private object _errorCountLock = new();
 
         private GroupDto _currentGroupDto = null;
+        public List<UserSimpleDto> Users => _currentGroupDto.PlayerList.ToList();
         private AuthManager _authManager;
+
+        private readonly CancellationTokenSource _globalCancellationToken = new();
+        public CancellationToken CToken => _globalCancellationToken.Token;
 
         private Task _tcpReadTask;
         private Task _udpReadTask;
@@ -71,9 +75,6 @@ namespace Network
             }
         }
 
-        private readonly CancellationTokenSource _cancellationTokenSource = new();
-        private CancellationToken _globalCancellationToken => _cancellationTokenSource.Token;
-
         public bool IsOnline { get; private set; }
         public bool IsSendPacketOn { get; private set; }
         private bool IsTryingToConnect { get; set; }
@@ -89,8 +90,8 @@ namespace Network
 
         private void OnDestroy()
         {
-            _cancellationTokenSource.Cancel();
-            _cancellationTokenSource.Dispose();
+            _globalCancellationToken.Cancel();
+            _globalCancellationToken.Dispose();
             DisconnectFromServer();
         }
 
@@ -174,20 +175,20 @@ namespace Network
             _tcpStream = _tcpClient.GetStream();
 
             // Get Udp Port
-            if (!await AsyncExchangeUdpPort(_globalCancellationToken))
+            if (!await AsyncExchangeUdpPort(CToken))
             {
                 DisconnectFromServer();
                 return false;
             }
 
             // Send user info and group info
-            if (!await AsyncExchangeUserInfo(_globalCancellationToken))
+            if (!await AsyncExchangeUserInfo(CToken))
             {
                 DisconnectFromServer();
                 return false;
             }
 
-            if (!await AsyncExchangeGroupInfo(_globalCancellationToken))
+            if (!await AsyncExchangeGroupInfo(CToken))
             {
                 DisconnectFromServer();
                 return false;
@@ -198,8 +199,8 @@ namespace Network
 
             IsOnline = true;
 
-            _tcpReadTask = TcpAsyncReadData(_globalCancellationToken);
-            _udpReadTask = UdpAsyncReadData(_globalCancellationToken);
+            _tcpReadTask = TcpAsyncReadData(CToken);
+            _udpReadTask = UdpAsyncReadData(CToken);
 
             IsTryingToConnect = false;
 
@@ -219,7 +220,7 @@ namespace Network
                 if (bytesRead == 0)
                     return false;
 
-                // Convert the size from bytes to uint
+                // Network to Host
                 if (BitConverter.IsLittleEndian)
                     Array.Reverse(udpPortPacketSize);
 
@@ -234,30 +235,48 @@ namespace Network
                     return false;
 
                 // Deserialize the data
-                RpcPacket udpPortData = ProtoSerializer.DeserializeNetworkData(dataBuffer);
+                RpcPacket receiveUdpPort = RpcPacket.Parser.ParseFrom(dataBuffer);
 
-                // Convert string to ushort (Port)
-                var byteData = Encoding.UTF8.GetBytes(udpPortData.Data);
-                if (!BitConverter.IsLittleEndian)
+                // Network to Host
+                var byteData = receiveUdpPort.Data.ToByteArray();
+                if (byteData.Length != sizeof(ushort))
+                {
+                    Debug.LogError($"Invalid port data length: {byteData.Length}");
+                    return false;
+                }
+
+                if (BitConverter.IsLittleEndian)
                     Array.Reverse(byteData);
 
                 ushort udpPort = BitConverter.ToUInt16(byteData, 0);
+                Debug.Log($"Received Server Udp Port: {udpPort}");
 
-                // Endpoint Setting
+                // Udp Socket Init
                 _udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
+                const int SIO_UDP_CONNRESET = -1744830452;
+                byte[] inValue = new byte[] { 0 };
+                byte[] outValue = new byte[] { 0 };
+                _udpClient.Client.IOControl(SIO_UDP_CONNRESET, inValue, outValue);
+
+                // Endpoint set
                 _clientUdpEndPoint = (IPEndPoint)_udpClient.Client.LocalEndPoint!;
                 _serverUdpEndPoint = new IPEndPoint(IPAddress.Parse(Host), udpPort);
                 Debug.Log($"Udp Client Created - {_serverUdpEndPoint.Address}:{_serverUdpEndPoint.Port}");
 
                 // Send the UDP port to the server
                 var clientPort = (ushort)_clientUdpEndPoint.Port;
+                Debug.Log($"Send Port : {clientPort}");
+
+                var netClientPort = BitConverter.GetBytes(clientPort);
+                if (BitConverter.IsLittleEndian)
+                    Array.Reverse(netClientPort);
+
+                var sendClientPort = ByteString.CopyFrom(netClientPort);
                 var sendUdpPortPacket = new RpcPacket
                 {
                     Method = RpcMethod.UdpPort,
-                    Data = clientPort.ToString(),
+                    Data = sendClientPort,
                 };
-
-                Debug.Log($"Send Udp Port little endian - {clientPort}");
 
                 // convert client port for send
                 byte[] sendUdpPortPacketData = sendUdpPortPacket.ToByteArray();
@@ -307,7 +326,7 @@ namespace Network
                     return false;
 
                 // deserialize receive packet
-                RpcPacket userInfoData = ProtoSerializer.DeserializeNetworkData(dataBuffer);
+                RpcPacket userInfoData = RpcPacket.Parser.ParseFrom(dataBuffer);
                 if (userInfoData.Method != RpcMethod.UserInfo)
                     return false;
 
@@ -316,10 +335,10 @@ namespace Network
                 {
                     Uid = _authManager.UserGuid.ToString(),
                     Method = RpcMethod.UserInfo,
-                    Data = _authManager.Username
+                    Data = ByteString.CopyFrom(Encoding.UTF8.GetBytes(_authManager.Username))
                 };
 
-                byte[] sendData = ProtoSerializer.SerializeNetworkData(sendUserInfoData);
+                byte[] sendData = sendUserInfoData.ToByteArray(); // Serialize rpc packet to byte[]
                 byte[] sendDataSize = BitConverter.GetBytes(sendData.Length);
 
                 if (BitConverter.IsLittleEndian)
@@ -363,7 +382,7 @@ namespace Network
                 if (readBytes == 0)
                     return false;
 
-                RpcPacket readPacket = ProtoSerializer.DeserializeNetworkData(readBuffer);
+                RpcPacket readPacket = RpcPacket.Parser.ParseFrom(readBuffer);
                 if (readPacket.Method != RpcMethod.GroupInfo)
                     return false;
 
@@ -375,10 +394,10 @@ namespace Network
                 {
                     Method = RpcMethod.GroupInfo,
                     Uid = _authManager.UserGuid.ToString(),
-                    Data = sendDtoString,
+                    Data = ByteString.CopyFrom(Encoding.UTF8.GetBytes(sendDtoString))
                 };
 
-                byte[] sendPacketData = ProtoSerializer.SerializeNetworkData(sendPacket);
+                byte[] sendPacketData = sendPacket.ToByteArray(); // serialize rpc packet to byte[]
                 byte[] sendPacketSize = BitConverter.GetBytes(sendPacketData.Length);
 
                 if (BitConverter.IsLittleEndian)
@@ -419,7 +438,7 @@ namespace Network
             Debug.Log("disconnected.");
         }
 
-        public async Task AsyncWriteRpcPacket(RpcPacket data)
+        public async Task AsyncWriteRpcPacketByUdp(RpcPacket data, CancellationToken ct)
         {
             if (!IsOnline)
                 return;
@@ -428,7 +447,7 @@ namespace Network
             {
                 data.Uid = _authManager.UserGuid.ToString();
 
-                byte[] payload = ProtoSerializer.SerializeNetworkData(data);
+                byte[] payload = data.ToByteArray();
                 var payloadSize = (short)payload.Length;
                 byte[] sizeBuffer = BitConverter.GetBytes(payloadSize);
 
@@ -446,12 +465,16 @@ namespace Network
                     ++_sentPacketCount;
                 }
 
-                Debug.Log($"Sent Rpc Packet To Server {ProtoSerializer.ConvertTimestampToString(data.Timestamp)}" +
-                          $" {ProtoSerializer.ConvertUuidToGuid(data.Uid)}: {data.Method}");
+                Debug.Log($"Sent Rpc Packet To Server {Utility.Util.ConvertTimestampToString(data.Timestamp)}" +
+                          $" {data.Uid}: {data.Method}");
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.Log("Cancelled");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"send to failed: {ex.Message}");
+                Debug.LogError($"send failed: {ex.Message}");
             }
         }
 
@@ -463,7 +486,7 @@ namespace Network
             try
             {
                 // Tcp Send
-                byte[] sendPacket = ProtoSerializer.SerializeNetworkData(data);
+                byte[] sendPacket = data.ToByteArray();
                 byte[] packetSize = BitConverter.GetBytes(sendPacket.Length);
 
                 if (BitConverter.IsLittleEndian)
@@ -540,12 +563,12 @@ namespace Network
         {
             while (!ct.IsCancellationRequested && IsOnline)
             {
-                // Read the data from the stream
-                UdpReceiveResult result;
-
+                Debug.Log($"Called");
                 try
                 {
-                    result = await _udpClient.ReceiveAsync();
+                    // Read the data from the stream
+                    Debug.Log($"udp endpoint : {_udpClient.Client.RemoteEndPoint}");
+                    UdpReceiveResult result = await _udpClient.ReceiveAsync();
                     byte[] readData = result.Buffer;
 
                     // Error 시 버림
@@ -580,7 +603,6 @@ namespace Network
                     // Extract the payload
                     var payload = new byte[payloadSize];
                     Buffer.BlockCopy(readData, 2, payload, 0, payloadSize);
-
                     EnqueueProcess(payload);
 
                     lock (_receivedPacketLock)
@@ -592,6 +614,14 @@ namespace Network
                 {
                     Debug.Log($"UDP loop canceled");
                     break;
+                }
+                catch (ObjectDisposedException ex)
+                {
+                    Debug.LogError($"{ex.HResult} : error object dis {ex.Message}");
+                }
+                catch (SocketException ex)
+                {
+                    Debug.LogError($"{ex.SocketErrorCode} : error socket {ex.Message}");
                 }
                 catch (Exception ex)
                 {
@@ -622,7 +652,7 @@ namespace Network
             if (nextProcess == null)
                 return;
 
-            var data = ProtoSerializer.DeserializeNetworkData(nextProcess);
+            var data = RpcPacket.Parser.ParseFrom(nextProcess);
             if (data == null)
                 return;
 
@@ -635,21 +665,21 @@ namespace Network
                         Uid = _authManager.ToString()
                     };
 
-                    var task = AsyncWriteByTcp(pongPacket, _globalCancellationToken);
+                    var task = AsyncWriteByTcp(pongPacket, CToken);
                     break;
 
                 case RpcMethod.MoveStart:
                 case RpcMethod.MoveStop:
                 case RpcMethod.Move:
                     // Deserialize the data
-                    MoveData moveData = MoveData.Parser.ParseFrom(Encoding.UTF8.GetBytes(data.Data));
+                    MoveData moveData = MoveData.Parser.ParseFrom(Encoding.UTF8.GetBytes(data.Data.ToString()));
 
                     // Call SyncManager to sync the object position
-                    SyncManager.Instance.SyncObjectPosition(ProtoSerializer.ConvertUuidToGuid(data.Uid), moveData);
+                    SyncManager.Instance.SyncObjectPosition(Guid.Parse(data.Uid), moveData);
                     break;
 
                 case RpcMethod.LastRtt:
-                    byte[] rttData = Encoding.UTF8.GetBytes(data.Data);
+                    byte[] rttData = Encoding.UTF8.GetBytes(data.Data.ToStringUtf8());
                     _lastRtt = uint.Parse(Encoding.ASCII.GetString(rttData));
                     _rttList.Add(_lastRtt);
                     RttAverage = (uint)_rttList.Average(x => x);

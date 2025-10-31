@@ -1,7 +1,6 @@
 ﻿using System;
 using UnityEngine;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using Network;
 using NetworkData;
 
@@ -11,73 +10,70 @@ public class SyncManager : Singleton<SyncManager>
     [SerializeField] private GameObject _syncObjectNameTagPrefab;
     [SerializeField] private Transform _syncObjectCanvas;
 
-    private LogicServerConnector _networkManager;
+    private LogicServerConnector _connector;
     private AuthManager _authManager;
 
-    private Dictionary<Guid, GameObject> _syncObjects = new();
-
-    private void OnEnable()
-    {
-        LogicServerConnector.Instance.disconnectAction += OnDisconnected;
-    }
-
-    private void OnDisable()
-    {
-    }
+    private readonly Dictionary<Guid, GameObject> _syncObjects = new();
+    private readonly Dictionary<Guid, UserSimpleDto> _userInfos = new();
 
     private void Start()
     {
         _authManager = AuthManager.Instance;
-        _networkManager = LogicServerConnector.Instance;
-    }
+        _connector = LogicServerConnector.Instance;
 
-    private void OnDisconnected()
-    {
-        // all sync objects should be removed
-        foreach (GameObject syncObject in _syncObjects.Values)
+        // 시작 시 모든 플레이어 오브젝트 생성
+        foreach (var user in _connector.Users)
         {
-            Destroy(syncObject);
+            var userId = Guid.Parse(user.Uid);
+            var newUser = CreateSyncObject(user, Vector3.zero);
+            if (!_syncObjects.TryAdd(userId, newUser))
+            {
+                Debug.LogError($"Invalid situation: {user.Uid} already exist in syncObjects");
+            }
+
+            if (!_userInfos.TryAdd(userId, user))
+            {
+                Debug.LogError($"Invalid situation: {user.Uid} already exist in userInfos");
+            }
         }
     }
 
-    private GameObject CreateSyncObject(Guid objectId, Vector3 position)
+    private GameObject CreateSyncObject(UserSimpleDto user, Vector3 position)
     {
         GameObject syncObject = Instantiate(_syncObjectPrefab, position, Quaternion.identity); // Create the object
 
-        syncObject.transform.SetParent(transform); // Set parent to SyncManager (here)
-        syncObject.name = objectId.ToString(); // Set the name to the objectId
-        syncObject.GetComponent<SyncObject>().Init(objectId); // Initialize SyncObject
+        syncObject.transform.SetParent(transform); // Set parent to SyncManager
+        syncObject.name = user.ToString(); // Set the name to the objectId
+        syncObject.GetComponent<SyncObject>().Init(user); // Initialize SyncObject
 
         // Create the name tag
         GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
-        nameTag.GetComponent<NameTagController>().Init(objectId, syncObject);
+        nameTag.GetComponent<NameTagController>().Init(user, syncObject);
 
-        _syncObjects.Add(objectId, syncObject); // Add to dict
+        _syncObjects.Add(Guid.Parse(user.Uid), syncObject); // Add to dict
 
         return syncObject;
     }
 
-    public void SyncObjectPosition(Guid objectId, MoveData moveData)
+    public void SyncObjectPosition(Guid uid, MoveData moveData)
     {
-        Debug.Log($"Received SyncObjectPosition - {objectId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
-        if (objectId == Guid.Empty)
+        Debug.Log($"Received SyncObjectPosition - {uid} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+        if (uid == Guid.Empty)
         {
             Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
-            ++_networkManager.ErrorCount;
+            ++_connector.ErrorCount;
             return;
         }
 
         var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
-        if (!_syncObjects.TryGetValue(objectId, out GameObject syncObject))
+        if (!_syncObjects.TryGetValue(uid, out var syncObject))
         {
-            // If the object doesn't exist, create it
-            syncObject = CreateSyncObject(objectId, startPosition);
+            Debug.LogError($"Invalid Situation: {uid} is not exist in syncObjects");
             return;
         }
 
         var syncObjectComponent = syncObject.GetComponent<SyncObject>();
-        // Sync position
-        syncObjectComponent.SyncPosition(moveData).Forget();
+        syncObjectComponent.EnqueueMoveData(moveData);
     }
 
     public void SyncObjectNone(Guid objectId)

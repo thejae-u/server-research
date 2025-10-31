@@ -2,10 +2,11 @@
 using Network;
 using TMPro;
 using UnityEngine;
+using NetworkData;
 
 public class NameTagController : MonoBehaviour
 {
-    private Guid ObjectId { get; set; }
+    private UserSimpleDto _user { get; set; }
     private GameObject _syncObject;
     private Transform _syncObjectTransform;
     private Camera _camera;
@@ -13,17 +14,16 @@ public class NameTagController : MonoBehaviour
     private TMP_Text _nameTagText;
     private GameObject _nameTag;
 
-    public void Init(Guid objectId, GameObject syncObject)
+    public void Init(UserSimpleDto user, GameObject syncObject)
     {
-        ObjectId = objectId;
+        _user = user;
         _syncObject = syncObject;
         _syncObjectTransform = syncObject.transform;
 
         _camera = Camera.main;
 
         _nameTagText = transform.GetComponentInChildren<TMP_Text>();
-        Debug.Assert(_nameTagText is not null, "NameTagController.Init - _nameTagText is null");
-        _nameTagText.text = ObjectId.ToString();
+        _nameTagText.text = _user.Username;
         _nameTag = transform.GetChild(0).gameObject;
     }
 
@@ -49,7 +49,7 @@ public class NameTagController : MonoBehaviour
             Destroy(gameObject);
         }
 
-        if (ObjectId == AuthManager.Instance.UserGuid)
+        if (Guid.Parse(_user.Uid) == AuthManager.Instance.UserGuid)
             return false;
 
         Vector3 viewportPoint = _camera.WorldToViewportPoint(_syncObjectTransform.position);
