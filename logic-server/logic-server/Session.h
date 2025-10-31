@@ -99,13 +99,13 @@ private:
     std::uint32_t _tcpDataSize = 0;
 
     void SendPingPacket();
-    void ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet);
+    void ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet);
 
-    void TcpAsyncWrite(const std::shared_ptr<std::string>& data);
+    void TcpAsyncWrite(const std::shared_ptr<std::string> data);
 
     void TcpAsyncReadSize();
-    void TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer);
+    void TcpAsyncReadData(const std::shared_ptr<std::vector<char>> dataBuffer);
 
     void UdpAsyncRead();
-    void UdpAsyncWrite(const std::shared_ptr<std::string>& data);
+    void UdpAsyncWrite(const std::shared_ptr<std::string> data);
 };

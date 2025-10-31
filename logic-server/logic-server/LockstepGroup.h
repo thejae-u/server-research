@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <memory>
 #include <string>
 #include <vector>
@@ -56,7 +56,7 @@ namespace std
 class LockstepGroup final : public Base<LockstepGroup>
 {
 public:
-	LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const std::shared_ptr<GroupDto>& newGroupDtoPtr);
+	LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const std::shared_ptr<GroupDto> newGroupDtoPtr);
 	~LockstepGroup() override
 	{
 		spdlog::info("{} : lockstep group destroyed", _groupInfo->groupid());
@@ -69,7 +69,7 @@ public:
 	void Stop() override;
 	void AddMember(const std::shared_ptr<Session>& newSession);
 	void RemoveMember(const std::shared_ptr<Session>& session);
-	void CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>& rpcRequest);
+	void CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);
 	void ProcessStep();
 	void Tick();
 
@@ -104,6 +104,7 @@ private:
 	std::mutex _bufferMutex;
 
 	std::shared_ptr<Scheduler> _tickTimer;
+    std::mutex _runningStateMutex;
 	bool _isRunning = false;
 
 	NotifyEmptyCallback _notifyEmptyCallback;

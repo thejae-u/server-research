@@ -5,7 +5,7 @@
 
 InternalConnector::InternalConnector()
 {
-    std::fstream f(INTERNAL_FILE_NAME.data());
+	std::fstream f(INTERNAL_FILE_NAME.data());
 
     if (!f.is_open() || f.bad() || f.eof() || f.fail())
     {
@@ -44,6 +44,8 @@ bool InternalConnector::GetAccessTokenFromInternal()
     const auto& loginInfo = _loginData.internal();
     std::string jsonString;
     auto status = google::protobuf::util::MessageToJsonString(loginInfo, &jsonString);
+
+	spdlog::info("json string : {}", jsonString);
 
     if (status.message().size() > 0)
     {
@@ -98,7 +100,7 @@ bool InternalConnector::GetAccessTokenFromInternal()
         status = google::protobuf::util::JsonStringToMessage(r.text, &_accessToken);
         if (status.message().size() > 0)
         {
-            spdlog::error("parsing error occured: access token");
+            spdlog::error("parsing access token error : {}", status.message());
             return false;
         }
 

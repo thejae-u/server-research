@@ -18,38 +18,38 @@ message RpcPacket
 {
   string uid = 1;
   RpcMethod method = 2;
-  string data = 3; // serialized parameter data (Login Data, Position Data, etc.)
+  bytes data = 3; // serialized parameter data (Login Data, Position Data, etc.)
   google.protobuf.Timestamp timestamp = 4;
 }
 
 message UserSimpleDto
 {
-	string uid = 1;
-	string username = 2;
+  string uid = 1;
+  string username = 2;
 }
 
 message InternalData
 {
-	LoginDto internal = 1;
+  LoginDto internal = 1;
 }
 
 message LoginDto
 {
-	string username = 1;
-	string password = 2;
+  string username = 1;
+  string password = 2;
 }
 
 message GroupDto
 {
-	string groupId = 1;
-	string name = 2;
-	UserSimpleDto owner = 3;
-	repeated UserSimpleDto playerList = 4;
+  string groupId = 1;
+  string name = 2;
+  UserSimpleDto owner = 3;
+  repeated UserSimpleDto playerList = 4;
 }
 
 message AccessToken
 {
-	string accessToken = 1;
+  string accessToken = 1;
 }
 
 enum RpcMethod

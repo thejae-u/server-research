@@ -39,6 +39,12 @@
     <ClCompile Include="HttpStatus.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="ContextManager.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Scheduler.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Session.h">

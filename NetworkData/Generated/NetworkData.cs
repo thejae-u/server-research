@@ -29,7 +29,7 @@ namespace NetworkData {
             "CgF5GAIgASgCEgkKAXoYAyABKAISEAoIdmVydGljYWwYBCABKAISEgoKaG9y",
             "aXpvbnRhbBgFIAEoAhINCgVzcGVlZBgGIAEoAiJ9CglScGNQYWNrZXQSCwoD",
             "dWlkGAEgASgJEiYKBm1ldGhvZBgCIAEoDjIWLk5ldHdvcmtEYXRhLlJwY01l",
-            "dGhvZBIMCgRkYXRhGAMgASgJEi0KCXRpbWVzdGFtcBgEIAEoCzIaLmdvb2ds",
+            "dGhvZBIMCgRkYXRhGAMgASgMEi0KCXRpbWVzdGFtcBgEIAEoCzIaLmdvb2ds",
             "ZS5wcm90b2J1Zi5UaW1lc3RhbXAiLgoNVXNlclNpbXBsZUR0bxILCgN1aWQY",
             "ASABKAkSEAoIdXNlcm5hbWUYAiABKAkiNwoMSW50ZXJuYWxEYXRhEicKCGlu",
             "dGVybmFsGAEgASgLMhUuTmV0d29ya0RhdGEuTG9naW5EdG8iLgoITG9naW5E",
@@ -549,13 +549,13 @@ namespace NetworkData {
 
     /// <summary>Field number for the "data" field.</summary>
     public const int DataFieldNumber = 3;
-    private string data_ = "";
+    private pb::ByteString data_ = pb::ByteString.Empty;
     /// <summary>
     /// serialized parameter data (Login Data, Position Data, etc.)
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Data {
+    public pb::ByteString Data {
       get { return data_; }
       set {
         data_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
@@ -632,7 +632,7 @@ namespace NetworkData {
       }
       if (Data.Length != 0) {
         output.WriteRawTag(26);
-        output.WriteString(Data);
+        output.WriteBytes(Data);
       }
       if (timestamp_ != null) {
         output.WriteRawTag(34);
@@ -658,7 +658,7 @@ namespace NetworkData {
       }
       if (Data.Length != 0) {
         output.WriteRawTag(26);
-        output.WriteString(Data);
+        output.WriteBytes(Data);
       }
       if (timestamp_ != null) {
         output.WriteRawTag(34);
@@ -681,7 +681,7 @@ namespace NetworkData {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Method);
       }
       if (Data.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Data);
+        size += 1 + pb::CodedOutputStream.ComputeBytesSize(Data);
       }
       if (timestamp_ != null) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(Timestamp);
@@ -741,7 +741,7 @@ namespace NetworkData {
             break;
           }
           case 26: {
-            Data = input.ReadString();
+            Data = input.ReadBytes();
             break;
           }
           case 34: {
@@ -779,7 +779,7 @@ namespace NetworkData {
             break;
           }
           case 26: {
-            Data = input.ReadString();
+            Data = input.ReadBytes();
             break;
           }
           case 34: {

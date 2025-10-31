@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Net;
-using Google.Protobuf;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Utility
 {
@@ -26,5 +25,16 @@ namespace Utility
             TimeSpan ts = _stopwatch.Elapsed;
             return _stopwatch.ElapsedMilliseconds.ToString();
         }
+
+        public static string ConvertTimestampToString(Timestamp timestamp)
+        {
+            if (timestamp == null)
+            {
+                return string.Empty;
+            }
+
+            var dateTime = timestamp.ToDateTime();
+            return dateTime.ToString("yyyy-MM-dd HH:mm:ss");
+        } 
     }
 }

@@ -18,14 +18,14 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
 
 void Session::Start()
 {
-    spdlog::info("session {} started", _sessionInfo.uid());
-
     // Async Functions Start
     TcpAsyncReadSize();
     _pingTimer->Start();
     UdpAsyncRead();
 
     _isConnected = true;
+
+    spdlog::info("session {} started", _sessionInfo.uid());
 }
 
 void Session::Stop()
@@ -57,13 +57,15 @@ void Session::AsyncExchangeUdpPortWork(std::function<void(bool success)> onCompl
 bool Session::ExchangeUdpPort()
 {
     const std::string connectedIp = _tcpSocketPtr->remote_endpoint().address().to_string();
-
     const std::uint16_t udpPort = _udpSocketPtr->local_endpoint().port();
-    std::string udpPortString = std::to_string(udpPort);
+    auto netUdpPort = htons(udpPort);
+    std::string sendUdpByte(reinterpret_cast<char*>(&netUdpPort), sizeof(netUdpPort));
+
+    spdlog::info("port {} try exchange", udpPort);
 
     RpcPacket packet;
     packet.set_method(UDP_PORT);
-    packet.set_data(udpPortString);
+    packet.set_data(sendUdpByte);
 
     std::string udpPortPacket;
     if (!packet.SerializeToString(&udpPortPacket))
@@ -80,15 +82,16 @@ bool Session::ExchangeUdpPort()
 
     // 예외 처리를 위한 system::error_code
     error_code ec;
-    boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
-    if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(udpPortPacket), ec);
-    if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(&receiveNetSize, sizeof(uint32_t)), ec);
+    boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec); // send size
+    if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(udpPortPacket), ec); // send data
+    if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(&receiveNetSize, sizeof(uint32_t)), ec); // receive size
 
+    // recive size calculate
     const auto receiveDataSize = ntohl(receiveNetSize);
     if (!ec && receiveDataSize > 0)
     {
         receiveBuffer.resize(receiveDataSize);
-        if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(receiveBuffer), ec);
+        if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(receiveBuffer), ec); // receive data
     }
 
     // 어느 지점에서든 error_code가 있을 때 -> 비정상 작동 종료
@@ -98,29 +101,31 @@ bool Session::ExchangeUdpPort()
         return false;
     }
 
-    RpcPacket receivePacket;
-    if (!receivePacket.ParseFromArray(receiveBuffer.data(), static_cast<int>(receiveDataSize)))
+    // parse receive data
+    RpcPacket receiveUdpPortPacket;
+    if (!receiveUdpPortPacket.ParseFromArray(receiveBuffer.data(), static_cast<int>(receiveDataSize)))
     {
         spdlog::error("{} : failed to parse UDP port packet", connectedIp);
         return false;
     }
 
-    if (receivePacket.method() != UDP_PORT)
+    if (receiveUdpPortPacket.method() != UDP_PORT)
     {
         // Invalid Method 확인
         const auto* descriptor = RpcMethod_descriptor();
-        const auto& methodName = descriptor->FindValueByNumber(receivePacket.method())->name();
+        const auto& methodName = descriptor->FindValueByNumber(receiveUdpPortPacket.method())->name();
         spdlog::error("{} : invalid method ({})", connectedIp, methodName);
         return false;
     }
 
-    // Big endian to little endian
-    std::uint16_t clientPort;
-    std::memcpy(&clientPort, receivePacket.data().data(), sizeof(clientPort));
+    // network to host
+    std::uint16_t netClientPort;
+    std::memcpy(&netClientPort, receiveUdpPortPacket.data().data(), sizeof(netClientPort));
+    auto clientPort = ntohs(netClientPort);
 
     // Set the UDP endpoint
     _udpSendEp = udp::endpoint(_tcpSocketPtr->remote_endpoint().address(), clientPort);
-
+    spdlog::info("client port get {}", clientPort);
     return true;
 }
 
@@ -280,10 +285,10 @@ void Session::SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_
 
     for (const auto& [key, packet] : copiedInputs)
     {
-        const auto serializedData = std::make_shared<std::string>();
-        if (packet.SerializeToString(serializedData.get()))
+        auto serializedData = std::make_shared<std::string>();
+        if (!packet.SerializeToString(serializedData.get()))
         {
-            spdlog::error("{} : rpc packet serialize failed for key {}", _sessionInfo.uid(), to_string(key.guid));
+            spdlog::error("{} : rpc packet serialize failed for key {}", _sessionInfo.uid(), packet.data());
             return;
         }
 
@@ -312,7 +317,7 @@ void Session::SendPingPacket()
     }
 }
 
-void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet)
+void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet)
 {
     if (packet->method() == PONG)
     {
@@ -334,7 +339,7 @@ void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket>& packet)
     }
 }
 
-void Session::TcpAsyncWrite(const std::shared_ptr<std::string>& data)
+void Session::TcpAsyncWrite(const std::shared_ptr<std::string> data)
 {
     auto self(shared_from_this());
 
@@ -402,7 +407,7 @@ void Session::TcpAsyncReadSize()
     );
 }
 
-void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>>& dataBuffer)
+void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>> dataBuffer)
 {
     boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(*dataBuffer),
         _ctxManager->GetStrand().wrap([self(shared_from_this()), dataBuffer](const boost::system::error_code& dataEc, std::size_t) {
@@ -441,9 +446,7 @@ void Session::UdpAsyncRead()
         return;
 
     // max size buffer for udp packet
-    const auto buf = std::make_shared<std::string>();
-    buf->resize(MAX_PACKET_SIZE);
-
+    const auto buf = std::make_shared<std::vector<char>>(MAX_PACKET_SIZE);
     const auto senderEndpoint = std::make_shared<udp::endpoint>();
 
     _udpSocketPtr->async_receive_from(
@@ -469,16 +472,9 @@ void Session::UdpAsyncRead()
                 return;
             }
 
-            if (buf->data() == nullptr)
-            {
-                spdlog::error("{} : invalid packet received (buffer->data() is null)", self->_sessionInfo.uid());
-                self->UdpAsyncRead();
-                return;
-            }
-
             // payload size
             std::uint16_t payloadSize = 0;
-            std::memcpy(&payloadSize, buf->data(), sizeof(std::uint16_t)); // Access Violation reading location exception
+            std::memcpy(&payloadSize, buf->data(), sizeof(std::uint16_t));
             payloadSize = ntohs(payloadSize);
 
             if (payloadSize == 0 || payloadSize + sizeof(std::uint16_t) > bytesRead)
@@ -496,21 +492,25 @@ void Session::UdpAsyncRead()
                 return;
             }
 
-            self->UdpAsyncRead();
-
             // Input Send to Lockstep Group
             if (self->_inputAction)
             {
                 const auto rpcRequest =
                     std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->_toUuid(self->_sessionInfo.uid()), std::make_shared<RpcPacket>(packet));
                 self->_inputAction(rpcRequest);
-            }}
+            }
+
+            spdlog::info("Packet read complete");
+            self->UdpAsyncRead();
+            }
         )
     );
 }
 
-void Session::UdpAsyncWrite(const std::shared_ptr<std::string>& data)
+void Session::UdpAsyncWrite(const std::shared_ptr<std::string> data)
 {
+    spdlog::info("{} : udp write", _sessionInfo.uid());
+
     // make udp packet
     const std::uint16_t payloadSize = static_cast<std::uint16_t>(data->size());
     const std::uint16_t netPayloadSize = htons(payloadSize);
@@ -530,7 +530,7 @@ void Session::UdpAsyncWrite(const std::shared_ptr<std::string>& data)
 
             std::string addressStr = self->_udpSendEp.address().to_string();
             std::string portStr = std::to_string(self->_udpSendEp.port());
-            // spdlog::info("{} : send packet to {} {}", self->_sessionInfo.uid(), addressStr, portStr);
+            //spdlog::info("{} : send packet to {} {}", self->_sessionInfo.uid(), addressStr, portStr);
             }
         )
     );
