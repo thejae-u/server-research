@@ -9,8 +9,6 @@ using UnityEngine.UI;
 using Utility;
 using Network;
 using NetworkData;
-using System;
-using Google.Protobuf;
 
 public class InRoomManager : MonoBehaviour
 {
@@ -329,8 +327,18 @@ public class InRoomManager : MonoBehaviour
         }
 
         Debug.Log($"Connect to Logic Server");
+
         // 로직 서버 접속 시도 (접속 실패 시 예외 처리 필요)
-        yield return _logicServerConnector.TryConnectToServer(this, _externalGroupInfo, ip, port);
+        var connectTask = _logicServerConnector.TryConnectToServer(this, _externalGroupInfo, ip, port);
+        yield return new WaitUntil(() => connectTask.IsCompleted);
+
+        var result = connectTask.Result;
+        if (!result)
+        {
+            _waitSignalRoutine = null;
+            InitByFailedConnection();
+            yield break;
+        }
 
         if (_startGameRoutine is not null)
         {
@@ -344,11 +352,9 @@ public class InRoomManager : MonoBehaviour
             _roomUpdateRoutine = null;
         }
 
-        if (_waitSignalRoutine is not null)
-        {
-            StopCoroutine(_waitSignalRoutine);
-            _waitSignalRoutine = null;
-        }
+        _waitSignalRoutine = null;
+        SceneController.Instance.LoadSceneAsync(SceneController.EScene.GameScene);
+        Debug.Log($"Scene Load call pass");
     }
 
     public void InitByFailedConnection()

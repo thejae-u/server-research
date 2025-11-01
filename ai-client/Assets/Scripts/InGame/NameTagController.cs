@@ -27,8 +27,31 @@ public class NameTagController : MonoBehaviour
         _nameTag = transform.GetChild(0).gameObject;
     }
 
+    /// <summary>
+    /// for test init
+    /// </summary>
+    public void Init(string username, GameObject syncObject)
+    {
+        _user = null;
+        _syncObject = syncObject;
+        _syncObjectTransform = syncObject.transform;
+
+        _camera = Camera.main;
+
+        _nameTagText = transform.GetComponentInChildren<TMP_Text>();
+        _nameTagText.text = username;
+        _nameTag = transform.gameObject;
+        if(_nameTag is null)
+        {
+            Debug.LogError($"name tag is null {transform.name}");
+        }
+    }
+
     private void Update()
     {
+        if (_nameTag is null)
+            return;
+
         if (!IsVisible())
         {
             _nameTag.SetActive(false);
@@ -44,6 +67,9 @@ public class NameTagController : MonoBehaviour
 
     private bool IsVisible()
     {
+        if (_user is null)
+            return true;
+
         if (!_syncObject)
         {
             Destroy(gameObject);

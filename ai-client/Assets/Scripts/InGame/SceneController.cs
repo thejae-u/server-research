@@ -24,15 +24,15 @@ public class SceneController : Singleton<SceneController>
 
     private IEnumerator LoadSceneRoutine(string sceneName)
     {
+        Debug.Log($"Scene Load Start");
         var op = SceneManager.LoadSceneAsync(sceneName);
-        Debug.Log($"Load Scene {sceneName}");
 
         while (!op.isDone)
         {
-            Debug.Log($"progress: {op.progress * 100}%");
             yield return null;
         }
 
         _loadSceneRoutine = null;
+        Debug.Log($"Scene Load end");
     }
 }

@@ -2495,10 +2495,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a33a86bbbec30241b0277b7252295c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Network.LogicServerConnector
-  _serverIp: 127.0.0.1
-  _serverPort: 53200
-  _inputAction: {fileID: 0}
-  _isManualMode: 0
 --- !u!1 &940935821
 GameObject:
   m_ObjectHideFlags: 0

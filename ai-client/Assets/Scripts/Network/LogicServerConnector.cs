@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using NetworkData;
+using UnityEditor.Search;
 using UnityEngine;
 
 namespace Network
@@ -34,48 +35,110 @@ namespace Network
         private readonly ConcurrentQueue<byte[]> _processQueue = new();
 
         private int _maxRetries = 5;
+        private const uint MAX_PACKET_SIZE = 65536; // 64KB
 
-        private readonly object _sentPacketLock = new();
-        private uint _sentPacketCount = 0;
+        private int SentPacketCount
+        {
+            get
+            {
+                return Interlocked.CompareExchange(ref _sentPacketCount, 0, 0);
+            }
+        }
+        private volatile int _sentPacketCount = 0;
 
-        private readonly object _receivedPacketLock = new();
-        private uint _receivedPacketCount = 0;
+        private int ReceivedPacketCount
+        {
+            get
+            {
+                return Interlocked.CompareExchange(ref _receivedPacketCount, 0, 0);
+            }
+        }
+        private volatile int _receivedPacketCount = 0;
 
-        private uint _lastRtt = 0;
-        public uint LastRtt => _lastRtt;
-        private List<uint> _rttList = new();
-        public uint RttAverage { get; private set; }
+        public int LastRtt
+        {
+            get
+            {
+                return Interlocked.CompareExchange(ref _lastRtt, 0, 0);
+            }
 
-        public uint ErrorCount { get; set; }
-        private object _errorCountLock = new();
+            private set
+            {
+                Interlocked.Exchange(ref _lastRtt, value);
+            }
+        }
+        private volatile int _lastRtt = 0;
+        private readonly List<int> _rttList = new();
 
-        private GroupDto _currentGroupDto = null;
+        public int RttAverage 
+        { 
+            get 
+            {
+                return Interlocked.CompareExchange(ref _rttAverage, 0, 0);
+            }
+
+            set
+            {
+                Interlocked.Exchange(ref _rttAverage, value);
+            }
+        }
+        private volatile int _rttAverage = 0;
+
+        public int ErrorCount
+        {
+            get
+            {
+                return Interlocked.CompareExchange(ref _errorCount, 0, 0);
+            }
+        }
+        private volatile int _errorCount = 0;
+        public void IncrementErrorCount() { Interlocked.Increment(ref _errorCount); }
+
         public List<UserSimpleDto> Users => _currentGroupDto.PlayerList.ToList();
+        private GroupDto _currentGroupDto = null;
         private AuthManager _authManager;
 
-        private readonly CancellationTokenSource _globalCancellationToken = new();
         public CancellationToken CToken => _globalCancellationToken.Token;
+        private readonly CancellationTokenSource _globalCancellationToken = new();
 
         private Task _tcpReadTask;
         private Task _udpReadTask;
+
+        private Task _sendRpcPacketByUdpTask;
+        private readonly ConcurrentQueue<RpcPacket> _sendPacketQueueForUdp = new();
+
+        private Task _sendRpcPacketByTcpTask;
+        private readonly ConcurrentQueue<RpcPacket> _sendPacketQueueForTcp = new();
+
+        private readonly List<Task> tasks = new();
 
         public float ErrorRate
         {
             get
             {
-                lock (_errorCountLock)
+                if (ErrorCount == 0)
                 {
-                    if (ErrorCount == 0)
-                    {
-                        return 0.0f;
-                    }
-
-                    return ErrorCount / (float)_receivedPacketCount * 100.0f;
+                    return 0.0f;
                 }
+
+                return ErrorCount / (float)ReceivedPacketCount * 100.0f;
             }
         }
 
-        public bool IsOnline { get; private set; }
+        public bool IsOnline
+        {
+            get 
+            {
+                return Interlocked.CompareExchange(ref _isOnline, 0, 0) == 1;
+            }
+
+            private set
+            {
+                Interlocked.Exchange(ref _isOnline, value ? 1 : 0);
+            }
+        }
+        private volatile int _isOnline;
+
         public bool IsSendPacketOn { get; private set; }
         private bool IsTryingToConnect { get; set; }
 
@@ -84,6 +147,7 @@ namespace Network
             _authManager = AuthManager.Instance;
 
             IsSendPacketOn = false;
+
             IsOnline = false;
             IsTryingToConnect = false;
         }
@@ -92,26 +156,48 @@ namespace Network
         {
             _globalCancellationToken.Cancel();
             _globalCancellationToken.Dispose();
+
+            foreach(var task in tasks)
+            {
+                task.Dispose();
+            }
+
+            DisconnectFromServer();
+        }
+
+        private void OnApplicationQuit()
+        {
+            _globalCancellationToken.Cancel();
+            _globalCancellationToken.Dispose();
+
+            foreach(var task in tasks)
+            {
+                task.Dispose();
+            }
+
             DisconnectFromServer();
         }
 
         private void Update()
         {
+            if (!IsOnline) 
+                return;
+
             ProcessRpc();
         }
 
-        public async Task TryConnectToServer(InRoomManager roomManager, GroupDto groupInfo, string ip, ushort port)
+        public async Task<bool> TryConnectToServer(InRoomManager roomManager, GroupDto groupInfo, string ip, ushort port)
         {
             if (IsOnline)
             {
                 Debug.Log($"already connected.");
-                return;
+                return false;
             }
 
             if (IsTryingToConnect)
             {
                 Debug.Log($"already trying to connect.");
-                return;
+                return false;
             }
 
             Debug.Log($"NetworkManager TryConnectToServer");
@@ -120,19 +206,17 @@ namespace Network
             Host = ip;
             Port = port;
 
-            var connectTask = await ConnectToServer();
-            if (!connectTask)
+            bool isConnected = await ConnectToServer(CToken);
+            if (!isConnected)
             {
-                roomManager.InitByFailedConnection();
                 IsTryingToConnect = false;
-                return;
+                return false;
             }
 
-            // Scene Change
-            SceneController.Instance.LoadSceneAsync(SceneController.EScene.GameScene);
+            return true;
         }
 
-        private async Task<bool> ConnectToServer()
+        private async Task<bool> ConnectToServer(CancellationToken ct)
         {
             if (IsOnline)
                 return false;
@@ -164,6 +248,11 @@ namespace Network
                         return false;
                     }
                 }
+                catch(OperationCanceledException)
+                {
+                    Debug.LogWarning("Cancelled");
+                    return false;
+                }
                 catch (Exception ex)
                 {
                     Debug.LogError($"Unknown Error: {ex.Message}");
@@ -175,67 +264,84 @@ namespace Network
             _tcpStream = _tcpClient.GetStream();
 
             // Get Udp Port
-            if (!await AsyncExchangeUdpPort(CToken))
+            if (!await AsyncExchangeUdpPort(ct))
             {
                 DisconnectFromServer();
                 return false;
             }
 
             // Send user info and group info
-            if (!await AsyncExchangeUserInfo(CToken))
+            if (!await AsyncExchangeUserInfo(ct))
             {
                 DisconnectFromServer();
                 return false;
             }
 
-            if (!await AsyncExchangeGroupInfo(CToken))
+            if (!await AsyncExchangeGroupInfo(ct))
             {
                 DisconnectFromServer();
                 return false;
             }
 
+            return true;
+        }
+
+        public void StartGameTask()
+        {
+            Dispatcher.Enqueue(() => Debug.Log($"Called Start Task"));
+
+            // prevent duplication 
+            if (IsOnline)
+                return;
+
+            // internal state init
+            IsOnline = true;
+            IsTryingToConnect = false;
+
+            // network statistics init
             _sentPacketCount = 0;
             _receivedPacketCount = 0;
 
-            IsOnline = true;
+            _tcpReadTask = Task.Run(() => TcpAsyncReadData(CToken), CToken); // Tcp read Task start
+            _udpReadTask = Task.Run(() => UdpAsyncReadData(CToken), CToken); // Udp read Task start
 
-            _tcpReadTask = TcpAsyncReadData(CToken);
-            _udpReadTask = UdpAsyncReadData(CToken);
+            _sendRpcPacketByUdpTask = Task.Run(() => AsyncWriteByUdp(CToken), CToken); // rpc send by tcp Task start
+            _sendRpcPacketByTcpTask = Task.Run(() => AsyncWriteByTcp(CToken), CToken); // rpc send by udp Task start
 
-            IsTryingToConnect = false;
-
-            // Scene Change Call Here
-
-            return true;
+            // task List add
+            tasks.Add(_tcpReadTask);
+            tasks.Add(_udpReadTask);
+            tasks.Add(_sendRpcPacketByUdpTask);
+            tasks.Add(_sendRpcPacketByTcpTask);
         }
 
         private async Task<bool> AsyncExchangeUdpPort(CancellationToken ct)
         {
             try
             {
-                var udpPortPacketSize = new byte[4];
-                // Read the size of the incoming data
-                int bytesRead = await _tcpStream.ReadAsync(udpPortPacketSize, 0, udpPortPacketSize.Length, ct);
+                var readPacketNetSize = new byte[4];
 
-                if (bytesRead == 0)
+                // Read the size of the incoming data
+                if(!await ReadTcpExactlyAsync(_tcpStream, readPacketNetSize, readPacketNetSize.Length, ct))
+                {
                     return false;
+                }
 
                 // Network to Host
                 if (BitConverter.IsLittleEndian)
-                    Array.Reverse(udpPortPacketSize);
+                    Array.Reverse(readPacketNetSize);
 
-                var dataSize = BitConverter.ToUInt32(udpPortPacketSize, 0);
-                var dataBuffer = new byte[dataSize];
+                var readPacketHostSize = BitConverter.ToUInt32(readPacketNetSize, 0);
+                var readDataBuffer = new byte[readPacketHostSize];
 
                 // Read the rest of the data
-                bytesRead = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, ct);
-
-                // EOF connection closed
-                if (bytesRead == 0)
+                if(!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
+                {
                     return false;
+                }
 
                 // Deserialize the data
-                RpcPacket receiveUdpPort = RpcPacket.Parser.ParseFrom(dataBuffer);
+                RpcPacket receiveUdpPort = RpcPacket.Parser.ParseFrom(readDataBuffer);
 
                 // Network to Host
                 var byteData = receiveUdpPort.Data.ToByteArray();
@@ -308,25 +414,25 @@ namespace Network
             try
             {
                 // Read Size First
-                var userInfoPacketSize = new byte[4];
-                int bytesRead = await _tcpStream.ReadAsync(userInfoPacketSize, 0, userInfoPacketSize.Length, ct);
-
-                if (bytesRead == 0)
+                var readPacketNetSize = new byte[4];
+                if (!await ReadTcpExactlyAsync(_tcpStream, readPacketNetSize, readPacketNetSize.Length, ct))
+                {
                     return false;
+                }
 
                 if (BitConverter.IsLittleEndian)
-                    Array.Reverse(userInfoPacketSize);
+                    Array.Reverse(readPacketNetSize);
 
                 // Read Data
-                var dataSize = BitConverter.ToInt32(userInfoPacketSize, 0);
-                var dataBuffer = new byte[dataSize];
-                bytesRead = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, ct);
-
-                if (bytesRead == 0)
+                var readPacketHostSize = BitConverter.ToInt32(readPacketNetSize, 0);
+                var readDataBuffer = new byte[readPacketHostSize];
+                if(!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
+                {
                     return false;
+                }
 
                 // deserialize receive packet
-                RpcPacket userInfoData = RpcPacket.Parser.ParseFrom(dataBuffer);
+                RpcPacket userInfoData = RpcPacket.Parser.ParseFrom(readDataBuffer);
                 if (userInfoData.Method != RpcMethod.UserInfo)
                     return false;
 
@@ -366,28 +472,28 @@ namespace Network
         {
             try
             {
-                var readPacketSize = new byte[4];
-                int readBytes = await _tcpStream.ReadAsync(readPacketSize, 0, readPacketSize.Length, ct);
-
-                if (readBytes == 0)
+                var readPacketNetSize = new byte[4];
+                if(!await ReadTcpExactlyAsync(_tcpStream, readPacketNetSize, readPacketNetSize.Length, ct))
+                {
                     return false;
+                }
 
                 if (BitConverter.IsLittleEndian)
-                    Array.Reverse(readPacketSize);
+                    Array.Reverse(readPacketNetSize);
 
-                var readDataSize = BitConverter.ToInt32(readPacketSize, 0);
-                var readBuffer = new byte[readDataSize];
+                var readPacketHostSize = BitConverter.ToInt32(readPacketNetSize, 0);
+                var readDataBuffer = new byte[readPacketHostSize];
 
-                readBytes = await _tcpStream.ReadAsync(readBuffer, 0, readBuffer.Length, ct);
-                if (readBytes == 0)
+                if(!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
+                {
                     return false;
+                }
 
-                RpcPacket readPacket = RpcPacket.Parser.ParseFrom(readBuffer);
+                RpcPacket readPacket = RpcPacket.Parser.ParseFrom(readDataBuffer);
                 if (readPacket.Method != RpcMethod.GroupInfo)
                     return false;
 
                 var sendDtoString = JsonFormatter.Default.Format(_currentGroupDto);
-
                 Debug.Log($"Send Dto String : {sendDtoString}");
 
                 RpcPacket sendPacket = new()
@@ -438,91 +544,106 @@ namespace Network
             Debug.Log("disconnected.");
         }
 
-        public async Task AsyncWriteRpcPacketByUdp(RpcPacket data, CancellationToken ct)
+        public void EnqueueRpcPacketForUdp(RpcPacket sendPacket)
         {
-            if (!IsOnline)
-                return;
+            _sendPacketQueueForUdp.Enqueue(sendPacket);
+        }
 
-            try
+        private async Task AsyncWriteByUdp(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested && IsOnline)
             {
-                data.Uid = _authManager.UserGuid.ToString();
-
-                byte[] payload = data.ToByteArray();
-                var payloadSize = (short)payload.Length;
-                byte[] sizeBuffer = BitConverter.GetBytes(payloadSize);
-
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(sizeBuffer);
-
-                var packet = new byte[sizeBuffer.Length + payload.Length];
-                Buffer.BlockCopy(sizeBuffer, 0, packet, 0, sizeBuffer.Length);
-                Buffer.BlockCopy(payload, 0, packet, sizeBuffer.Length, payload.Length);
-
-                await _udpClient.SendAsync(packet, packet.Length, _serverUdpEndPoint);
-
-                lock (_sentPacketLock)
+                try
                 {
-                    ++_sentPacketCount;
-                }
+                    if (!_sendPacketQueueForUdp.TryDequeue(out var data))
+                    {
+                        await Task.Yield();
+                        continue;
+                    }
 
-                Debug.Log($"Sent Rpc Packet To Server {Utility.Util.ConvertTimestampToString(data.Timestamp)}" +
-                          $" {data.Uid}: {data.Method}");
-            }
-            catch (OperationCanceledException)
-            {
-                Debug.Log("Cancelled");
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"send failed: {ex.Message}");
+                    data.Uid = _authManager.UserGuid.ToString();
+
+                    byte[] payload = data.ToByteArray();
+                    var payloadSize = (short)payload.Length;
+                    byte[] sizeBuffer = BitConverter.GetBytes(payloadSize);
+
+                    if (BitConverter.IsLittleEndian)
+                        Array.Reverse(sizeBuffer);
+
+                    var packet = new byte[sizeBuffer.Length + payload.Length];
+                    Buffer.BlockCopy(sizeBuffer, 0, packet, 0, sizeBuffer.Length);
+                    Buffer.BlockCopy(payload, 0, packet, sizeBuffer.Length, payload.Length);
+
+                    await _udpClient.SendAsync(packet, packet.Length, _serverUdpEndPoint).ConfigureAwait(false);
+                    Interlocked.Increment(ref _sentPacketCount); // sent packet count increment by atomic
+
+                    Dispatcher.Enqueue(() => Debug.Log($"Sent Rpc Packet To Server {Utility.Util.ConvertTimestampToString(data.Timestamp)}" +
+                              $" {data.Uid}: {data.Method}"));
+                }
+                catch (OperationCanceledException)
+                {
+                    Dispatcher.Enqueue(() => Debug.Log("Cancelled"));
+                }
+                catch (Exception ex)
+                {
+                    Dispatcher.Enqueue(() => Debug.LogError($"send failed: {ex.Message}"));
+                }
             }
         }
 
-        private async Task AsyncWriteByTcp(RpcPacket data, CancellationToken ct)
+        private void EnqueueRpcPacketForTcp(RpcPacket sendPacket)
         {
-            if (!IsOnline)
-                return;
+            _sendPacketQueueForTcp.Enqueue(sendPacket);
+        }
 
-            try
+        private async Task AsyncWriteByTcp(CancellationToken ct)
+        {
+            while (!ct.IsCancellationRequested && IsOnline)
             {
-                // Tcp Send
-                byte[] sendPacket = data.ToByteArray();
-                byte[] packetSize = BitConverter.GetBytes(sendPacket.Length);
+                try
+                {
+                    if(!_sendPacketQueueForTcp.TryDequeue(out var data))
+                    {
+                        await Task.Yield();
+                        continue;
+                    }
 
-                if (BitConverter.IsLittleEndian)
-                    Array.Reverse(packetSize);
+                    // Tcp Send
+                    byte[] sendPacket = data.ToByteArray();
+                    byte[] packetSize = BitConverter.GetBytes(sendPacket.Length);
 
-                await _tcpStream.WriteAsync(packetSize, 0, packetSize.Length, ct);
-                await _tcpStream.WriteAsync(sendPacket, 0, sendPacket.Length, ct);
-            }
-            catch (OperationCanceledException)
-            {
-                return;
-            }
-            catch (Exception e)
-            {
-                Debug.Log($"error tcp send: {e.Message}");
-                return;
+                    if (BitConverter.IsLittleEndian)
+                        Array.Reverse(packetSize);
+
+                    await _tcpStream.WriteAsync(packetSize, 0, packetSize.Length, ct).ConfigureAwait(false);
+                    await _tcpStream.WriteAsync(sendPacket, 0, sendPacket.Length, ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (Exception e)
+                {
+                    Dispatcher.Enqueue(() => Debug.Log($"error tcp send: {e.Message}"));
+                    return;
+                }
             }
         }
 
         private async Task TcpAsyncReadData(CancellationToken ct)
         {
-            while (!ct.IsCancellationRequested || IsOnline)
+            while (!ct.IsCancellationRequested && IsOnline)
             {
-                var sizeBuffer = new byte[sizeof(uint)]; // 4 bytes
-                int bytesRead = 0;
-
                 try
                 {
-                    // Read Size first for data receive
-                    bytesRead = await _tcpStream.ReadAsync(sizeBuffer, 0, sizeBuffer.Length, ct);
+                    var sizeBuffer = new byte[sizeof(uint)]; // 4 bytes read size buffer
 
-                    // EOF connection closed
-                    if (bytesRead == 0)
+                    // Read Size first for data receive
+                    if(!await ReadTcpExactlyAsync(_tcpStream, sizeBuffer, sizeBuffer.Length, ct).ConfigureAwait(false))
                     {
+                        Dispatcher.Enqueue(() => Debug.Log($"failed to read packet size."));
                         DisconnectFromServer();
-                        break;
+                        return;
                     }
 
                     // Convert the size from bytes to uint
@@ -531,22 +652,24 @@ namespace Network
 
                     uint netSize = BitConverter.ToUInt32(sizeBuffer, 0);
 
-                    if (netSize > 128)
-                        continue;
-
-                    var dataBuffer = new byte[netSize]; // netSize : 3 bytes
-
-                    // Read the rest of the data
-                    bytesRead = await _tcpStream.ReadAsync(dataBuffer, 0, dataBuffer.Length, ct);
-
-                    // EOF connection closed
-                    if (bytesRead == 0)
+                    if(netSize == 0 || netSize > MAX_PACKET_SIZE)
                     {
+                        Dispatcher.Enqueue(() => Debug.LogError($"Invalid Packet Size received {netSize}."));
                         DisconnectFromServer();
-                        break;
+                        return;
                     }
 
-                    EnqueueProcess(dataBuffer);
+                    var dataBuffer = new byte[netSize]; // real data buffer sizeof netSize
+
+                    // Read the rest of the data
+                    if(!await ReadTcpExactlyAsync(_tcpStream, dataBuffer, dataBuffer.Length, ct).ConfigureAwait(false))
+                    {
+                        Dispatcher.Enqueue(() => Debug.LogError($"failed to read packet data."));
+                        DisconnectFromServer();
+                        return;
+                    }
+
+                    EnqueueInternalProcess(dataBuffer);
                 }
                 catch (OperationCanceledException)
                 {
@@ -554,107 +677,135 @@ namespace Network
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"TCP read size error: {ex.Message}");
+                    Dispatcher.Enqueue(() => Debug.LogError($"TCP read size error: {ex.Message}"));
                 }
             }
+        }
+
+        private async Task<bool> ReadTcpExactlyAsync(NetworkStream stream, byte[] buffer, int length, CancellationToken ct)
+        {
+            int totalBytesRead = 0;
+            while(totalBytesRead < length)
+            {
+                try
+                {
+                    int bytesRead = await stream.ReadAsync(buffer, totalBytesRead, length - totalBytesRead, ct).ConfigureAwait(false); // 총 길이 - 현재 길이 만큼 더 받음
+                    if(bytesRead == 0)
+                    {
+                        Dispatcher.Enqueue(() => Debug.LogWarning("(EOF) disconnected"));
+                        return false;
+                    }
+
+                    totalBytesRead += bytesRead;
+                }
+                catch(OperationCanceledException)
+                {
+                    Dispatcher.Enqueue(() => Debug.Log($"cancelled"));
+                    return false;
+                }
+                catch(Exception ex)
+                {
+                    Dispatcher.Enqueue(() => Debug.LogError($"error ReadTcpExactly: {ex.Message}"));
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private async Task UdpAsyncReadData(CancellationToken ct)
         {
             while (!ct.IsCancellationRequested && IsOnline)
             {
-                Debug.Log($"Called");
                 try
                 {
                     // Read the data from the stream
-                    Debug.Log($"udp endpoint : {_udpClient.Client.RemoteEndPoint}");
-                    UdpReceiveResult result = await _udpClient.ReceiveAsync();
+                    UdpReceiveResult result = await _udpClient.ReceiveAsync().ConfigureAwait(false);
                     byte[] readData = result.Buffer;
 
                     // Error 시 버림
                     if (readData.Length < sizeof(ushort))
                     {
-                        lock (_errorCountLock)
-                        {
-                            ErrorCount++;
-                        }
-
+                        IncrementErrorCount();
                         continue;
                     }
 
                     // Read size of the payload
-                    var payloadSize = BitConverter.ToUInt16(readData, 0);
+                    short netOrderSize = BitConverter.ToInt16(readData, 0);
 
                     // convert if little-endian system
-                    if (BitConverter.IsLittleEndian)
-                        payloadSize = (ushort)IPAddress.NetworkToHostOrder((short)payloadSize);
+                    ushort payloadSize = (ushort)IPAddress.NetworkToHostOrder(netOrderSize);
 
                     // Check if the payload size is valid
-                    if (payloadSize == 0 || payloadSize > readData.Length - 2)
+                    if (netOrderSize == 0 || netOrderSize > readData.Length - 2)
                     {
-                        lock (_errorCountLock)
-                        {
-                            ErrorCount++;
-                        }
-
+                        IncrementErrorCount();
                         continue;
                     }
 
                     // Extract the payload
                     var payload = new byte[payloadSize];
                     Buffer.BlockCopy(readData, 2, payload, 0, payloadSize);
-                    EnqueueProcess(payload);
 
-                    lock (_receivedPacketLock)
-                    {
-                        ++_receivedPacketCount;
-                    }
+                    EnqueueInternalProcess(payload);
+                    Interlocked.Increment(ref _receivedPacketCount); // Increment received packet count by atomic
                 }
                 catch (OperationCanceledException)
                 {
-                    Debug.Log($"UDP loop canceled");
+                    Dispatcher.Enqueue(() => Debug.Log($"UDP loop canceled"));
                     break;
                 }
                 catch (ObjectDisposedException ex)
                 {
-                    Debug.LogError($"{ex.HResult} : error object dis {ex.Message}");
+                    Dispatcher.Enqueue(() => Debug.LogError($"{ex.HResult} : error object dis {ex.Message}"));
+                    break;
                 }
                 catch (SocketException ex)
                 {
-                    Debug.LogError($"{ex.SocketErrorCode} : error socket {ex.Message}");
+                    Dispatcher.Enqueue(() => Debug.LogError($"{ex.SocketErrorCode} : error socket {ex.Message}"));
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"UDP error: {ex.Message}");
+                    Dispatcher.Enqueue(() => Debug.LogError($"UDP error: {ex.Message}"));
+                    break;
                 }
             }
         }
 
-        private void EnqueueProcess(byte[] data)
+        private void EnqueueInternalProcess(byte[] data)
         {
+            Dispatcher.Enqueue(() => Debug.Log($"data enqueued"));
             _processQueue.Enqueue(data);
         }
 
-        private byte[] DequeueProcess()
+        private byte[] DequeueInternalProcess()
         {
             if (!_processQueue.TryDequeue(out var data))
             {
                 return null;
             }
 
+            Dispatcher.Enqueue(() => Debug.Log($"data dequeued"));
             return data;
         }
 
         private void ProcessRpc()
         {
-            var nextProcess = DequeueProcess();
+            var nextProcess = DequeueInternalProcess();
 
-            if (nextProcess == null)
+            if (nextProcess is null)
+            {
+                Debug.Log($"next process is null");
                 return;
+            }
 
             var data = RpcPacket.Parser.ParseFrom(nextProcess);
-            if (data == null)
+            if (data is null)
+            {
+                Debug.Log($"Data is null");
                 return;
+            }
 
             switch (data.Method)
             {
@@ -662,27 +813,28 @@ namespace Network
                     var pongPacket = new RpcPacket
                     {
                         Method = RpcMethod.Pong,
-                        Uid = _authManager.ToString()
+                        Uid = _authManager.UserGuid.ToString()
                     };
 
-                    var task = AsyncWriteByTcp(pongPacket, CToken);
+                    EnqueueRpcPacketForTcp(pongPacket);
                     break;
 
                 case RpcMethod.MoveStart:
                 case RpcMethod.MoveStop:
                 case RpcMethod.Move:
+                    Debug.Log($"Move data process");
                     // Deserialize the data
-                    MoveData moveData = MoveData.Parser.ParseFrom(Encoding.UTF8.GetBytes(data.Data.ToString()));
+                    MoveData moveData = MoveData.Parser.ParseFrom(data.Data);
 
                     // Call SyncManager to sync the object position
                     SyncManager.Instance.SyncObjectPosition(Guid.Parse(data.Uid), moveData);
                     break;
 
                 case RpcMethod.LastRtt:
-                    byte[] rttData = Encoding.UTF8.GetBytes(data.Data.ToStringUtf8());
-                    _lastRtt = uint.Parse(Encoding.ASCII.GetString(rttData));
-                    _rttList.Add(_lastRtt);
-                    RttAverage = (uint)_rttList.Average(x => x);
+                    LastRtt = int.Parse(data.Data.ToStringUtf8());
+                    _rttList.Add(LastRtt);
+
+                    RttAverage = (int)_rttList.Average(x => x);
                     break;
 
                 case RpcMethod.PacketCount:

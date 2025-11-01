@@ -9,9 +9,8 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Network;
 using NetworkData;
-using Random = UnityEngine.Random;
 
-public class AIManager : MonoBehaviour
+public class OwnObjectManager : MonoBehaviour
 {
     [SerializeField] private PlayerMoveActions _playerMoveActions;
     [SerializeField] private PlayerStatData _playerStatData;
@@ -22,9 +21,7 @@ public class AIManager : MonoBehaviour
     private bool _isMoving;
 
     private Vector3 _cachedDirection;
-
     private float _lastSendDeltaTime = 0.0f;
-
     private MoveData _moveData = new()
     {
         X = 0.0f,
@@ -37,9 +34,18 @@ public class AIManager : MonoBehaviour
 
     private readonly RpcPacket _sendPacket = new();
 
+    private bool _isManualMode = false;
+
     private void Start()
     {
+        if (SyncManager.Instance.isManualMode)
+        {
+            _isManualMode = true;
+            return;
+        }
+
         _connector = LogicServerConnector.Instance;
+        _connector.StartGameTask();
         _isMoving = false;
     }
 
@@ -59,6 +65,9 @@ public class AIManager : MonoBehaviour
 
     private void Update()
     {
+        if (_isManualMode)
+            return;
+
         if (!_connector.IsOnline)
             return;
 
@@ -89,7 +98,7 @@ public class AIManager : MonoBehaviour
         _sendPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
         _sendPacket.Data = _moveData.ToByteString();
 
-        var task = _connector.AsyncWriteRpcPacketByUdp(_sendPacket, _connector.CToken);
+        _connector.EnqueueRpcPacketForUdp(_sendPacket);
     }
 
     public void MoveTo()

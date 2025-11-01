@@ -3,12 +3,15 @@ using UnityEngine;
 using System.Collections.Generic;
 using Network;
 using NetworkData;
+using Random = UnityEngine.Random;
 
 public class SyncManager : Singleton<SyncManager>
 {
     [SerializeField] private GameObject _syncObjectPrefab;
     [SerializeField] private GameObject _syncObjectNameTagPrefab;
     [SerializeField] private Transform _syncObjectCanvas;
+
+    public bool isManualMode = false;
 
     private LogicServerConnector _connector;
     private AuthManager _authManager;
@@ -18,22 +21,32 @@ public class SyncManager : Singleton<SyncManager>
 
     private void Start()
     {
+        if (isManualMode)
+        {
+            CreateTestSyncObject();
+            return;
+        }
+
         _authManager = AuthManager.Instance;
         _connector = LogicServerConnector.Instance;
+
+        if (_authManager is null || _connector is null)
+        {
+            return;
+        }
 
         // 시작 시 모든 플레이어 오브젝트 생성
         foreach (var user in _connector.Users)
         {
-            var userId = Guid.Parse(user.Uid);
-            var newUser = CreateSyncObject(user, Vector3.zero);
-            if (!_syncObjects.TryAdd(userId, newUser))
+            if(Guid.Parse(user.Uid) == _authManager.UserGuid)
             {
-                Debug.LogError($"Invalid situation: {user.Uid} already exist in syncObjects");
+                continue;
             }
 
-            if (!_userInfos.TryAdd(userId, user))
+            var newUser = CreateSyncObject(user, Vector3.zero);
+            if(newUser is null)
             {
-                Debug.LogError($"Invalid situation: {user.Uid} already exist in userInfos");
+                Debug.LogError($"{user.Username} is already exist");
             }
         }
     }
@@ -43,14 +56,27 @@ public class SyncManager : Singleton<SyncManager>
         GameObject syncObject = Instantiate(_syncObjectPrefab, position, Quaternion.identity); // Create the object
 
         syncObject.transform.SetParent(transform); // Set parent to SyncManager
-        syncObject.name = user.ToString(); // Set the name to the objectId
+        syncObject.name = user.Username; // Set the name to the objectId
         syncObject.GetComponent<SyncObject>().Init(user); // Initialize SyncObject
 
         // Create the name tag
         GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
         nameTag.GetComponent<NameTagController>().Init(user, syncObject);
 
-        _syncObjects.Add(Guid.Parse(user.Uid), syncObject); // Add to dict
+        var userId = Guid.Parse(user.Uid);
+        if (!_syncObjects.TryAdd(userId, syncObject)) // Add to dict
+        {
+            Destroy(nameTag);
+            Destroy(syncObject);
+            return null;
+        }
+
+        if(!_userInfos.TryAdd(userId, user))
+        {
+            Destroy(nameTag);
+            Destroy(syncObject);
+            return null;
+        }
 
         return syncObject;
     }
@@ -61,7 +87,7 @@ public class SyncManager : Singleton<SyncManager>
         if (uid == Guid.Empty)
         {
             Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
-            ++_connector.ErrorCount;
+            _connector.IncrementErrorCount();
             return;
         }
 
@@ -83,5 +109,25 @@ public class SyncManager : Singleton<SyncManager>
             return;
 
         Debug.Log($"SyncObjectNone - {objectId}");
+    }
+
+    private void CreateTestSyncObject()
+    {
+        const int MAX_USER = 4;
+
+        for (int i = 0; i < MAX_USER; ++i)
+        {
+            GameObject randomObject = Instantiate(_syncObjectPrefab, Vector3.up, Quaternion.identity);
+            randomObject.transform.SetParent(transform);
+            randomObject.name = $"user {i + 1}";
+            randomObject.GetComponent<SyncObject>().Init(null);
+
+            randomObject.transform.position = new Vector3(Random.Range(0, 10), 1, Random.Range(0, 10));
+
+            GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
+            nameTag.GetComponent<NameTagController>().Init(randomObject.name, randomObject);
+
+            _syncObjects.Add(Guid.NewGuid(), randomObject);
+        }
     }
 }

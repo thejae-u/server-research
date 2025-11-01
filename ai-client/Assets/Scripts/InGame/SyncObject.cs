@@ -21,13 +21,24 @@ public class SyncObject : MonoBehaviour
     private IEnumerator _syncPositionRoutine = null;
 
     private bool _isMyObject => Guid.Parse(_user.Uid) == _authManager.UserGuid;
+    private bool _isMannualMode = false;
 
     public void Init(UserSimpleDto user)
     {
+        if(user is null)
+        {
+            _isMannualMode = true;
+            return;
+        }
+
         _user = user;
         _meshRenderer = GetComponent<MeshRenderer>();
+
         _connector = LogicServerConnector.Instance;
         _authManager = AuthManager.Instance;
+
+        if (_connector is null || _authManager is null)
+            return;
 
         if (Guid.Parse(_user.Uid) == _authManager.UserGuid)
         {
@@ -62,6 +73,9 @@ public class SyncObject : MonoBehaviour
 
     private void Update()
     {
+        if (_isMannualMode)
+            return;
+
         if (!_connector.IsOnline)
             return;
 

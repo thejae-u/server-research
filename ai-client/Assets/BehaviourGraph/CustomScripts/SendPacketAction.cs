@@ -13,7 +13,7 @@ using Random = UnityEngine.Random;
 [NodeDescription(name: "SendPacket", story: "Notify to NetworkManager And Move [AiManager]", category: "Action", id: "35c819287347764da93b47dfce107cbd")]
 public partial class SendPacketAction : Action
 {
-    [SerializeReference] public BlackboardVariable<AIManager> AiManager;
+    [SerializeReference] public BlackboardVariable<OwnObjectManager> AiManager;
     private RpcPacket _sendPacket;
     private Vector3 _targetPosition;
     private LogicServerConnector _networkManager;

@@ -43,8 +43,7 @@ public class LoginManager : MonoBehaviour
 
     private IEnumerator WaitToken()
     {
-        while (_authManager.LoadingTask is not null)
-            yield return null;
+        yield return null;
 
         if (_authManager.HasRefreshToken)
         {
