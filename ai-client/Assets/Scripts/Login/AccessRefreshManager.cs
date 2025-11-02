@@ -4,7 +4,6 @@ using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Utility;
 

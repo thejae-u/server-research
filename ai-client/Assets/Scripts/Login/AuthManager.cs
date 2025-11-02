@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections;
-using System.Threading.Tasks;
 using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 using Utility;
-using System.Threading;
 
 /// <summary>
 /// This Class is global class for user Authentication by web server <br/>

@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 using Utility;
 using Newtonsoft.Json;
 

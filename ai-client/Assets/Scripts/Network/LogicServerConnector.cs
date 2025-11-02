@@ -14,7 +14,6 @@ using System.Threading.Tasks;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using NetworkData;
-using UnityEditor.Search;
 using UnityEngine;
 
 namespace Network
@@ -98,9 +97,6 @@ namespace Network
         private GroupDto _currentGroupDto = null;
         private AuthManager _authManager;
 
-        public CancellationToken CToken => _globalCancellationToken.Token;
-        private readonly CancellationTokenSource _globalCancellationToken = new();
-
         private Task _tcpReadTask;
         private Task _udpReadTask;
 
@@ -142,9 +138,12 @@ namespace Network
         public bool IsSendPacketOn { get; private set; }
         private bool IsTryingToConnect { get; set; }
 
+        private MainThreadDispatcher _dispatcher;
+
         private void Start()
         {
             _authManager = AuthManager.Instance;
+            _dispatcher = MainThreadDispatcher.Instance;
 
             IsSendPacketOn = false;
 
@@ -154,27 +153,11 @@ namespace Network
 
         private void OnDestroy()
         {
-            _globalCancellationToken.Cancel();
-            _globalCancellationToken.Dispose();
-
-            foreach(var task in tasks)
-            {
-                task.Dispose();
-            }
-
             DisconnectFromServer();
         }
 
         private void OnApplicationQuit()
         {
-            _globalCancellationToken.Cancel();
-            _globalCancellationToken.Dispose();
-
-            foreach(var task in tasks)
-            {
-                task.Dispose();
-            }
-
             DisconnectFromServer();
         }
 
@@ -190,23 +173,23 @@ namespace Network
         {
             if (IsOnline)
             {
-                Debug.Log($"already connected.");
+                _dispatcher.Enqueue(() => Debug.Log($"already connected."));
                 return false;
             }
 
             if (IsTryingToConnect)
             {
-                Debug.Log($"already trying to connect.");
+                _dispatcher.Enqueue(() => Debug.Log($"already trying to connect."));
                 return false;
             }
 
-            Debug.Log($"NetworkManager TryConnectToServer");
+            _dispatcher.Enqueue(() => Debug.Log($"NetworkManager TryConnectToServer"));
 
             _currentGroupDto = groupInfo;
             Host = ip;
             Port = port;
 
-            bool isConnected = await ConnectToServer(CToken);
+            bool isConnected = await ConnectToServer(destroyCancellationToken);
             if (!isConnected)
             {
                 IsTryingToConnect = false;
@@ -235,15 +218,15 @@ namespace Network
                 }
                 catch (SocketException ex)
                 {
-                    Debug.Log($"서버 연결 실패: {ex.Message}");
+                    _dispatcher.Enqueue(() => Debug.Log($"서버 연결 실패: {ex.Message}"));
 
                     if (i < _maxRetries)
                     {
-                        Debug.Log($"재시도...{_maxRetries - i}");
+                        _dispatcher.Enqueue(() => Debug.Log($"재시도...{_maxRetries - i}"));
                     }
                     else
                     {
-                        Debug.Log($"서버 연결 실패: {ex.Message}");
+                        _dispatcher.Enqueue(() => Debug.Log($"서버 연결 실패: {ex.Message}"));
                         _currentGroupDto = null;
                         return false;
                     }
@@ -255,7 +238,7 @@ namespace Network
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"Unknown Error: {ex.Message}");
+                    _dispatcher.Enqueue(() => Debug.LogError($"Unknown Error: {ex.Message}"));
                     _currentGroupDto = null;
                     return false;
                 }
@@ -288,7 +271,7 @@ namespace Network
 
         public void StartGameTask()
         {
-            Dispatcher.Enqueue(() => Debug.Log($"Called Start Task"));
+            _dispatcher.Enqueue(() => Debug.Log($"Called start Task"));
 
             // prevent duplication 
             if (IsOnline)
@@ -302,17 +285,11 @@ namespace Network
             _sentPacketCount = 0;
             _receivedPacketCount = 0;
 
-            _tcpReadTask = Task.Run(() => TcpAsyncReadData(CToken), CToken); // Tcp read Task start
-            _udpReadTask = Task.Run(() => UdpAsyncReadData(CToken), CToken); // Udp read Task start
+            _tcpReadTask = Task.Run(() => TcpAsyncReadData(destroyCancellationToken), destroyCancellationToken); // Tcp read Task start
+            _udpReadTask = Task.Run(() => UdpAsyncReadData(destroyCancellationToken), destroyCancellationToken); // Udp read Task start
 
-            _sendRpcPacketByUdpTask = Task.Run(() => AsyncWriteByUdp(CToken), CToken); // rpc send by tcp Task start
-            _sendRpcPacketByTcpTask = Task.Run(() => AsyncWriteByTcp(CToken), CToken); // rpc send by udp Task start
-
-            // task List add
-            tasks.Add(_tcpReadTask);
-            tasks.Add(_udpReadTask);
-            tasks.Add(_sendRpcPacketByUdpTask);
-            tasks.Add(_sendRpcPacketByTcpTask);
+            _sendRpcPacketByUdpTask = Task.Run(() => AsyncWriteByUdp(destroyCancellationToken), destroyCancellationToken); // rpc send by tcp Task start
+            _sendRpcPacketByTcpTask = Task.Run(() => AsyncWriteByTcp(destroyCancellationToken), destroyCancellationToken); // rpc send by udp Task start
         }
 
         private async Task<bool> AsyncExchangeUdpPort(CancellationToken ct)
@@ -347,7 +324,7 @@ namespace Network
                 var byteData = receiveUdpPort.Data.ToByteArray();
                 if (byteData.Length != sizeof(ushort))
                 {
-                    Debug.LogError($"Invalid port data length: {byteData.Length}");
+                    _dispatcher.Enqueue(() => Debug.LogError($"Invalid port data length: {byteData.Length}"));
                     return false;
                 }
 
@@ -355,7 +332,7 @@ namespace Network
                     Array.Reverse(byteData);
 
                 ushort udpPort = BitConverter.ToUInt16(byteData, 0);
-                Debug.Log($"Received Server Udp Port: {udpPort}");
+                _dispatcher.Enqueue(() => Debug.Log($"Received Server Udp Port: {udpPort}"));
 
                 // Udp Socket Init
                 _udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, 0));
@@ -367,11 +344,11 @@ namespace Network
                 // Endpoint set
                 _clientUdpEndPoint = (IPEndPoint)_udpClient.Client.LocalEndPoint!;
                 _serverUdpEndPoint = new IPEndPoint(IPAddress.Parse(Host), udpPort);
-                Debug.Log($"Udp Client Created - {_serverUdpEndPoint.Address}:{_serverUdpEndPoint.Port}");
+                _dispatcher.Enqueue(() => Debug.Log($"Udp Client Created - {_serverUdpEndPoint.Address}:{_serverUdpEndPoint.Port}"));
 
                 // Send the UDP port to the server
                 var clientPort = (ushort)_clientUdpEndPoint.Port;
-                Debug.Log($"Send Port : {clientPort}");
+                _dispatcher.Enqueue(() => Debug.Log($"Send Port : {clientPort}"));
 
                 var netClientPort = BitConverter.GetBytes(clientPort);
                 if (BitConverter.IsLittleEndian)
@@ -393,16 +370,16 @@ namespace Network
                 // Send the UDP port packet
                 await _tcpStream.WriteAsync(udpPortSize, 0, udpPortSize.Length, ct);
                 await _tcpStream.WriteAsync(sendUdpPortPacketData, 0, sendUdpPortPacketData.Length, ct);
-                Debug.Log($"Exchanged Udp Port completed");
+                _dispatcher.Enqueue(() => Debug.Log($"Exchanged Udp Port completed"));
             }
             catch (OperationCanceledException)
             {
-                Debug.Log($"Cancelled");
+                _dispatcher.Enqueue(() => Debug.Log($"Cancelled"));
                 return false;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Exchange failed: {ex.Message}");
+                _dispatcher.Enqueue(() => Debug.LogError($"Exchange failed: {ex.Message}"));
                 return false;
             }
 
@@ -452,16 +429,16 @@ namespace Network
 
                 await _tcpStream.WriteAsync(sendDataSize, 0, sendDataSize.Length, ct);
                 await _tcpStream.WriteAsync(sendData, 0, sendData.Length, ct);
-                Debug.Log($"Exchange UserInfo Complete");
+                _dispatcher.Enqueue(() => Debug.Log($"Exchange UserInfo Complete"));
             }
             catch (OperationCanceledException)
             {
-                Debug.Log($"Cancelled");
+                _dispatcher.Enqueue(() => Debug.Log($"Cancelled"));
                 return false;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Network Error {ex.Message}");
+                _dispatcher.Enqueue(() => Debug.LogError($"Network Error {ex.Message}"));
                 return false;
             }
 
@@ -494,7 +471,7 @@ namespace Network
                     return false;
 
                 var sendDtoString = JsonFormatter.Default.Format(_currentGroupDto);
-                Debug.Log($"Send Dto String : {sendDtoString}");
+                _dispatcher.Enqueue(() => Debug.Log($"Send Dto String : {sendDtoString}"));
 
                 RpcPacket sendPacket = new()
                 {
@@ -511,7 +488,7 @@ namespace Network
 
                 await _tcpStream.WriteAsync(sendPacketSize, 0, sendPacketSize.Length, ct);
                 await _tcpStream.WriteAsync(sendPacketData, 0, sendPacketData.Length, ct);
-                Debug.Log($"Exchange Complete");
+                _dispatcher.Enqueue(() => Debug.Log($"Exchange Complete"));
 
                 return true;
             }
@@ -522,7 +499,7 @@ namespace Network
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Network Error: {ex.Message}");
+                _dispatcher.Enqueue(() => Debug.LogError($"Network Error: {ex.Message}"));
                 return false;
             }
         }
@@ -555,14 +532,17 @@ namespace Network
             {
                 try
                 {
+                    await Awaitable.BackgroundThreadAsync();
                     if (!_sendPacketQueueForUdp.TryDequeue(out var data))
                     {
                         await Task.Yield();
                         continue;
                     }
 
-                    data.Uid = _authManager.UserGuid.ToString();
+                    await Awaitable.MainThreadAsync();
+                    data.Uid = _authManager.UserGuid.ToString(); // main thread function (MonoBehaviour)
 
+                    await Awaitable.BackgroundThreadAsync();
                     byte[] payload = data.ToByteArray();
                     var payloadSize = (short)payload.Length;
                     byte[] sizeBuffer = BitConverter.GetBytes(payloadSize);
@@ -574,19 +554,31 @@ namespace Network
                     Buffer.BlockCopy(sizeBuffer, 0, packet, 0, sizeBuffer.Length);
                     Buffer.BlockCopy(payload, 0, packet, sizeBuffer.Length, payload.Length);
 
-                    await _udpClient.SendAsync(packet, packet.Length, _serverUdpEndPoint).ConfigureAwait(false);
+                    await _udpClient.SendAsync(packet, packet.Length, _serverUdpEndPoint);
+
                     Interlocked.Increment(ref _sentPacketCount); // sent packet count increment by atomic
 
-                    Dispatcher.Enqueue(() => Debug.Log($"Sent Rpc Packet To Server {Utility.Util.ConvertTimestampToString(data.Timestamp)}" +
+                    _dispatcher.Enqueue(() => Debug.Log($"Sent Rpc Packet To Server {Utility.Util.ConvertTimestampToString(data.Timestamp)}" +
                               $" {data.Uid}: {data.Method}"));
                 }
                 catch (OperationCanceledException)
                 {
-                    Dispatcher.Enqueue(() => Debug.Log("Cancelled"));
+                    _dispatcher.Enqueue(() => Debug.Log("Cancelled"));
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    _dispatcher.Enqueue(() => Debug.Log("stream closed"));
+                    return;
                 }
                 catch (Exception ex)
                 {
-                    Dispatcher.Enqueue(() => Debug.LogError($"send failed: {ex.Message}"));
+                    _dispatcher.Enqueue(() =>
+                    {
+                        Debug.LogError($"send failed: {ex.Message}");
+                        DisconnectFromServer();
+                    });
+                    return;
                 }
             }
         }
@@ -598,11 +590,12 @@ namespace Network
 
         private async Task AsyncWriteByTcp(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
                 {
-                    if(!_sendPacketQueueForTcp.TryDequeue(out var data))
+                    if (!_sendPacketQueueForTcp.TryDequeue(out var data))
                     {
                         await Task.Yield();
                         continue;
@@ -615,16 +608,26 @@ namespace Network
                     if (BitConverter.IsLittleEndian)
                         Array.Reverse(packetSize);
 
-                    await _tcpStream.WriteAsync(packetSize, 0, packetSize.Length, ct).ConfigureAwait(false);
-                    await _tcpStream.WriteAsync(sendPacket, 0, sendPacket.Length, ct).ConfigureAwait(false);
+                    await _tcpStream.WriteAsync(packetSize, 0, packetSize.Length, ct);
+                    await _tcpStream.WriteAsync(sendPacket, 0, sendPacket.Length, ct);
                 }
                 catch (OperationCanceledException)
                 {
+                    _dispatcher.Enqueue(() => Debug.Log($"cancelled"));
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    _dispatcher.Enqueue(() => Debug.Log($"stream closed"));
                     return;
                 }
                 catch (Exception e)
                 {
-                    Dispatcher.Enqueue(() => Debug.Log($"error tcp send: {e.Message}"));
+                    _dispatcher.Enqueue(() =>
+                    {
+                        Debug.LogError($"error tcp send: {e.Message}");
+                        DisconnectFromServer();
+                    });
                     return;
                 }
             }
@@ -632,6 +635,7 @@ namespace Network
 
         private async Task TcpAsyncReadData(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
@@ -639,10 +643,13 @@ namespace Network
                     var sizeBuffer = new byte[sizeof(uint)]; // 4 bytes read size buffer
 
                     // Read Size first for data receive
-                    if(!await ReadTcpExactlyAsync(_tcpStream, sizeBuffer, sizeBuffer.Length, ct).ConfigureAwait(false))
+                    if (!await ReadTcpExactlyAsync(_tcpStream, sizeBuffer, sizeBuffer.Length, ct))
                     {
-                        Dispatcher.Enqueue(() => Debug.Log($"failed to read packet size."));
-                        DisconnectFromServer();
+                        _dispatcher.Enqueue(() =>
+                        {
+                            Debug.Log($"failed to read packet size.");
+                            DisconnectFromServer();
+                        });
                         return;
                     }
 
@@ -652,20 +659,26 @@ namespace Network
 
                     uint netSize = BitConverter.ToUInt32(sizeBuffer, 0);
 
-                    if(netSize == 0 || netSize > MAX_PACKET_SIZE)
+                    if (netSize == 0 || netSize > MAX_PACKET_SIZE)
                     {
-                        Dispatcher.Enqueue(() => Debug.LogError($"Invalid Packet Size received {netSize}."));
-                        DisconnectFromServer();
+                        _dispatcher.Enqueue(() =>
+                        {
+                            Debug.LogError($"Invalid Packet Size received {netSize}.");
+                            DisconnectFromServer();
+                        });
                         return;
                     }
 
                     var dataBuffer = new byte[netSize]; // real data buffer sizeof netSize
 
                     // Read the rest of the data
-                    if(!await ReadTcpExactlyAsync(_tcpStream, dataBuffer, dataBuffer.Length, ct).ConfigureAwait(false))
+                    if (!await ReadTcpExactlyAsync(_tcpStream, dataBuffer, dataBuffer.Length, ct))
                     {
-                        Dispatcher.Enqueue(() => Debug.LogError($"failed to read packet data."));
-                        DisconnectFromServer();
+                        _dispatcher.Enqueue(() =>
+                        {
+                            Debug.LogError($"failed to read packet data.");
+                            DisconnectFromServer();
+                        });
                         return;
                     }
 
@@ -673,26 +686,38 @@ namespace Network
                 }
                 catch (OperationCanceledException)
                 {
-                    break;
+                    _dispatcher.Enqueue(() => Debug.Log($"cancelled"));
+                    return;
+                }
+                catch(ObjectDisposedException)
+                {
+                    _dispatcher.Enqueue(() => Debug.Log($"stream closed"));
+                    return;
                 }
                 catch (Exception ex)
                 {
-                    Dispatcher.Enqueue(() => Debug.LogError($"TCP read size error: {ex.Message}"));
+                    _dispatcher.Enqueue(() =>
+                    {
+                        Debug.LogError($"TCP read size error: {ex.Message}");
+                        DisconnectFromServer();
+                    });
+                    return;
                 }
             }
         }
 
         private async Task<bool> ReadTcpExactlyAsync(NetworkStream stream, byte[] buffer, int length, CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             int totalBytesRead = 0;
             while(totalBytesRead < length)
             {
                 try
                 {
-                    int bytesRead = await stream.ReadAsync(buffer, totalBytesRead, length - totalBytesRead, ct).ConfigureAwait(false); // 총 길이 - 현재 길이 만큼 더 받음
+                    int bytesRead = await stream.ReadAsync(buffer, totalBytesRead, length - totalBytesRead, ct); // 총 길이 - 현재 길이 만큼 더 받음
                     if(bytesRead == 0)
                     {
-                        Dispatcher.Enqueue(() => Debug.LogWarning("(EOF) disconnected"));
+                        _dispatcher.Enqueue(() => Debug.LogWarning("(EOF) disconnected"));
                         return false;
                     }
 
@@ -700,12 +725,12 @@ namespace Network
                 }
                 catch(OperationCanceledException)
                 {
-                    Dispatcher.Enqueue(() => Debug.Log($"cancelled"));
+                    _dispatcher.Enqueue(() => Debug.Log($"cancelled"));
                     return false;
                 }
                 catch(Exception ex)
                 {
-                    Dispatcher.Enqueue(() => Debug.LogError($"error ReadTcpExactly: {ex.Message}"));
+                    _dispatcher.Enqueue(() => Debug.LogError($"error ReadTcpExactly: {ex.Message}"));
                     return false;
                 }
             }
@@ -715,12 +740,13 @@ namespace Network
 
         private async Task UdpAsyncReadData(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
                 {
                     // Read the data from the stream
-                    UdpReceiveResult result = await _udpClient.ReceiveAsync().ConfigureAwait(false);
+                    UdpReceiveResult result = await _udpClient.ReceiveAsync();
                     byte[] readData = result.Buffer;
 
                     // Error 시 버림
@@ -752,33 +778,38 @@ namespace Network
                 }
                 catch (OperationCanceledException)
                 {
-                    Dispatcher.Enqueue(() => Debug.Log($"UDP loop canceled"));
+                    _dispatcher.Enqueue(() => Debug.Log($"UDP loop canceled"));
                     break;
                 }
-                catch (ObjectDisposedException ex)
+                catch (ObjectDisposedException)
                 {
-                    Dispatcher.Enqueue(() => Debug.LogError($"{ex.HResult} : error object dis {ex.Message}"));
+                    _dispatcher.Enqueue(() => Debug.Log($"stream closed"));
                     break;
                 }
-                catch (SocketException ex)
+                catch (Exception ex) // abnormal exit 
                 {
-                    Dispatcher.Enqueue(() => Debug.LogError($"{ex.SocketErrorCode} : error socket {ex.Message}"));
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    Dispatcher.Enqueue(() => Debug.LogError($"UDP error: {ex.Message}"));
+                    _dispatcher.Enqueue(() =>
+                    {
+                        Debug.LogError($"UDP error: {ex.Message}");
+                        DisconnectFromServer();
+                    });
                     break;
                 }
             }
         }
 
+        /// <summary>
+        /// called in background thread
+        /// </summary>
         private void EnqueueInternalProcess(byte[] data)
         {
-            Dispatcher.Enqueue(() => Debug.Log($"data enqueued"));
+            _dispatcher.Enqueue(() => Debug.Log($"data enqueued"));
             _processQueue.Enqueue(data);
         }
 
+        /// <summary>
+        /// called in main thrad
+        /// </summary>
         private byte[] DequeueInternalProcess()
         {
             if (!_processQueue.TryDequeue(out var data))
@@ -786,19 +817,19 @@ namespace Network
                 return null;
             }
 
-            Dispatcher.Enqueue(() => Debug.Log($"data dequeued"));
+            _dispatcher.Enqueue(() => Debug.Log($"data dequeued"));
             return data;
         }
 
+        /// <summary>
+        /// called in main thread
+        /// </summary>
         private void ProcessRpc()
         {
             var nextProcess = DequeueInternalProcess();
 
             if (nextProcess is null)
-            {
-                Debug.Log($"next process is null");
                 return;
-            }
 
             var data = RpcPacket.Parser.ParseFrom(nextProcess);
             if (data is null)
