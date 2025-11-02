@@ -10,8 +10,8 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
     _udpSocketPtr(std::make_shared<UdpSocket>(_rpcCtxManager->GetStrand().context(), udp::endpoint(udp::v4(), 0))),
     _lastRtt(0)
 {
-    _pingTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_pingDelay), [this]() {
-        SendPingPacket();
+    _pingTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_pingDelay), [this](CompletionHandler onComplete) {
+        SendPingPacket(onComplete);
         }
     );
 }
@@ -265,6 +265,7 @@ void Session::AysncReceiveGroupInfo(std::function<void(bool success, std::shared
     );
 }
 
+
 void Session::SetStopCallback(StopCallback stopCallback)
 {
     _onStopCallback = std::move(stopCallback);
@@ -275,28 +276,51 @@ void Session::SetCollectInputAction(SessionInput inputAction)
     _inputAction = std::move(inputAction);
 }
 
-void Session::SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs)
+void Session::SendRpcPacketToClient()
 {
-    std::unordered_map<SSessionKey, RpcPacket> copiedInputs;
-    for (const auto& [key, packet] : allInputs)
-    {
-        copiedInputs[key] = *packet;
-    }
+	auto self(shared_from_this());
 
-    for (const auto& [key, packet] : copiedInputs)
-    {
-        auto serializedData = std::make_shared<std::string>();
-        if (!packet.SerializeToString(serializedData.get()))
-        {
-            spdlog::error("{} : rpc packet serialize failed for key {}", _sessionInfo.uid(), packet.data());
-            return;
-        }
+	// lock for check empty queue
+	{
+		std::lock_guard<std::mutex> lock(_sendQueueMutex);
+		if (_sendPacketQueue.empty())
+		{
+			boost::asio::post(_rpcCtxManager->GetStrand(), [self]() { self->SendRpcPacketToClient() }); // restart this function
+			return;
+		}
+	}
 
-        UdpAsyncWrite(serializedData);
-    }
+	auto nextPacket = DequeueSendPacket(); // this function will lock queue
+	auto serializedData = std::make_shared<std::string>();
+	if(!nextPacket.SerializeToString(serializedData.get()))
+	{
+		spdlog::error("{} : rpc packet serialize failed", _sessionInfo.uid());
+		boost::asio::post(_rpcCtxManager->GetStrand(), [self]() { self->SendRpcPacketToClient(); }); // restart this function
+		return;
+	}
+
+	UdpAsyncWrite(serializedData);
+	boost::asio::post(_rpcCtxManager->GetStrand(), [self]() { self->SendRpcPacketToClient(); }); // restart this function
 }
 
-void Session::SendPingPacket()
+void Session::EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets)
+{
+	std::lock_guard<std::mutex> lock(_sendQueueMutex);
+	for (const auto& packet : sendPackets)
+	{
+		_sendPacketQueue.push(*packet->packet);
+	}
+}
+
+RpcPacket Session::DequeueSendPacket()
+{
+	std::lock_guard<std::mutex> lock(_sendQueueMutex);
+	auto nextPacket = _sendPacketQueue.front();
+	_sendPacketQueue.pop();
+	return nextPacket;
+}
+
+void Session::SendPingPacket(CompletionHandler onComplete)
 {
     RpcPacket packet;
     packet.set_method(PING);
@@ -310,29 +334,31 @@ void Session::SendPingPacket()
     boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
     if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(*serializePingPacket));
 
-    // error occured
+    // error occured log
     if (ec)
     {
         spdlog::error("{} : network error occured ({})", _sessionInfo.uid(), ec.message());
     }
+
+    onComplete();
 }
 
 void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet)
 {
-    if (packet->method() == PONG)
-    {
-        const auto rtt = Utility::StopStopwatch(_pingTime);
-        _lastRtt = rtt;
+	if (packet->method() == PONG)
+	{
+		const auto rtt = Utility::StopStopwatch(_pingTime);
+		_lastRtt = rtt;
 
-        RpcPacket rttPacket;
-        rttPacket.set_method(LAST_RTT);
+		RpcPacket rttPacket;
+		rttPacket.set_method(LAST_RTT);
 
-        std::string rttData = std::to_string(rtt);
-        rttPacket.set_data(rttData);
-        const auto serializedRttPacket = std::make_shared<std::string>(rttPacket.SerializeAsString());
+		std::string rttData = std::to_string(rtt);
+		rttPacket.set_data(rttData);
+		const auto serializedRttPacket = std::make_shared<std::string>(rttPacket.SerializeAsString());
 
-        TcpAsyncWrite(serializedRttPacket); // Send the last RTT back to the client
-    }
+		TcpAsyncWrite(serializedRttPacket); // Send the last RTT back to the client
+	}
     else
     {
         spdlog::error("{} : invalid packet method ({})", _sessionInfo.uid(), Utility::MethodToString(packet->method()));
@@ -407,7 +433,7 @@ void Session::TcpAsyncReadSize()
     );
 }
 
-void Session::TcpAsyncReadData(const std::shared_ptr<std::vector<char>> dataBuffer)
+void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
 {
     boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(*dataBuffer),
         _ctxManager->GetStrand().wrap([self(shared_from_this()), dataBuffer](const boost::system::error_code& dataEc, std::size_t) {
@@ -449,8 +475,7 @@ void Session::UdpAsyncRead()
     const auto buf = std::make_shared<std::vector<char>>(MAX_PACKET_SIZE);
     const auto senderEndpoint = std::make_shared<udp::endpoint>();
 
-    _udpSocketPtr->async_receive_from(
-        boost::asio::buffer(*buf), *senderEndpoint,
+    _udpSocketPtr->async_receive_from(boost::asio::buffer(*buf), *senderEndpoint,
         _rpcCtxManager->GetStrand().wrap([self(shared_from_this()), buf](const boost::system::error_code& ec, const std::size_t bytesRead) {
             if (ec)
             {
@@ -500,17 +525,14 @@ void Session::UdpAsyncRead()
                 self->_inputAction(rpcRequest);
             }
 
-            spdlog::info("Packet read complete");
             self->UdpAsyncRead();
             }
         )
     );
 }
 
-void Session::UdpAsyncWrite(const std::shared_ptr<std::string> data)
+void Session::UdpAsyncWrite(std::shared_ptr<std::string> data)
 {
-    spdlog::info("{} : udp write", _sessionInfo.uid());
-
     // make udp packet
     const std::uint16_t payloadSize = static_cast<std::uint16_t>(data->size());
     const std::uint16_t netPayloadSize = htons(payloadSize);

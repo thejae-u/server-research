@@ -9,6 +9,8 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/string_generator.hpp>
 
+#include <queue>
+
 #include "Base.h"
 #include "Scheduler.h"
 #include "NetworkData.pb.h"
@@ -26,9 +28,10 @@ class LockstepGroup;
 class Scheduler;
 class ContextManager;
 struct SSessionKey;
+struct SSendPacket;
 
 constexpr std::int64_t INVALID_RTT = -1;
-constexpr std::size_t MAX_PACKET_SIZE = 128;
+constexpr std::size_t MAX_PACKET_SIZE = 65535;
 
 class Session final : public Base<Session>
 {
@@ -52,7 +55,6 @@ public:
     using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
     void SetCollectInputAction(SessionInput inputAction);
 
-    void SendRpcPacketToClient(std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> allInputs);
     tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
     void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 
@@ -68,6 +70,8 @@ public:
     bool IsValid() const { return _isConnected; }
     uuid GetSessionUuid() { return _toUuid(_sessionInfo.uid()); }
 
+    void EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets);
+
 private:
     using TcpSocket = tcp::socket;
     using UdpSocket = udp::socket;
@@ -79,7 +83,7 @@ private:
     std::shared_ptr<UdpSocket> _udpSocketPtr;
     udp::endpoint _udpSendEp;
 
-    bool _isConnected = false;
+    std::atomic<bool> _isConnected = false;
 
     boost::uuids::string_generator _toUuid;
     UserSimpleDto _sessionInfo;
@@ -98,14 +102,20 @@ private:
     std::uint32_t _tcpNetSize = 0;
     std::uint32_t _tcpDataSize = 0;
 
-    void SendPingPacket();
+    std::mutex _sendQueueMutex;
+    std::queue<RpcPacket> _sendPacketQueue;
+
+    RpcPacket DequeueSendPacket();
+    void SendRpcPacketToClient();
+
+    void SendPingPacket(CompletionHandler onComplete);
     void ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet);
 
     void TcpAsyncWrite(const std::shared_ptr<std::string> data);
 
-    void TcpAsyncReadSize();
-    void TcpAsyncReadData(const std::shared_ptr<std::vector<char>> dataBuffer);
+	void TcpAsyncReadSize();
+    void TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer);
 
     void UdpAsyncRead();
-    void UdpAsyncWrite(const std::shared_ptr<std::string> data);
+    void UdpAsyncWrite(std::shared_ptr<std::string> data);
 };

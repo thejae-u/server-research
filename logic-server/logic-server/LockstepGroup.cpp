@@ -24,8 +24,9 @@ void LockstepGroup::Start()
         std::lock_guard<std::mutex> runningLock(_runningStateMutex);
         _isRunning = true;
     }
-    _tickTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_fixedDeltaMs), [this]() {
-        Tick();
+
+    _tickTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_fixedDeltaMs), [this](CompletionHandler onComplete) {
+        Tick(onComplete);
         }
     );
 
@@ -83,67 +84,52 @@ void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 
 void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest)
 {
-    const auto& [guid, request] = *rpcRequest;
+    const auto [guid, request] = *rpcRequest;
 
-    SSessionKey key;
+    // make send packet
+    std::shared_ptr<SSendPacket> packet = std::make_shared<SSendPacket>(SSendPacket{ _inputCounter++, guid, request });
     {
-        std::lock_guard<std::mutex> inputCounterLock(_inputIdCounterMutex);
-        key = SSessionKey{ _inputIdCounter++, guid };
+        std::lock_guard<std::mutex> bufferLock(_bufferMutex);
+        _inputBuffer[_currentBucket].push_back(packet);
     }
 
-    {
-        std::lock_guard<std::mutex> lock(_bufferMutex);
-        std::lock_guard<std::mutex> bucketLock(_bucketMutex);
-        _inputBuffer[_currentBucket][key] = request;
-    }
-
-    // spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
+    spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
 }
 
-void LockstepGroup::ProcessStep()
+void LockstepGroup::Tick(CompletionHandler onComplete)
 {
-    std::unordered_map<SSessionKey, std::shared_ptr<RpcPacket>> input;
-
-    {
-        std::lock_guard<std::mutex> lock(_bufferMutex);
-        std::lock_guard<std::mutex> bucketLock(_bucketMutex);
-        input = _inputBuffer[_currentBucket];
-    }
-
-    // Copy and safe Access to Members
-    std::set<std::shared_ptr<Session>> cpMembers;
-    {
-        std::lock_guard<std::mutex> memberLock(_memberMutex);
-        cpMembers = _members;
-    }
-
-    for (auto& member : cpMembers)
-    {
-        if (member == nullptr || !member->IsValid())
-            continue;
-
-        // Session Rpc Call
-        member->SendRpcPacketToClient(input);
-    }
-}
-
-void LockstepGroup::Tick()
-{
+    // check state first
     {
         std::lock_guard<std::mutex> runningLock(_runningStateMutex);
         if (!_isRunning)
+        {
+            onComplete();
             return;
+        }
     }
 
     auto self(shared_from_this());
-
-    boost::asio::post(_ctxManager->GetBlockingPool(), [self]() {
-        self->ProcessStep();
-
-        boost::asio::post(self->_ctxManager->GetStrand(), [self]() {
-            self->_currentBucket++;
-            self->_inputIdCounter = 0;
-            });
+    boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]() {
+        std::list<std::shared_ptr<SSendPacket>> currentBucketPackets;
+        {
+            std::lock_guard<std::mutex> bufferLock(self->_bufferMutex);
+            currentBucketPackets = self->_inputBuffer[self->_currentBucket];
         }
+
+        boost::asio::post(self->_ctxManager->GetStrand(), [self, onComplete, currentBucketPackets]() {
+            std::lock_guard<std::mutex> memberLock(self->_memberMutex);
+            for (const auto& member : self->_members)
+            {
+                if (!member->IsValid())
+                    continue;
+
+                member->EnqueueSendPackets(currentBucketPackets);
+            }
+
+            self->_currentBucket++;
+            self->_inputCounter = 0;
+            onComplete(); 
+            }
+        );}
     );
 }

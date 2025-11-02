@@ -1,6 +1,6 @@
 #include "Scheduler.h"
 
-Scheduler::Scheduler(IoContext::strand& strand, const std::chrono::milliseconds cycleTime, std::function<void()> handler)
+Scheduler::Scheduler(IoContext::strand& strand, const std::chrono::milliseconds cycleTime, TaskHandler handler)
     : _strand(strand), _cycleTime(cycleTime), _handler(std::move(handler))
 {
     _timer = std::make_shared<boost::asio::steady_timer>(strand.context());
@@ -29,9 +29,7 @@ void Scheduler::DoStart()
             return;
         }
 
-        self->_handler(); // Execute the task
-        self->Start(); // Restart the timer
-        }
+        self->_handler([self]() { self->Start(); }); }
     );
 }
 

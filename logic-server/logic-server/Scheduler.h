@@ -8,20 +8,26 @@
 
 #include "Base.h"
 
+using CompletionHandler = std::function<void()>;
+using TaskHandler = std::function<void(CompletionHandler)>;
+
 class Scheduler : public Base<Scheduler>
 {
 public:
     using IoContext = boost::asio::io_context;
 
-    Scheduler(IoContext::strand& strand, const std::chrono::milliseconds cycleTime, std::function<void()> handler);
+    Scheduler(IoContext::strand& strand, const std::chrono::milliseconds cycleTime, TaskHandler handler);
     void Start() override;
     void Stop() override;
+
 
 private:
     IoContext::strand& _strand;
     std::shared_ptr<boost::asio::steady_timer> _timer;
     std::chrono::milliseconds _cycleTime;
-    std::function<void()> _handler;
+
+    //std::function<void()> _handler;
+    TaskHandler _handler;
 
     void DoStart();
 };
