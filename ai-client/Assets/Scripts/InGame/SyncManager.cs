@@ -1,89 +1,133 @@
-using System;
+﻿using System;
 using UnityEngine;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using Network;
 using NetworkData;
+using Random = UnityEngine.Random;
 
-public class SyncManager : Singleton<SyncManager> 
+public class SyncManager : Singleton<SyncManager>
 {
     [SerializeField] private GameObject _syncObjectPrefab;
     [SerializeField] private GameObject _syncObjectNameTagPrefab;
     [SerializeField] private Transform _syncObjectCanvas;
-    
-    private NetworkManager _networkManager;
-    
-    private Dictionary<Guid, GameObject> _syncObjects = new();
 
-    private void OnEnable()
-    {
-        NetworkManager.Instance.disconnectAction += OnDisconnected;
-    }
-    
-    private void OnDisable()
-    {
-    }
+    public bool isManualMode = false;
+
+    private LogicServerConnector _connector;
+    private AuthManager _authManager;
+
+    private readonly Dictionary<Guid, GameObject> _syncObjects = new();
+    private readonly Dictionary<Guid, UserSimpleDto> _userInfos = new();
 
     private void Start()
     {
-        _networkManager = NetworkManager.Instance;
-    }
-
-    private void OnDisconnected()
-    {
-        // all sync objects should be removed
-        foreach (GameObject syncObject in _syncObjects.Values)
+        if (isManualMode)
         {
-            Destroy(syncObject);
+            CreateTestSyncObject();
+            return;
+        }
+
+        _authManager = AuthManager.Instance;
+        _connector = LogicServerConnector.Instance;
+
+        if (_authManager is null || _connector is null)
+        {
+            return;
+        }
+
+        // 시작 시 모든 플레이어 오브젝트 생성
+        foreach (var user in _connector.Users)
+        {
+            if(Guid.Parse(user.Uid) == _authManager.UserGuid)
+            {
+                continue;
+            }
+
+            var newUser = CreateSyncObject(user, Vector3.zero);
+            if(newUser is null)
+            {
+                Debug.LogError($"{user.Username} is already exist");
+            }
         }
     }
 
-    private GameObject CreateSyncObject(Guid objectId, Vector3 position) 
+    private GameObject CreateSyncObject(UserSimpleDto user, Vector3 position)
     {
         GameObject syncObject = Instantiate(_syncObjectPrefab, position, Quaternion.identity); // Create the object
-        
-        syncObject.transform.SetParent(transform); // Set parent to SyncManager (here)
-        syncObject.name = objectId.ToString(); // Set the name to the objectId
-        syncObject.GetComponent<SyncObject>().Init(objectId); // Initialize SyncObject
-        
+
+        syncObject.transform.SetParent(transform); // Set parent to SyncManager
+        syncObject.name = user.Username; // Set the name to the objectId
+        syncObject.GetComponent<SyncObject>().Init(user); // Initialize SyncObject
+
         // Create the name tag
         GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
-        nameTag.GetComponent<NameTagController>().Init(objectId, syncObject);
-        
-        _syncObjects.Add(objectId, syncObject); // Add to dict
+        nameTag.GetComponent<NameTagController>().Init(user, syncObject);
+
+        var userId = Guid.Parse(user.Uid);
+        if (!_syncObjects.TryAdd(userId, syncObject)) // Add to dict
+        {
+            Destroy(nameTag);
+            Destroy(syncObject);
+            return null;
+        }
+
+        if(!_userInfos.TryAdd(userId, user))
+        {
+            Destroy(nameTag);
+            Destroy(syncObject);
+            return null;
+        }
 
         return syncObject;
     }
 
-    public void SyncObjectPosition(Guid objectId, MoveData moveData)
+    public void SyncObjectPosition(Guid uid, MoveData moveData)
     {
-        Debug.Log($"Received SyncObjectPosition - {objectId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
-        if (objectId == Guid.Empty)
+        Debug.Log($"Received SyncObjectPosition - {uid} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+        if (uid == Guid.Empty)
         {
             Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
-            ++_networkManager.ErrorCount;
+            _connector.IncrementErrorCount();
             return;
         }
 
         var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
-        if (!_syncObjects.TryGetValue(objectId, out GameObject syncObject))
+        if (!_syncObjects.TryGetValue(uid, out var syncObject))
         {
-            // If the object doesn't exist, create it
-            syncObject = CreateSyncObject(objectId, startPosition);
+            Debug.LogError($"Invalid Situation: {uid} is not exist in syncObjects");
             return;
         }
-        
+
         var syncObjectComponent = syncObject.GetComponent<SyncObject>();
-        // Sync position
-        syncObjectComponent.SyncPosition(moveData).Forget();
+        syncObjectComponent.EnqueueMoveData(moveData);
     }
 
     public void SyncObjectNone(Guid objectId)
     {
         // self packet check and return
-        if (objectId == _networkManager.ConnectedUuid)
+        if (objectId == _authManager.UserGuid)
             return;
-        
+
         Debug.Log($"SyncObjectNone - {objectId}");
+    }
+
+    private void CreateTestSyncObject()
+    {
+        const int MAX_USER = 4;
+
+        for (int i = 0; i < MAX_USER; ++i)
+        {
+            GameObject randomObject = Instantiate(_syncObjectPrefab, Vector3.up, Quaternion.identity);
+            randomObject.transform.SetParent(transform);
+            randomObject.name = $"user {i + 1}";
+            randomObject.GetComponent<SyncObject>().Init(null);
+
+            randomObject.transform.position = new Vector3(Random.Range(0, 10), 1, Random.Range(0, 10));
+
+            GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
+            nameTag.GetComponent<NameTagController>().Init(randomObject.name, randomObject);
+
+            _syncObjects.Add(Guid.NewGuid(), randomObject);
+        }
     }
 }

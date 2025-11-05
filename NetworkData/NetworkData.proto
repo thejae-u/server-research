@@ -2,18 +2,6 @@ syntax = "proto3";
 package NetworkData;
 import "google/protobuf/timestamp.proto";
 
-message LoginData
-{
-  string username = 1;
-  string password = 2;
-}
-
-message RegisterData
-{
-  string username = 1;
-  string password = 2;
-}
-
 message MoveData 
 {
   // Current Position
@@ -28,42 +16,56 @@ message MoveData
 
 message RpcPacket
 {
-  bytes uuid = 1;
+  string uid = 1;
   RpcMethod method = 2;
   bytes data = 3; // serialized parameter data (Login Data, Position Data, etc.)
   google.protobuf.Timestamp timestamp = 4;
 }
 
+message UserSimpleDto
+{
+  string uid = 1;
+  string username = 2;
+}
+
+message InternalData
+{
+  LoginDto internal = 1;
+}
+
+message LoginDto
+{
+  string username = 1;
+  string password = 2;
+}
+
+message GroupDto
+{
+  string groupId = 1;
+  string name = 2;
+  UserSimpleDto owner = 3;
+  repeated UserSimpleDto playerList = 4;
+}
+
+message AccessToken
+{
+  string accessToken = 1;
+}
+
 enum RpcMethod
 {
-  // Login or DB methods
-  NONE = 0;
-  LOGIN = 1;
-  REGISTER = 2;
-  RETRIEVE = 3;
-  ACCESS = 4;
-  REJECT = 5;
-  LOGOUT = 6;
-  // Limit DB access to 99
-
-  IN_GAME_NONE = 100;
-  MOVE = 101;
-  MoveStart = 102;
-  MoveStop = 103;
+  IN_GAME_NONE = 0;
+  MOVE = 1;
+  MoveStart = 2;
+  MoveStop = 3;
   
   // Network Settings
   NETWORK_NONE = 500;
   UDP_PORT = 501;
-  UUID = 502;
-  PING = 503;
-  PONG = 504;
-  PACKET_COUNT = 505;
-  LAST_RTT = 506;
-}
-
-enum ELoginError 
-{
-  USER_NOT_FOUND = 0;
-  USER_ALREADY_EXIST = 1;
-  INCORRECT = 2;
+  USER_INFO = 502;
+  GROUP_INFO = 503;
+  PING = 504;
+  PONG = 505;
+  PACKET_COUNT = 506;
+  LAST_RTT = 507;
 }

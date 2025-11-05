@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -9,22 +9,19 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Network;
 using NetworkData;
-using Random = UnityEngine.Random;
 
-public class AIManager : MonoBehaviour
+public class OwnObjectManager : MonoBehaviour
 {
     [SerializeField] private PlayerMoveActions _playerMoveActions;
     [SerializeField] private PlayerStatData _playerStatData;
     [SerializeField] private float _movePacketSendInterval = 16.6f; // in milliseconds
-    
-    private NetworkManager _networkManager;
-    
+
+    private LogicServerConnector _connector;
+
     private bool _isMoving;
 
     private Vector3 _cachedDirection;
-
     private float _lastSendDeltaTime = 0.0f;
-
     private MoveData _moveData = new()
     {
         X = 0.0f,
@@ -34,16 +31,21 @@ public class AIManager : MonoBehaviour
         Vertical = 0.0f,
         Speed = 0.0f
     };
-    
-    private readonly RpcPacket _sendPacket = new ()
-    {
-        Method = RpcMethod.None,    
-        Data = ByteString.Empty,
-    };
-    
+
+    private readonly RpcPacket _sendPacket = new();
+
+    private bool _isManualMode = false;
+
     private void Start()
     {
-        _networkManager = NetworkManager.Instance;
+        if (SyncManager.Instance.isManualMode)
+        {
+            _isManualMode = true;
+            return;
+        }
+
+        _connector = LogicServerConnector.Instance;
+        _connector.StartGameTask();
         _isMoving = false;
     }
 
@@ -60,19 +62,22 @@ public class AIManager : MonoBehaviour
         _playerMoveActions.onMoveStopAction -= OnMoveStop;
         _playerMoveActions.onMoveStartAction -= OnMoveStart;
     }
-    
+
     private void Update()
     {
-        if (!_networkManager.IsOnline)
+        if (_isManualMode)
             return;
-        
+
+        if (!_connector.IsOnline)
+            return;
+
         _lastSendDeltaTime += Time.deltaTime * 1000.0f; // Convert to milliseconds
 
         if (!_isMoving)
         {
             return;
         }
-        
+
         MoveTo();
         SendPacket();
     }
@@ -93,7 +98,7 @@ public class AIManager : MonoBehaviour
         _sendPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
         _sendPacket.Data = _moveData.ToByteString();
 
-        _networkManager.AsyncWriteRpcPacket(_sendPacket).Forget();
+        _connector.EnqueueRpcPacketForUdp(_sendPacket);
     }
 
     public void MoveTo()
@@ -114,19 +119,20 @@ public class AIManager : MonoBehaviour
 
     private void OnMove(Vector2 move)
     {
+        _isMoving = true;
         Vector3 dir = transform.right * move.x + transform.forward * move.y;
         _cachedDirection = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.zero;
-        
+
         _sendPacket.Method = RpcMethod.Move;
         _moveData.Horizontal = dir.x;
         _moveData.Vertical = dir.z;
         _moveData.Speed = _playerStatData.speed;
     }
-    
+
     private void OnMoveStop()
     {
         _isMoving = false;
-        
+
         _sendPacket.Method = RpcMethod.MoveStop;
         _moveData.Horizontal = 0;
         _moveData.Vertical = 0;

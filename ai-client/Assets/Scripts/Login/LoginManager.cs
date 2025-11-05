@@ -4,10 +4,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
 using Utility;
-using System.Threading.Tasks;
-using System.Threading;
+using Newtonsoft.Json;
 
 public class LoginManager : MonoBehaviour
 {
@@ -44,8 +42,7 @@ public class LoginManager : MonoBehaviour
 
     private IEnumerator WaitToken()
     {
-        while (_authManager.LoadingTask is not null)
-            yield return null;
+        yield return null;
 
         if (_authManager.HasRefreshToken)
         {
@@ -81,19 +78,20 @@ public class LoginManager : MonoBehaviour
         const string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_AUTH_LOGIN;
 
         using var request = new UnityWebRequest(apiUri, "POST");
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
 
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success) // 200 (OK)
         {
             string jsonResponse = request.downloadHandler.text;
-            var response = JsonUtility.FromJson<LoginResponse>(jsonResponse);
+            var response = JsonConvert.DeserializeObject<LoginResponse>(jsonResponse);
 
             _authManager.InitTokens(response);
             ToastStatusText("로그인 성공, 게임에 접속합니다.", new Color(0, 128, 0), 1.0f);
+
             StartCoroutine(ChangeToLobbyScene());
         }
         else if (request.result == UnityWebRequest.Result.ConnectionError)
@@ -124,11 +122,7 @@ public class LoginManager : MonoBehaviour
         }
 
         SetStatusText("접속중...", Color.black);
-        AsyncOperation loginTask = SceneManager.LoadSceneAsync("LobbyScene");
-        while (loginTask is { isDone: false })
-        {
-            yield return null;
-        }
+        SceneController.Instance.LoadSceneAsync(SceneController.EScene.LobbyScene);
     }
 
     private void SetStatusText(string text, Color color)

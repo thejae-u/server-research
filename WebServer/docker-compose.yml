@@ -23,17 +23,19 @@
     depends_on:
       - redis
       - db
+    networks:
+      - internal-network
 
   # PostgreSQL 데이터베이스 서비스
   db:
     image: postgres:latest
     container_name: lockstep-server-db
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
+    networks:
+      - internal-network
     volumes:
       - postgres_data:/var/lib/postgresql/data # Persistant Data Path
 
@@ -41,11 +43,15 @@
     image: 'redis:7-alpine'
     container_name: lockstep-redis-cache
     restart: always
-    ports:
-      - '6379:6379'
     command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
+    networks:
+      - internal-network
+
+networks:
+  internal-network:
+    driver: bridge
 
 volumes:
   postgres_data:

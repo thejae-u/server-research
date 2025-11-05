@@ -69,15 +69,11 @@ public class UserService : IUserService
         var user = await GetUserByUserName(userLoginDto.Username);
 
         if (user == null || !BCrypt.Net.BCrypt.Verify(userLoginDto.Password, user.PasswordHash))
-        {
             return null; // 사용자가 없거나 비밀번호가 틀림
-        }
 
         // User Caching in Redis
         if (!await _cachingService.SetUserLoginStatusAsync(user.Uid))
-        {
             throw new Exception("Internal error: user caching failed");
-        }
 
         // TODO : 이미 로그인 중인 사용자에 대한 처리 필요
         // 로그인 사용자와 로그인을 사용자 모두 Token에 대한 정보를 삭제 -> 재 접속 하도록 유도
@@ -99,7 +95,8 @@ public class UserService : IUserService
     public async Task<InternalResponseDto?> LoginInternalAsync(UserLoginDto userLoginDto)
     {
         var internalUser = await GetUserByUserName(userLoginDto.Username);
-        if (internalUser is null) return null;
+        if (internalUser is null || !BCrypt.Net.BCrypt.Verify(userLoginDto.Password, internalUser.PasswordHash))
+            return null; // 잘못된 아이디 혹은 비밀번호
 
         if ((internalUser.Role.Equals(RoleCaching.Admin) || internalUser.Role.Equals(RoleCaching.Internal)) == false) // if not internal user
             return null;

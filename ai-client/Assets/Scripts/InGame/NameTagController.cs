@@ -1,11 +1,12 @@
-using System;
+﻿using System;
 using Network;
 using TMPro;
 using UnityEngine;
+using NetworkData;
 
 public class NameTagController : MonoBehaviour
 {
-    private Guid ObjectId { get; set; }
+    private UserSimpleDto _user { get; set; }
     private GameObject _syncObject;
     private Transform _syncObjectTransform;
     private Camera _camera;
@@ -13,28 +14,50 @@ public class NameTagController : MonoBehaviour
     private TMP_Text _nameTagText;
     private GameObject _nameTag;
 
-    public void Init(Guid objectId, GameObject syncObject)
+    public void Init(UserSimpleDto user, GameObject syncObject)
     {
-        ObjectId = objectId;
+        _user = user;
         _syncObject = syncObject;
         _syncObjectTransform = syncObject.transform;
-        
+
         _camera = Camera.main;
-        
+
         _nameTagText = transform.GetComponentInChildren<TMP_Text>();
-        Debug.Assert(_nameTagText is not null, "NameTagController.Init - _nameTagText is null");
-        _nameTagText.text = ObjectId.ToString();
+        _nameTagText.text = _user.Username;
         _nameTag = transform.GetChild(0).gameObject;
     }
-    
+
+    /// <summary>
+    /// for test init
+    /// </summary>
+    public void Init(string username, GameObject syncObject)
+    {
+        _user = null;
+        _syncObject = syncObject;
+        _syncObjectTransform = syncObject.transform;
+
+        _camera = Camera.main;
+
+        _nameTagText = transform.GetComponentInChildren<TMP_Text>();
+        _nameTagText.text = username;
+        _nameTag = transform.gameObject;
+        if(_nameTag is null)
+        {
+            Debug.LogError($"name tag is null {transform.name}");
+        }
+    }
+
     private void Update()
     {
+        if (_nameTag is null)
+            return;
+
         if (!IsVisible())
         {
             _nameTag.SetActive(false);
             return;
         }
-        
+
         _nameTag.SetActive(true);
         Vector3 screenPoint = _camera.WorldToScreenPoint(_syncObjectTransform.position);
         screenPoint.y += 50; // Offset the name tag above the object
@@ -44,17 +67,20 @@ public class NameTagController : MonoBehaviour
 
     private bool IsVisible()
     {
+        if (_user is null)
+            return true;
+
         if (!_syncObject)
         {
             Destroy(gameObject);
         }
 
-        if (ObjectId == NetworkManager.Instance.ConnectedUuid)
+        if (Guid.Parse(_user.Uid) == AuthManager.Instance.UserGuid)
             return false;
-        
+
         Vector3 viewportPoint = _camera.WorldToViewportPoint(_syncObjectTransform.position);
-        
-        return viewportPoint.x is > 0.0f and < 1.0f 
+
+        return viewportPoint.x is > 0.0f and < 1.0f
                && viewportPoint.y is > 0.0f and < 1.0f;
     }
 }

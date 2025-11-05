@@ -76,30 +76,27 @@ public class RegisterManager : MonoBehaviour
         string apiUri = WebServerUtils.API_SERVER_IP + WebServerUtils.API_AUTH_REGISTER;
 
         var isSuccess = false;
-        using (var request = new UnityWebRequest(apiUri, "POST"))
+
+        using var request = new UnityWebRequest(apiUri, "POST");
+        request.SetRequestHeader("Content-Type", "application/json");
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+
+        _statusText.text = "회원가입 중...";
+        _statusText.color = Color.black;
+
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
         {
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            _statusText.text = "회원가입 중...";
-            _statusText.color = Color.black;
-
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success) // OK (200)
-            {
-                // 로그인으로 유도 -> Login canvas로 변경
-                isSuccess = true;
-            }
-            else if (request.result == UnityWebRequest.Result.ConnectionError)
-            {
-                SetStatusText($"서버와 연결에 실패했습니다.", Color.red, 5.0f);
-            }
-            else
-            {
-                SetStatusText($"이미 존재하는 아이디입니다.", Color.blue, 3.0f);
-            }
+            isSuccess = true;
+        }
+        else if (request.result == UnityWebRequest.Result.ConnectionError)
+        {
+            SetStatusText($"서버와 연결에 실패했습니다.", Color.red, 5.0f);
+        }
+        else
+        {
+            SetStatusText($"이미 존재하는 아이디입니다.", Color.blue, 3.0f);
         }
 
         _registerButton.interactable = true;

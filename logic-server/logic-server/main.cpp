@@ -1,39 +1,55 @@
-﻿#include <boost/asio.hpp>
+#include <boost/asio.hpp>
 #include <memory>
 #include <thread>
 #include <vector>
 #include <iostream>
 
-#include "InternalConnector.h"
 #include "Server.h"
 #include "ContextManager.h"
+#include "InternalConnector.h"
 
 constexpr unsigned short SERVER_PORT = 53200;
 using namespace boost::asio::ip;
 
 int main()
 {
-	const auto ctxThreadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 100;
-	const std::size_t rpcCtxThreadCount = ctxThreadCount / 5; // 20% of total threads for RPC
-	const std::size_t workCtxThreadCount = ctxThreadCount - rpcCtxThreadCount; // Remaining threads for work context
+    spdlog::info("initialize start");
+    const auto ctxThreadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 100;
+    const std::size_t rpcCtxThreadCount = ctxThreadCount / 5; // 20% of total threads for RPC
+    const std::size_t workCtxThreadCount = ctxThreadCount - rpcCtxThreadCount; // Remaining threads for work context
 
-	auto workThreadContext = std::make_shared<ContextManager>(workCtxThreadCount * 0.3f, workCtxThreadCount * 0.7f); // work thread for normal network callback
-	auto rpcThreadContext = std::make_shared<ContextManager>(rpcCtxThreadCount * 0.3f, rpcCtxThreadCount * 0.7f); // rpc thread for udp network callback
+    auto workThreadContext = ContextManager::Create("work", 
+        static_cast<std::size_t>(workCtxThreadCount * 0.3f), static_cast<std::size_t>(workCtxThreadCount * 0.7f)); // work thread for normal network callback
+    auto rpcThreadContext = ContextManager::Create("rpc",
+        static_cast<std::size_t>(rpcCtxThreadCount * 0.3f), static_cast<std::size_t>(rpcCtxThreadCount * 0.7f)); // rpc thread for udp network callback
 
-	tcp::endpoint thisEndPoint(tcp::v4(), SERVER_PORT);
-	tcp::acceptor acceptor(workThreadContext->GetContext(), thisEndPoint);
+    auto internalConnector = std::make_shared<InternalConnector>();
+    if (!internalConnector->GetAccessTokenFromInternal())
+    {
+        spdlog::error("initialize failed close server...");
 
-	auto server = std::make_shared<Server>(workThreadContext, rpcThreadContext, acceptor);
+        workThreadContext->Stop();
+        rpcThreadContext->Stop();
+        return -1;
+    }
 
-	server->Start();
-	SPDLOG_INFO("{} Logic Server Started", __func__);
+    spdlog::info("initialize complete");
 
-	std::cin.get();
+    tcp::endpoint thisEndPoint(tcp::v4(), SERVER_PORT);
+    tcp::acceptor acceptor(workThreadContext->GetContext(), thisEndPoint);
 
-	server->Stop();
+    auto server = std::make_shared<Server>(workThreadContext, rpcThreadContext, acceptor);
 
-	workThreadContext->Stop();
-	rpcThreadContext->Stop();
+    spdlog::info("start server...");
+    server->Start();
 
-	return 0;
+    spdlog::warn("press any key to stop server");
+    std::cin.get();
+
+    server->Stop();
+
+    workThreadContext->Stop();
+    rpcThreadContext->Stop();
+
+    return 0;
 }

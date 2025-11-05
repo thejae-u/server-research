@@ -1,31 +1,31 @@
-﻿#pragma once
+#pragma once
 #include <string_view>
-#include <nlohmann/json.hpp>
 #include <fstream>
 #include <memory>
 #include <thread>
 #include <cpr/cpr.h>
 
-#include "ContextManager.h"
+#include <google/protobuf/util/json_util.h>
+#include "NetworkData.pb.h"
 
-constexpr unsigned short INTERNAL_WEB_SEVER_PORT = 18080;
-constexpr std::string_view INTERNAL_WEB_SERVER_IP = "localhost"; // String view can't change
+class ContextManager;
+class HttpStatus;
+
+constexpr auto WEB_SERVER_IP = "localhost:18080";
 constexpr std::string_view INTERNAL_FILE_NAME = "InternalId.json";
 
-using json = nlohmann::json;
+constexpr auto API_SAVE_GAME = "/api/internal/save-game";
+constexpr auto API_GET_TOKEN = "/api/auth/internal-login";
 
-class InternalConnector : std::enable_shared_from_this<InternalConnector>
+class InternalConnector : public std::enable_shared_from_this<InternalConnector>
 {
 public:
-	InternalConnector(std::shared_ptr<ContextManager> ctxManagerPtr);
+	InternalConnector();
+	bool GetAccessTokenFromInternal();
+
+	void SaveGameDataToDB(/*Game Result DTO*/);
 
 private:
-	std::shared_ptr<ContextManager> _ctxManagerPtr;
-
-	std::string _username;
-	std::string _password;
-
-	std::string _accessToken;
-
-	void GetAccessTokenFromInternal();
+	NetworkData::InternalData _loginData;
+	NetworkData::AccessToken _accessToken;
 };

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Network;
 using Unity.Behavior;
 using UnityEngine;
@@ -12,24 +12,21 @@ public partial class DelayAction : Action
 {
     [SerializeReference] public BlackboardVariable<int> IncludeA;
     [SerializeReference] public BlackboardVariable<int> IncludeB;
-    
+
     private float _delayTime;
     private float _elapsedTime;
 
-    private NetworkManager _networkManager;
+    private LogicServerConnector _networkManager;
 
     protected override Status OnStart()
     {
-        _networkManager = NetworkManager.Instance;
-        
-        if(_networkManager.IsManualMode)
-            return Status.Failure;
-        
+        _networkManager = LogicServerConnector.Instance;
+
         int min = IncludeA.Value;
         int max = IncludeB.Value;
         _delayTime = (float)Random.Range(min, max + 1) / 100;
         _elapsedTime = 0;
-        
+
         return Status.Running;
     }
 
@@ -39,7 +36,7 @@ public partial class DelayAction : Action
         {
             return Status.Running;
         }
-        
+
         _elapsedTime += Time.deltaTime;
         return _elapsedTime < _delayTime ? Status.Running : Status.Success;
     }
@@ -48,4 +45,3 @@ public partial class DelayAction : Action
     {
     }
 }
-

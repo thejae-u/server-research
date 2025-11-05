@@ -1,5 +1,6 @@
-using System;
-using Cysharp.Threading.Tasks;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using Network;
 using NetworkData;
 using UnityEngine;
@@ -7,73 +8,78 @@ using UnityEngine;
 public class SyncObject : MonoBehaviour
 {
     [SerializeField] private PlayerStatData _playerStatData; // Player Stat Data for the object
-    
+
     // Several Sync Data can be added to the SyncObject
-    public Guid ObjectId { get; private set; }
-    private NetworkManager _networkManager;
+    public UserSimpleDto _user { get; private set; }
+
+    private LogicServerConnector _connector;
+    private AuthManager _authManager;
     private MeshRenderer _meshRenderer;
 
-    private readonly object _positionLock = new();
     private Vector3 _lastNetworkPosition;
-    
-    private bool _isMyObject => ObjectId == _networkManager.ConnectedUuid;
+    private readonly Queue<MoveData> _moveQueue;
+    private IEnumerator _syncPositionRoutine = null;
 
-    public void Init(Guid objectId)
+    private bool _isMyObject => Guid.Parse(_user.Uid) == _authManager.UserGuid;
+    private bool _isMannualMode = false;
+
+    public void Init(UserSimpleDto user)
     {
-        ObjectId = objectId;
-        _meshRenderer = GetComponent<MeshRenderer>();
-        _networkManager = NetworkManager.Instance;
+        if(user is null)
+        {
+            _isMannualMode = true;
+            return;
+        }
 
-        if (ObjectId == _networkManager.ConnectedUuid)
+        _user = user;
+        _meshRenderer = GetComponent<MeshRenderer>();
+
+        _connector = LogicServerConnector.Instance;
+        _authManager = AuthManager.Instance;
+
+        if (_connector is null || _authManager is null)
+            return;
+
+        if (Guid.Parse(_user.Uid) == _authManager.UserGuid)
         {
             _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
         }
+
+        _syncPositionRoutine = SyncPositionRoutine();
+        StartCoroutine(_syncPositionRoutine);
     }
 
-    public async UniTask SyncPosition(MoveData moveData)
+    public void EnqueueMoveData(MoveData moveData)
     {
-        // Start position at the time of input
-        var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z); 
-        
-        // moved direction (key input value)
-        Vector3 direction = (transform.right * moveData.Horizontal + transform.forward * moveData.Vertical).normalized;
+        _moveQueue.Enqueue(moveData);
+    }
 
-        // calculate new position by moveData
-        float speed = _playerStatData.speed * Time.deltaTime;
-
-        lock (_positionLock)
+    private IEnumerator SyncPositionRoutine()
+    {
+        while (_connector.IsOnline)
         {
-            _lastNetworkPosition = startPosition + direction * speed;
+            if (_moveQueue.Count == 0)
+                continue;
+
+            MoveData nextData = _moveQueue.Dequeue();
+
+            Debug.Log($"{_user.Uid} next Data : {nextData.X},{nextData.Y},{nextData.Z}");
+
+            yield return null;
         }
-        
-        await UniTask.Yield();
+
+        _syncPositionRoutine = null;
     }
 
     private void Update()
     {
-        // interpolate the position of the object
-        if (!_networkManager.IsOnline)
+        if (_isMannualMode)
             return;
 
-        if (Vector3.Distance(transform.position, _lastNetworkPosition) < 0.01f)
-        {
-            if (_isMyObject)
-                _meshRenderer.material.color = Color.clear;
+        if (!_connector.IsOnline)
             return;
-        }
 
         if (_isMyObject)
-        {
             _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
-        }
-        
-        Vector3 lastPosition;
-        lock (_positionLock)
-        {
-            lastPosition = _lastNetworkPosition;
-        }
-
-        transform.position =
-            Vector3.Lerp(transform.position, lastPosition, Time.deltaTime * _playerStatData.speed);
     }
 }
