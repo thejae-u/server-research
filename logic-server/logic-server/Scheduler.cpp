@@ -35,5 +35,6 @@ void Scheduler::DoStart()
 
 void Scheduler::Stop()
 {
-    boost::asio::post(_strand.wrap([this] { _timer->cancel(); }));
+    auto self(shared_from_this());
+    boost::asio::post(_strand.wrap([self] { self->_timer->cancel(); }));
 }

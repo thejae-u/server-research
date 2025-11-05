@@ -18,8 +18,8 @@ int main()
     const std::size_t rpcCtxThreadCount = ctxThreadCount / 5; // 20% of total threads for RPC
     const std::size_t workCtxThreadCount = ctxThreadCount - rpcCtxThreadCount; // Remaining threads for work context
 
-    auto workThreadContext = std::make_shared<ContextManager>("work", workCtxThreadCount * 0.3f, workCtxThreadCount * 0.7f); // work thread for normal network callback
-    auto rpcThreadContext = std::make_shared<ContextManager>("rpc", rpcCtxThreadCount * 0.3f, rpcCtxThreadCount * 0.7f); // rpc thread for udp network callback
+    auto workThreadContext = ContextManager::Create("work", workCtxThreadCount * 0.3f, workCtxThreadCount * 0.7f); // work thread for normal network callback
+    auto rpcThreadContext = ContextManager::Create("rpc", rpcCtxThreadCount * 0.3f, rpcCtxThreadCount * 0.7f); // rpc thread for udp network callback
 
     auto internalConnector = std::make_shared<InternalConnector>();
     if (!internalConnector->GetAccessTokenFromInternal())

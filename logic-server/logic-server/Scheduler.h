@@ -25,8 +25,6 @@ private:
     IoContext::strand& _strand;
     std::shared_ptr<boost::asio::steady_timer> _timer;
     std::chrono::milliseconds _cycleTime;
-
-    //std::function<void()> _handler;
     TaskHandler _handler;
 
     void DoStart();

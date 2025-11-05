@@ -20,13 +20,10 @@ void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallba
 
 void LockstepGroup::Start()
 {
-    {
-        std::lock_guard<std::mutex> runningLock(_runningStateMutex);
-        _isRunning = true;
-    }
-
-    _tickTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_fixedDeltaMs), [this](CompletionHandler onComplete) {
-        Tick(onComplete);
+    _isRunning = true;
+    auto self(shared_from_this());
+    _tickTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_fixedDeltaMs), [self](CompletionHandler onComplete) {
+        self->Tick(onComplete);
         }
     );
 
@@ -35,7 +32,6 @@ void LockstepGroup::Start()
 
 void LockstepGroup::Stop()
 {
-    std::lock_guard<std::mutex> runningLock(_runningStateMutex);
     _isRunning = false;
     _tickTimer->Stop();
     _notifyEmptyCallback(shared_from_this());
@@ -51,14 +47,15 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
         }
     }
 
-    newSession->SetGroup(shared_from_this());
-    newSession->SetStopCallback([this](const std::shared_ptr<Session>& session) {
-        RemoveMember(session);
+    auto self(shared_from_this());
+    newSession->SetGroup(self);
+    newSession->SetStopCallback([self](const std::shared_ptr<Session>& session) {
+        self->RemoveMember(session);
         }
     );
 
-    newSession->SetCollectInputAction([this](const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest) {
-        CollectInput(rpcRequest);
+    newSession->SetCollectInputAction([self](const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest) {
+        self->CollectInput(rpcRequest);
         }
     );
 
@@ -68,7 +65,6 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
     spdlog::info("{} : removed from {}", to_string(session->GetSessionUuid()), _groupInfo->groupid());
-
     {
         std::lock_guard<std::mutex> lock(_memberMutex);
         _members.erase(session);
@@ -93,19 +89,16 @@ void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shar
         _inputBuffer[_currentBucket].push_back(packet);
     }
 
-    spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
+    // spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::Tick(CompletionHandler onComplete)
 {
     // check state first
+    if (!_isRunning)
     {
-        std::lock_guard<std::mutex> runningLock(_runningStateMutex);
-        if (!_isRunning)
-        {
-            onComplete();
-            return;
-        }
+        onComplete();
+        return;
     }
 
     auto self(shared_from_this());

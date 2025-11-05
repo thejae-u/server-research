@@ -12,15 +12,12 @@ GroupManager::GroupManager(const std::shared_ptr<ContextManager>& ctxManager) : 
 void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const std::shared_ptr<Session>& newSession)
 {
     uuid joinGroupId = _toUuid(groupDto->groupid());
-
     {
         std::lock_guard<std::mutex> lock(_groupMutex);
-        for (const auto& [groupId, group] : _groups)
+        auto groupIt = _groups.find(joinGroupId);
+        if (groupIt != _groups.end())
         {
-            if (groupId != joinGroupId)
-            {
-                continue;
-            }
+            const auto& [groupId, group] = *groupIt;
 
             if (group->IsFull())
             {
@@ -48,14 +45,14 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
 
 std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup(const std::shared_ptr<GroupDto> groupDto)
 {
+    auto self(shared_from_this());
     const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, groupDto);
-    newGroup->SetNotifyEmptyCallback(_ctxManager->GetStrand().wrap([this](const std::shared_ptr<LockstepGroup> emptyGroup) {
-        RemoveEmptyGroup(emptyGroup);
+    newGroup->SetNotifyEmptyCallback(_ctxManager->GetStrand().wrap([self](const std::shared_ptr<LockstepGroup> emptyGroup) {
+        self->RemoveEmptyGroup(emptyGroup);
         })
     );
 
     newGroup->Start();
-
     spdlog::info("created new group {}", to_string(newGroup->GetGroupId()));
 
     return newGroup;

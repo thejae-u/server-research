@@ -10,19 +10,22 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
     _udpSocketPtr(std::make_shared<UdpSocket>(_rpcCtxManager->GetStrand().context(), udp::endpoint(udp::v4(), 0))),
     _lastRtt(0)
 {
-    _pingTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_pingDelay), [this](CompletionHandler onComplete) {
-        SendPingPacket(onComplete);
-        }
-    );
 }
 
 void Session::Start()
 {
+    auto self(shared_from_this());
+    _pingTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_pingDelay), [self](CompletionHandler onComplete) {
+        self->SendPingPacket(onComplete);
+        }
+    );
+
     // Async Functions Start
     TcpAsyncReadSize();
-    _pingTimer->Start();
     UdpAsyncRead();
+    SendRpcPacketToClient();
 
+    _pingTimer->Start();
     _isConnected = true;
 
     spdlog::info("session {} started", _sessionInfo.uid());
@@ -285,7 +288,7 @@ void Session::SendRpcPacketToClient()
 		std::lock_guard<std::mutex> lock(_sendQueueMutex);
 		if (_sendPacketQueue.empty())
 		{
-			boost::asio::post(_rpcCtxManager->GetStrand(), [self]() { self->SendRpcPacketToClient() }); // restart this function
+            boost::asio::post(_rpcCtxManager->GetStrand(), [self]() { self->SendRpcPacketToClient(); }); // restart this function
 			return;
 		}
 	}
@@ -300,15 +303,21 @@ void Session::SendRpcPacketToClient()
 	}
 
 	UdpAsyncWrite(serializedData);
+
 	boost::asio::post(_rpcCtxManager->GetStrand(), [self]() { self->SendRpcPacketToClient(); }); // restart this function
 }
 
 void Session::EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets)
 {
-	std::lock_guard<std::mutex> lock(_sendQueueMutex);
 	for (const auto& packet : sendPackets)
 	{
-		_sendPacketQueue.push(*packet->packet);
+        // rpc packet deep copy
+        RpcPacket listupPacket;
+        listupPacket.CopyFrom(*packet->packet);
+
+        // copied RpcPacket push
+	    std::lock_guard<std::mutex> lock(_sendQueueMutex);
+		_sendPacketQueue.push(listupPacket);
 	}
 }
 
@@ -368,7 +377,6 @@ void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet)
 void Session::TcpAsyncWrite(const std::shared_ptr<std::string> data)
 {
     auto self(shared_from_this());
-
     const std::uint32_t dataSize = static_cast<std::uint32_t>(data->size());
     const std::uint32_t netSize = htonl(dataSize);
 
@@ -398,8 +406,9 @@ void Session::TcpAsyncReadSize()
     _tcpDataSize = 0;
     _tcpNetSize = 0;
 
+    auto self(shared_from_this());
     boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(&_tcpNetSize, sizeof(_tcpNetSize)),
-        _ctxManager->GetStrand().wrap([self(shared_from_this())](const boost::system::error_code& sizeEc, std::size_t) {
+        _ctxManager->GetStrand().wrap([self] (const boost::system::error_code& sizeEc, std::size_t) {
             if (sizeEc)
             {
                 if (sizeEc == boost::asio::error::eof
@@ -435,8 +444,9 @@ void Session::TcpAsyncReadSize()
 
 void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
 {
+    auto self(shared_from_this());
     boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(*dataBuffer),
-        _ctxManager->GetStrand().wrap([self(shared_from_this()), dataBuffer](const boost::system::error_code& dataEc, std::size_t) {
+        _ctxManager->GetStrand().wrap([self, dataBuffer](const boost::system::error_code& dataEc, std::size_t) {
             if (dataEc)
             {
                 if (dataEc == boost::asio::error::eof || dataEc == boost::asio::error::connection_reset)
@@ -474,9 +484,10 @@ void Session::UdpAsyncRead()
     // max size buffer for udp packet
     const auto buf = std::make_shared<std::vector<char>>(MAX_PACKET_SIZE);
     const auto senderEndpoint = std::make_shared<udp::endpoint>();
+    auto self(shared_from_this());
 
     _udpSocketPtr->async_receive_from(boost::asio::buffer(*buf), *senderEndpoint,
-        _rpcCtxManager->GetStrand().wrap([self(shared_from_this()), buf](const boost::system::error_code& ec, const std::size_t bytesRead) {
+        _rpcCtxManager->GetStrand().wrap([self, buf](const boost::system::error_code& ec, const std::size_t bytesRead) {
             if (ec)
             {
                 if (ec == boost::asio::error::eof || ec == boost::asio::error::operation_aborted)
@@ -541,9 +552,10 @@ void Session::UdpAsyncWrite(std::shared_ptr<std::string> data)
     payload->append(reinterpret_cast<const char*>(&netPayloadSize), sizeof(netPayloadSize));
     payload->append(*data);
 
+    auto self(shared_from_this());
     // Send packet to client
     _udpSocketPtr->async_send_to(boost::asio::buffer(*payload), _udpSendEp,
-        _rpcCtxManager->GetStrand().wrap([self(shared_from_this()), payload](const boost::system::error_code& ec, std::size_t) {
+        _rpcCtxManager->GetStrand().wrap([self, payload](const boost::system::error_code& ec, std::size_t) {
             if (ec)
             {
                 spdlog::error("{} : UDP error sending data ({})", self->_sessionInfo.uid(), ec.message());

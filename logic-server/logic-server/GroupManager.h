@@ -23,7 +23,7 @@ class ContextManager;
 using namespace boost::uuids;
 using namespace NetworkData;
 
-class GroupManager
+class GroupManager : public std::enable_shared_from_this<GroupManager>
 {
 public:
     GroupManager(const std::shared_ptr<ContextManager>& ctxManager);
@@ -32,10 +32,10 @@ public:
 
 private:
     std::shared_ptr<ContextManager> _ctxManager;
-    boost::uuids::string_generator _toUuid;
+    boost::uuids::string_generator _toUuid; // string to uuid utility
     const std::int64_t _invalidRtt = -1;
 
-    std::map<uuid, std::shared_ptr<LockstepGroup>> _groups;
     std::mutex _groupMutex;
+    std::map<uuid, std::shared_ptr<LockstepGroup>> _groups;
     std::shared_ptr<LockstepGroup> CreateNewGroup(const std::shared_ptr<GroupDto> groupDtoPtr);
 };

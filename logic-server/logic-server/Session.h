@@ -36,7 +36,6 @@ constexpr std::size_t MAX_PACKET_SIZE = 65535;
 class Session final : public Base<Session>
 {
 public:
-
     Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager);
     ~Session() override
     {

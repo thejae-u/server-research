@@ -10,17 +10,12 @@
 using ThreadPool = boost::asio::thread_pool;
 class ContextManager : public std::enable_shared_from_this<ContextManager>
 {
-public:
-    explicit ContextManager(std::string contextName, const std::size_t threadCount, const std::size_t blockingThreadCount = 4 /*Default 4 thread are blocking thread*/)
-        : _contextName(contextName), _workStrand(_ctx), _blockingPool(blockingThreadCount), _workGuard(boost::asio::make_work_guard(_ctx))
-    {
-        _ctxThreads.reserve(threadCount);
-        for (std::size_t i = 0; i < threadCount; ++i)
-        {
-            _ctxThreads.emplace_back(std::make_shared<std::thread>([this]() { _ctx.run(); }));
-        }
-    }
+private:
+    struct PrivateInternalTag {};
 
+public:
+    explicit ContextManager(PrivateInternalTag, std::string contextName, const std::size_t blockingThreadCount);
+    static std::shared_ptr<ContextManager> Create(std::string contextName, const std::size_t threadCount, const std::size_t blockingThreadCount = 4 /*Default 4 thread are blocking thread*/);
     ~ContextManager();
     void Stop();
 

@@ -84,8 +84,7 @@ private:
 	std::atomic<std::size_t> _inputCounter = 0;
 
 	std::shared_ptr<Scheduler> _tickTimer;
-    std::mutex _runningStateMutex;
-	bool _isRunning = false;
+	std::atomic<bool> _isRunning = false;
 
 	NotifyEmptyCallback _notifyEmptyCallback;
 };

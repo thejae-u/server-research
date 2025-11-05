@@ -6,8 +6,7 @@
 Server::Server(const std::shared_ptr<ContextManager>& mainCtxManager, const std::shared_ptr<ContextManager>& rpcCtxManager, tcp::acceptor& acceptor)
     : _mainCtxManager(mainCtxManager), _rpcCtxManager(rpcCtxManager), _acceptor(acceptor)
 {
-    _uuidGenerator = std::make_shared<random_generator>();
-    _groupManager = std::make_unique<GroupManager>(_mainCtxManager);
+    _groupManager = std::make_shared<GroupManager>(_mainCtxManager);
     _isRunning = false;
 }
 
@@ -26,7 +25,6 @@ void Server::Stop()
     _isRunning = false;
     _acceptor.close();
     _groupManager.reset();
-    _uuidGenerator.reset();
 
     spdlog::info("server stopped.");
 }
@@ -39,7 +37,7 @@ void Server::AcceptClientAsync()
     auto self(shared_from_this());
     auto newSession = std::make_shared<Session>(_mainCtxManager, _rpcCtxManager);
 
-    _acceptor.async_accept(newSession->GetSocket(), _mainCtxManager->GetStrand().wrap([this, newSession](const boost::system::error_code& ec) {
+    _acceptor.async_accept(newSession->GetSocket(), _mainCtxManager->GetStrand().wrap([self, newSession](const boost::system::error_code& ec) {
         if (ec)
         {
             if (ec == boost::asio::error::operation_aborted || ec == boost::asio::error::connection_aborted)
@@ -49,13 +47,12 @@ void Server::AcceptClientAsync()
             }
 
             spdlog::error("accept failed : {}", ec.message());
-            AcceptClientAsync();
+            self->AcceptClientAsync();
             return;
         }
 
-        AcceptClientAsync();
-
-        boost::asio::post(_mainCtxManager->GetStrand().wrap([this, newSession]() { InitSessionNetwork(newSession); }));
+        self->AcceptClientAsync();
+        boost::asio::post(self->_mainCtxManager->GetStrand().wrap([self, newSession]() { self->InitSessionNetwork(newSession); }));
         })
     );
 }

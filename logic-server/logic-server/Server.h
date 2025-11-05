@@ -35,10 +35,8 @@ private:
 	std::shared_ptr<ContextManager> _rpcCtxManager;
 	tcp::acceptor& _acceptor;
 
-	std::unique_ptr<GroupManager> _groupManager;
-	std::shared_ptr<random_generator> _uuidGenerator;
-
-	bool _isRunning;
+	std::shared_ptr<GroupManager> _groupManager;
+	std::atomic<bool> _isRunning;
 
 	void AcceptClientAsync();
 	void InitSessionNetwork(const std::shared_ptr<Session>& newSession) const;
