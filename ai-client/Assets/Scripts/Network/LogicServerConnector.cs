@@ -763,7 +763,7 @@ namespace Network
                     ushort payloadSize = (ushort)IPAddress.NetworkToHostOrder(netOrderSize);
 
                     // Check if the payload size is valid
-                    if (netOrderSize == 0 || netOrderSize > readData.Length - 2)
+                    if (payloadSize == 0 || payloadSize > readData.Length - 2)
                     {
                         IncrementErrorCount();
                         continue;
@@ -775,6 +775,7 @@ namespace Network
 
                     EnqueueInternalProcess(payload);
                     Interlocked.Increment(ref _receivedPacketCount); // Increment received packet count by atomic
+                    _dispatcher.Enqueue(() => { Debug.Log($"read data in udp all passed"); });
                 }
                 catch (OperationCanceledException)
                 {
@@ -803,7 +804,6 @@ namespace Network
         /// </summary>
         private void EnqueueInternalProcess(byte[] data)
         {
-            _dispatcher.Enqueue(() => Debug.Log($"data enqueued"));
             _processQueue.Enqueue(data);
         }
 
@@ -817,7 +817,6 @@ namespace Network
                 return null;
             }
 
-            _dispatcher.Enqueue(() => Debug.Log($"data dequeued"));
             return data;
         }
 
@@ -827,9 +826,10 @@ namespace Network
         private void ProcessRpc()
         {
             var nextProcess = DequeueInternalProcess();
-
             if (nextProcess is null)
+            {
                 return;
+            }
 
             var data = RpcPacket.Parser.ParseFrom(nextProcess);
             if (data is null)
@@ -837,6 +837,9 @@ namespace Network
                 Debug.Log($"Data is null");
                 return;
             }
+
+            if(data.Method == RpcMethod.Move)
+                Debug.Log($"Data parsing passed: {data.Uid} {data.Method}");
 
             switch (data.Method)
             {
@@ -853,7 +856,6 @@ namespace Network
                 case RpcMethod.MoveStart:
                 case RpcMethod.MoveStop:
                 case RpcMethod.Move:
-                    Debug.Log($"Move data process");
                     // Deserialize the data
                     MoveData moveData = MoveData.Parser.ParseFrom(data.Data);
 
