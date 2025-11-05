@@ -119,6 +119,7 @@ public class OwnObjectManager : MonoBehaviour
 
     private void OnMove(Vector2 move)
     {
+        _isMoving = true;
         Vector3 dir = transform.right * move.x + transform.forward * move.y;
         _cachedDirection = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.zero;
 

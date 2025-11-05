@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -34,7 +34,8 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
     {
         if (context.started)
         {
-            onMoveStartAction?.Invoke();
+            var input = context.ReadValue<Vector2>();
+            onMoveAction?.Invoke(input);
             return;
         }
         
@@ -47,7 +48,7 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
         if (!context.performed)
             return;
         
-        var input = context.ReadValue<Vector2>();
-        onMoveAction?.Invoke(input);
+        //var input = context.ReadValue<Vector2>();
+        //onMoveAction?.Invoke(input);
     }
 }
