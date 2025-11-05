@@ -57,8 +57,8 @@ public:
     tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
     void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 
-    bool ExchangeUdpPort();
-    void AsyncExchangeUdpPortWork(std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
+    bool ExchangeUdpPort(std::uint16_t udpPort);
+    void AsyncExchangeUdpPortWork(std::uint16_t udpPort, std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
 
     bool ReceiveUserInfo();
     void AsyncReceiveUserInfo(std::function<void(bool success)> onComplete);

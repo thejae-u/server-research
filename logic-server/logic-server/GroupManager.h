@@ -1,8 +1,9 @@
 #pragma once
 #include <memory>
 #include <chrono>
-#include <map>
+#include <unordered_map>
 #include <set>
+
 #include <mutex>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -29,6 +30,7 @@ public:
     GroupManager(const std::shared_ptr<ContextManager>& ctxManager);
     void AddSession(const std::shared_ptr<GroupDto> groupDto, const std::shared_ptr<Session>& newSession);
     void RemoveEmptyGroup(const std::shared_ptr<LockstepGroup> emptyGroup);
+    void CollectInput(std::shared_ptr<RpcPacket> input);
 
 private:
     std::shared_ptr<ContextManager> _ctxManager;
@@ -36,6 +38,10 @@ private:
     const std::int64_t _invalidRtt = -1;
 
     std::mutex _groupMutex;
-    std::map<uuid, std::shared_ptr<LockstepGroup>> _groups;
+    std::unordered_map<uuid, std::shared_ptr<LockstepGroup>> _groups;
+
+    std::mutex _groupBySessionMutex;
+    std::unordered_map<uuid, std::shared_ptr<LockstepGroup>> _groupsBySession;
+
     std::shared_ptr<LockstepGroup> CreateNewGroup(const std::shared_ptr<GroupDto> groupDtoPtr);
 };

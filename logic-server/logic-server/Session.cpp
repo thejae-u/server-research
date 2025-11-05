@@ -22,7 +22,7 @@ void Session::Start()
 
     // Async Functions Start
     TcpAsyncReadSize();
-    UdpAsyncRead();
+    // UdpAsyncRead();
     SendRpcPacketToClient();
 
     _pingTimer->Start();
@@ -44,12 +44,12 @@ void Session::Stop()
 }
 
 // wrapping ExchangeUdpPort, Using Blocking Pool
-void Session::AsyncExchangeUdpPortWork(std::function<void(bool success)> onComplete)
+void Session::AsyncExchangeUdpPortWork(std::uint16_t udpPort, std::function<void(bool success)> onComplete)
 {
     auto self(shared_from_this());
 
-    boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]() {
-        bool success = self->ExchangeUdpPort();
+    boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete, udpPort]() {
+        bool success = self->ExchangeUdpPort(udpPort);
         boost::asio::post(self->_ctxManager->GetStrand(), [self, success, onComplete]() {
             onComplete(success);
             });
@@ -57,10 +57,9 @@ void Session::AsyncExchangeUdpPortWork(std::function<void(bool success)> onCompl
     );
 }
 
-bool Session::ExchangeUdpPort()
+bool Session::ExchangeUdpPort(std::uint16_t udpPort)
 {
     const std::string connectedIp = _tcpSocketPtr->remote_endpoint().address().to_string();
-    const std::uint16_t udpPort = _udpSocketPtr->local_endpoint().port();
     auto netUdpPort = htons(udpPort);
     std::string sendUdpByte(reinterpret_cast<char*>(&netUdpPort), sizeof(netUdpPort));
 

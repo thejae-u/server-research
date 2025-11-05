@@ -13,7 +13,7 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
 {
     uuid joinGroupId = _toUuid(groupDto->groupid());
     {
-        std::lock_guard<std::mutex> lock(_groupMutex);
+        std::lock_guard<std::mutex> groupLock(_groupMutex);
         auto groupIt = _groups.find(joinGroupId);
         if (groupIt != _groups.end())
         {
@@ -25,7 +25,9 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
                 return;
             }
 
+            std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
             group->AddMember(newSession);
+            _groupsBySession[newSession->GetSessionUuid()] = group;
             spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
             newSession->Start();
             return;
@@ -38,8 +40,11 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
     newSession->Start();
 
     {
-        std::lock_guard<std::mutex> lock(_groupMutex);
+        std::lock_guard<std::mutex> groupLock(_groupMutex);
         _groups[newGroup->GetGroupId()] = newGroup;
+
+        std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
+        _groupsBySession[newSession->GetSessionUuid()] = newGroup;
     }
 }
 
@@ -75,4 +80,19 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup> emptyGr
     }
 
     spdlog::info("removed empty group {}", to_string(emptyGroup->GetGroupId()));
+}
+
+void GroupManager::CollectInput(std::shared_ptr<RpcPacket> input)
+{
+    auto uid = _toUuid(input->uid());
+
+    std::lock_guard<std::mutex> lock(_groupBySessionMutex);
+    if (_groupsBySession.find(uid) == _groupsBySession.end())
+    {
+        spdlog::error("no group by {}", input->uid());
+        return;
+    }
+
+    auto collectInput = std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(std::make_pair(uid, std::move(input)));
+    _groupsBySession[uid]->CollectInput(collectInput);
 }

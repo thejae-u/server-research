@@ -89,7 +89,7 @@ void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shar
         _inputBuffer[_currentBucket].push_back(packet);
     }
 
-    // spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
+    spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::Tick(CompletionHandler onComplete)
