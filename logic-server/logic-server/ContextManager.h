@@ -22,15 +22,11 @@ public:
     // For Use io_context normally
     boost::asio::io_context& GetContext() { return _ctx; }
 
-    // For Use Strand (Avoid data race)
-    boost::asio::io_context::strand& GetStrand() { return _workStrand; }
-
     // For Use BlockingPool (use this for heavy work)
     ThreadPool& GetBlockingPool() { return _blockingPool; }
 
 private:
     boost::asio::io_context _ctx;
-    boost::asio::io_context::strand _workStrand;
     ThreadPool _blockingPool;
 
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _workGuard;

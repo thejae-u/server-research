@@ -5,7 +5,7 @@
 #include "ContextManager.h"
 #include "Utility.h"
 
-GroupManager::GroupManager(const std::shared_ptr<ContextManager>& ctxManager) : _ctxManager(ctxManager)
+GroupManager::GroupManager(const std::shared_ptr<ContextManager>& ctxManager) : _ctxManager(ctxManager), _privateStrand(_ctxManager->GetContext())
 {
 }
 
@@ -52,7 +52,7 @@ std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup(const std::shared_pt
 {
     auto self(shared_from_this());
     const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, groupDto);
-    newGroup->SetNotifyEmptyCallback(_ctxManager->GetStrand().wrap([self](const std::shared_ptr<LockstepGroup> emptyGroup) {
+    newGroup->SetNotifyEmptyCallback(_privateStrand.wrap([self](const std::shared_ptr<LockstepGroup> emptyGroup) {
         self->RemoveEmptyGroup(emptyGroup);
         })
     );

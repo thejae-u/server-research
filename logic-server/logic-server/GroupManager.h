@@ -34,6 +34,8 @@ public:
 
 private:
     std::shared_ptr<ContextManager> _ctxManager;
+    boost::asio::io_context::strand _privateStrand;
+
     boost::uuids::string_generator _toUuid; // string to uuid utility
     const std::int64_t _invalidRtt = -1;
 

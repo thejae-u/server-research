@@ -9,6 +9,8 @@
 #include <mutex>
 #include <memory>
 #include <vector>
+#include <functional>
+#include <queue>
 
 #include "Base.h"
 #include "GroupManager.h"
@@ -35,12 +37,17 @@ public:
 private:
     using UdpSocket = udp::socket;
 
-	std::shared_ptr<ContextManager> _mainCtxManager;
+	std::shared_ptr<ContextManager> _normalCtxManager;
 	std::shared_ptr<ContextManager> _rpcCtxManager;
 	tcp::acceptor& _acceptor;
+	boost::asio::io_context::strand _normalPrivateStrand;
+	boost::asio::io_context::strand _rpcPrivateStrand;
 
     std::shared_ptr<UdpSocket> _udpSocket;
     std::uint16_t _allocatedUdpPort;
+
+    std::mutex _sendDataQueueMutex;
+    std::queue<std::shared_ptr<std::pair<udp::endpoint, std::string>>> _sendDataQueue;
 
 	std::shared_ptr<GroupManager> _groupManager;
 	std::atomic<bool> _isRunning;
@@ -50,5 +57,9 @@ private:
 
 	void AcceptClientAsync();
 	void InitSessionNetwork(const std::shared_ptr<Session>& newSession) const;
-    void ReceiveUdpDataAsync();
+
+	// Udp Socket Functions
+    void AsyncReceiveUdpData();
+    void EnqueueSendData(std::shared_ptr<std::pair<udp::endpoint, std::string>> sendData);
+    void AsyncSendUdpData();
 };
