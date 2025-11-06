@@ -18,8 +18,8 @@ void Server::Start()
 {
     _isRunning = true;
     AcceptClientAsync();
-    //AsyncReceiveUdpData();
-    //AsyncSendUdpData();
+    AsyncReceiveUdpData();
+    AsyncSendUdpData();
 
     spdlog::info("server start complete");
 }
@@ -42,10 +42,10 @@ void Server::AcceptClientAsync()
 
     auto self(shared_from_this());
     auto newSession = std::make_shared<Session>(_normalCtxManager, _rpcCtxManager);
-    /*newSession->SetSendDataByUdpAction([self](std::shared_ptr<std::pair<udp::endpoint, std::string>> sendData) {
+    newSession->SetSendDataByUdpAction([self](std::shared_ptr<std::pair<udp::endpoint, std::string>> sendData) {
         self->EnqueueSendData(sendData);
         }
-    );*/
+    );
 
     _acceptor.async_accept(newSession->GetSocket(), _normalPrivateStrand.wrap([self, newSession](const boost::system::error_code& ec) {
         if (ec)

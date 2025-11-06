@@ -7,7 +7,7 @@
 Session::Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager)
     : _normalCtxManager(contextManager), _rpcCtxManager(rpcContextManager),
     _tcpSocketPtr(std::make_shared<TcpSocket>(_normalCtxManager->GetContext())),
-    _udpSocketPtr(std::make_shared<UdpSocket>(_rpcCtxManager->GetContext(), udp::endpoint(udp::v4(), 0))),
+    //_udpSocketPtr(std::make_shared<UdpSocket>(_rpcCtxManager->GetContext(), udp::endpoint(udp::v4(), 0))),
     _lastRtt(0),
     _normalPrivateStrand(_normalCtxManager->GetContext()),
     _rpcPrivateStrand(_rpcCtxManager->GetContext())
@@ -24,7 +24,7 @@ void Session::Start()
 
     // Async Functions Start
     TcpAsyncReadSize();
-    UdpAsyncRead();
+    //UdpAsyncRead();
     SerializeRpcPacketAndEnqueueData();
 
     _pingTimer->Start();
@@ -39,7 +39,7 @@ void Session::Stop()
     _isConnected = false;
 
     _tcpSocketPtr->close();
-    _udpSocketPtr->close(); // close udp socket for aysnc function exit
+    //_udpSocketPtr->close(); // close udp socket for aysnc function exit
 
     _pingTimer->Stop();
     _onStopCallback(shared_from_this());
@@ -62,11 +62,11 @@ void Session::AsyncExchangeUdpPortWork(std::uint16_t udpPort, std::function<void
 bool Session::ExchangeUdpPort(std::uint16_t udpPort)
 {
     const std::string connectedIp = _tcpSocketPtr->remote_endpoint().address().to_string();
-    auto netUdpPort = _udpSocketPtr->local_endpoint().port(); // Session Udp Socket Port
-    //auto netUdpPort = htons(udpPort); // Server Main Udp Socket Port
+    //auto netUdpPort = htons(_udpSocketPtr->local_endpoint().port()); // Session Udp Socket Port
+    auto netUdpPort = htons(udpPort); // Server Main Udp Socket Port
     std::string sendUdpByte(reinterpret_cast<char*>(&netUdpPort), sizeof(netUdpPort));
 
-    spdlog::info("port {} try exchange", udpPort);
+    spdlog::info("port {} try exchange", ntohs(netUdpPort));
 
     RpcPacket packet;
     packet.set_method(UDP_PORT);
@@ -310,9 +310,9 @@ void Session::SerializeRpcPacketAndEnqueueData()
 		return;
 	}
 
-	UdpAsyncWrite(std::make_shared<std::string>(serializedData));
-    // auto sendDataPair = std::make_shared<std::pair<udp::endpoint, std::string>>(_udpSendEp, serializedData);
-    //_sendDataByUdp(std::move(sendDataPair));
+	//UdpAsyncWrite(std::make_shared<std::string>(serializedData));
+     auto sendDataPair = std::make_shared<std::pair<udp::endpoint, std::string>>(_udpSendEp, serializedData);
+    _sendDataByUdp(std::move(sendDataPair));
 
 	boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); }); // restart this function
 }
@@ -577,9 +577,7 @@ void Session::UdpAsyncWrite(std::shared_ptr<std::string> data)
                 return;
             }
 
-            //std::string addressStr = self->_udpSendEp.address().to_string();
-            //std::string portStr = std::to_string(self->_udpSendEp.port());
-            //spdlog::info("{} : send packet to {} {}", self->_sessionInfo.uid(), addressStr, portStr);
+            spdlog::info("{} : send packet to {} {}", self->_sessionInfo.uid(), self->_udpSendEp.address().to_string(), self->_udpSendEp.port());
             }
         )
     );
