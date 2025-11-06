@@ -11,6 +11,7 @@
 #include <vector>
 #include <functional>
 #include <queue>
+#include <unordered_map>
 
 #include "Base.h"
 #include "GroupManager.h"
@@ -40,6 +41,8 @@ private:
 	std::shared_ptr<ContextManager> _normalCtxManager;
 	std::shared_ptr<ContextManager> _rpcCtxManager;
 	tcp::acceptor& _acceptor;
+    boost::uuids::string_generator _toUuid;
+
 	boost::asio::io_context::strand _normalPrivateStrand;
 	boost::asio::io_context::strand _rpcPrivateStrand;
 
@@ -53,13 +56,19 @@ private:
 	std::atomic<bool> _isRunning;
     std::atomic<std::size_t> _udpReceiveCount;
 
+    std::unordered_map<uuid, std::shared_ptr<Session>> _sessions;
+    std::mutex _sessionsMutex;
+
     const std::size_t _maxPacketSize = 65535;
 
 	void AcceptClientAsync();
-	void InitSessionNetwork(const std::shared_ptr<Session>& newSession) const;
+	void InitSessionNetwork(const std::shared_ptr<Session>& newSession);
 
 	// Udp Socket Functions
     void AsyncReceiveUdpData();
     void EnqueueSendData(std::shared_ptr<std::pair<udp::endpoint, std::string>> sendData);
     void AsyncSendUdpData();
+
+    void AddSession(std::shared_ptr<Session> newSession);
+    void RemoveSession(uuid sessionId);
 };

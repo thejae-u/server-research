@@ -43,8 +43,8 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
         std::lock_guard<std::mutex> groupLock(_groupMutex);
         _groups[newGroup->GetGroupId()] = newGroup;
 
-        std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
-        _groupsBySession[newSession->GetSessionUuid()] = newGroup;
+        //std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
+        //_groupsBySession[newSession->GetSessionUuid()] = newGroup;
     }
 }
 
@@ -80,6 +80,7 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup> emptyGr
     spdlog::info("removed empty group {}", to_string(emptyGroup->GetGroupId()));
 }
 
+// 호출 안됨
 void GroupManager::CollectInput(std::shared_ptr<RpcPacket> input)
 {
     auto uid = _toUuid(input->uid());

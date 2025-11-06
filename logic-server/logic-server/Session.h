@@ -49,7 +49,8 @@ public:
     void Stop() override;
 
     using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
-    void SetStopCallback(StopCallback stopCallback);
+    void SetStopCallbackByGroup(StopCallback stopCallback);
+    void SetStopCallbackByServer(StopCallback stopCallback);
 
     using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
     void SetCollectInputAction(SessionInput inputAction);
@@ -72,6 +73,7 @@ public:
     using SendDataByUdp = std::function<void(std::shared_ptr<std::pair<udp::endpoint, std::string>>)>;
     void SetSendDataByUdpAction(SendDataByUdp enqueueAction);
 
+    void CollectInput(std::shared_ptr<RpcPacket> receivePacket);
     void EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets);
 
 private:
@@ -101,7 +103,9 @@ private:
     std::chrono::high_resolution_clock::time_point _pingTime;
     std::uint64_t _lastRtt;
 
-    StopCallback _onStopCallback;
+    StopCallback _onStopCallbackByGroup;
+    StopCallback _onStopCallbackByServer;
+
     SessionInput _inputAction;
     SendDataByUdp _sendDataByUdp;
 

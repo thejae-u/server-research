@@ -42,7 +42,8 @@ void Session::Stop()
     //_udpSocketPtr->close(); // close udp socket for aysnc function exit
 
     _pingTimer->Stop();
-    _onStopCallback(shared_from_this());
+    _onStopCallbackByGroup(shared_from_this());
+    _onStopCallbackByServer(shared_from_this());
 }
 
 // wrapping ExchangeUdpPort, Using Blocking Pool
@@ -270,10 +271,14 @@ void Session::AysncReceiveGroupInfo(std::function<void(bool success, std::shared
     );
 }
 
-
-void Session::SetStopCallback(StopCallback stopCallback)
+void Session::SetStopCallbackByGroup(StopCallback stopCallback)
 {
-    _onStopCallback = std::move(stopCallback);
+    _onStopCallbackByGroup = std::move(stopCallback);
+}
+
+void Session::SetStopCallbackByServer(StopCallback stopCallback)
+{
+    _onStopCallbackByServer = std::move(stopCallback);
 }
 
 void Session::SetCollectInputAction(SessionInput inputAction)
@@ -320,6 +325,25 @@ void Session::SerializeRpcPacketAndEnqueueData()
 void Session::SetSendDataByUdpAction(SendDataByUdp sendDataFunction)
 {
     _sendDataByUdp = std::move(sendDataFunction);
+}
+
+void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
+{
+    auto self(shared_from_this());
+    boost::asio::post(_rpcPrivateStrand.wrap([self, receivePacket] {
+        if (self->_inputAction == nullptr)
+        {
+            spdlog::error("collect action is not set");
+            return;
+        }
+
+        const auto rpcRequest =
+            std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->GetSessionUuid(), std::move(receivePacket));
+        self->_inputAction(rpcRequest);
+
+        spdlog::info("collect by session complete");
+        })
+    );
 }
 
 void Session::EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets)
