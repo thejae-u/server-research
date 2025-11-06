@@ -1,7 +1,7 @@
 #include "ContextManager.h"
 
 ContextManager::ContextManager(PrivateInternalTag, std::string contextName, const std::size_t blockingThreadCount)
-    : _contextName(contextName), _workStrand(_ctx), _blockingPool(blockingThreadCount), _workGuard(boost::asio::make_work_guard(_ctx))
+    : _contextName(contextName), _blockingPool(blockingThreadCount), _workGuard(boost::asio::make_work_guard(_ctx))
 {
 }
 

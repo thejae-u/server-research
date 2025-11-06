@@ -69,14 +69,20 @@ public:
     bool IsValid() const { return _isConnected; }
     uuid GetSessionUuid() { return _toUuid(_sessionInfo.uid()); }
 
+    using SendDataByUdp = std::function<void(std::shared_ptr<std::pair<udp::endpoint, std::string>>)>;
+    void SetSendDataByUdpAction(SendDataByUdp enqueueAction);
+
     void EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets);
 
 private:
     using TcpSocket = tcp::socket;
     using UdpSocket = udp::socket;
 
-    std::shared_ptr<ContextManager> _ctxManager;
+    std::shared_ptr<ContextManager> _normalCtxManager;
     std::shared_ptr<ContextManager> _rpcCtxManager;
+
+    boost::asio::io_context::strand _normalPrivateStrand;
+    boost::asio::io_context::strand _rpcPrivateStrand;
 
     std::shared_ptr<TcpSocket> _tcpSocketPtr;
     std::shared_ptr<UdpSocket> _udpSocketPtr;
@@ -97,6 +103,7 @@ private:
 
     StopCallback _onStopCallback;
     SessionInput _inputAction;
+    SendDataByUdp _sendDataByUdp;
 
     std::uint32_t _tcpNetSize = 0;
     std::uint32_t _tcpDataSize = 0;
@@ -105,7 +112,7 @@ private:
     std::queue<RpcPacket> _sendPacketQueue;
 
     RpcPacket DequeueSendPacket();
-    void SendRpcPacketToClient();
+    void SerializeRpcPacketAndEnqueueData();
 
     void SendPingPacket(CompletionHandler onComplete);
     void ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet);

@@ -69,6 +69,8 @@ public:
 
 private:
 	std::shared_ptr<ContextManager> _ctxManager;
+    boost::asio::io_context::strand _privateStrand;
+
 	boost::uuids::string_generator _toUuid;
 	std::shared_ptr<GroupDto> _groupInfo;
 

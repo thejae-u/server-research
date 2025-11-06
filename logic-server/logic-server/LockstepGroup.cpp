@@ -8,7 +8,7 @@
 #include "ContextManager.h"
 
 LockstepGroup::LockstepGroup(const std::shared_ptr<ContextManager>& ctxManager, const std::shared_ptr<GroupDto> newGroupDtoPtr)
-    : _ctxManager(ctxManager), _groupInfo(newGroupDtoPtr)
+    : _ctxManager(ctxManager), _privateStrand(_ctxManager->GetContext()), _groupInfo(newGroupDtoPtr)
 {
     _fixedDeltaMs = TICK_TIME; // Delay Time
 }
@@ -22,7 +22,7 @@ void LockstepGroup::Start()
 {
     _isRunning = true;
     auto self(shared_from_this());
-    _tickTimer = std::make_shared<Scheduler>(_ctxManager->GetStrand(), std::chrono::milliseconds(_fixedDeltaMs), [self](CompletionHandler onComplete) {
+    _tickTimer = std::make_shared<Scheduler>(_privateStrand, std::chrono::milliseconds(_fixedDeltaMs), [self](CompletionHandler onComplete) {
         self->Tick(onComplete);
         }
     );
@@ -89,7 +89,7 @@ void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shar
         _inputBuffer[_currentBucket].push_back(packet);
     }
 
-    spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
+    //spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
 }
 
 void LockstepGroup::Tick(CompletionHandler onComplete)
@@ -109,7 +109,7 @@ void LockstepGroup::Tick(CompletionHandler onComplete)
             currentBucketPackets = self->_inputBuffer[self->_currentBucket];
         }
 
-        boost::asio::post(self->_ctxManager->GetStrand(), [self, onComplete, currentBucketPackets]() {
+        boost::asio::post(self->_privateStrand, [self, onComplete, currentBucketPackets]() {
             std::lock_guard<std::mutex> memberLock(self->_memberMutex);
             for (const auto& member : self->_members)
             {
