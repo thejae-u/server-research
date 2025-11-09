@@ -54,8 +54,8 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
         }
     );
 
-    newSession->SetCollectInputAction([self](const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest) {
-        self->CollectInput(rpcRequest);
+    newSession->SetCollectInputAction([self](std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest) {
+        self->CollectInput(std::move(rpcRequest));
         }
     );
 
@@ -78,18 +78,50 @@ void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
     }
 }
 
-void LockstepGroup::CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest)
+void LockstepGroup::CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest)
 {
-    const auto [guid, request] = *rpcRequest;
-
     // make send packet
-    std::shared_ptr<SSendPacket> packet = std::make_shared<SSendPacket>(SSendPacket{ _inputCounter++, guid, request });
+    const auto sendPackets = ReprocessInput(rpcRequest);
+
     {
         std::lock_guard<std::mutex> bufferLock(_bufferMutex);
-        _inputBuffer[_currentBucket].push_back(packet);
+        // _inputBuffer[_currentBucket].push_back(packet);
+        for (const auto inputs : sendPackets)
+        {
+            _inputBuffer[_currentBucket].push_back(std::make_shared<SSendPacket>(inputs));
+	        spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(inputs.guid), Utility::MethodToString(inputs.packet->method()));
+        }
     }
 
-    //spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
+    // spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
+}
+
+std::list<SSendPacket> LockstepGroup::ReprocessInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest)
+{
+    const auto [guid, request] = *rpcRequest;
+	std::list<SSendPacket> sendPackets;
+
+	if (request->method() != RpcMethod::Atk)
+	{
+		// pass through
+        sendPackets.push_back({ _inputCounter++, guid, std::move(request) });
+	}
+    else
+    {
+        sendPackets.push_back({ _inputCounter++, guid, std::move(request) });
+
+        if (request->data().size() == 0)
+        {
+            return sendPackets;
+        }
+
+		auto hitPacket = std::make_shared<RpcPacket>();
+		MakeHitPacket(guid, request->data(), hitPacket);
+
+        sendPackets.push_back({ _inputCounter++, guid, std::move(hitPacket) });
+	}
+
+    return sendPackets;
 }
 
 void LockstepGroup::Tick(CompletionHandler onComplete)

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <string>
 #include <chrono>
 
@@ -76,8 +76,8 @@ namespace Utility
 			result = "GroupInfo";
 			break;
 
-		case MOVE:
-			result = "MOVE";
+		case Move:
+			result = "Move";
 			break;
 
 		case MoveStart:
@@ -87,6 +87,12 @@ namespace Utility
 		case MoveStop:
 			result = "MoveStop";
 			break;
+
+        case Atk:
+            result = "Atk";
+            break;
+        case Dead:
+            result = "Dead";
 
 		case PACKET_COUNT:
 			result = "PacketCount";

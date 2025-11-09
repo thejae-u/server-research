@@ -19,6 +19,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 #include "Base.h"
+#include "PacketProcess.h"
 #include "NetworkData.pb.h"
 
 using IoContext = boost::asio::io_context;
@@ -56,7 +57,8 @@ public:
 	void Stop() override;
 	void AddMember(const std::shared_ptr<Session>& newSession);
 	void RemoveMember(const std::shared_ptr<Session>& session);
-	void CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);
+	void CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);
+    std::list<SSendPacket> ReprocessInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);
 	void Tick(CompletionHandler onComplete);
 
 	uuid GetGroupId() const { return _toUuid(_groupInfo->groupid()); }

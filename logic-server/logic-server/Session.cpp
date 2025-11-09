@@ -271,21 +271,25 @@ void Session::AysncReceiveGroupInfo(std::function<void(bool success, std::shared
     );
 }
 
+// set by LockstepGroup.cpp
 void Session::SetStopCallbackByGroup(StopCallback stopCallback)
 {
     _onStopCallbackByGroup = std::move(stopCallback);
 }
 
+// set by Server.cpp
 void Session::SetStopCallbackByServer(StopCallback stopCallback)
 {
     _onStopCallbackByServer = std::move(stopCallback);
 }
 
+// set by Server.cpp
 void Session::SetCollectInputAction(SessionInput inputAction)
 {
     _inputAction = std::move(inputAction);
 }
 
+// called per frame
 void Session::SerializeRpcPacketAndEnqueueData()
 {
     if (_sendDataByUdp == nullptr)
@@ -322,11 +326,13 @@ void Session::SerializeRpcPacketAndEnqueueData()
 	boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); }); // restart this function
 }
 
+// set by server.cpp
 void Session::SetSendDataByUdpAction(SendDataByUdp sendDataFunction)
 {
     _sendDataByUdp = std::move(sendDataFunction);
 }
 
+// called by server.cpp
 void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
 {
     auto self(shared_from_this());
@@ -337,15 +343,15 @@ void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
             return;
         }
 
-        const auto rpcRequest =
+        auto rpcRequest =
             std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->GetSessionUuid(), std::move(receivePacket));
-        self->_inputAction(rpcRequest);
 
-        spdlog::info("collect by session complete");
+        boost::asio::post(self->_rpcPrivateStrand.wrap([self, rpcRequest]() { self->_inputAction(std::move(rpcRequest)); }));
         })
     );
 }
 
+// 사용 안함
 void Session::EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets)
 {
 	for (const auto& packet : sendPackets)
@@ -360,6 +366,7 @@ void Session::EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> s
 	}
 }
 
+// 사용 안함
 RpcPacket Session::DequeueSendPacket()
 {
 	std::lock_guard<std::mutex> lock(_sendQueueMutex);
@@ -515,6 +522,7 @@ void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
     );
 }
 
+// 사용 안함
 void Session::UdpAsyncRead()
 {
     if (!_udpSocketPtr || !_udpSocketPtr->is_open())
@@ -570,9 +578,9 @@ void Session::UdpAsyncRead()
             // Input Send to Lockstep Group
             if (self->_inputAction)
             {
-                const auto rpcRequest =
+                auto rpcRequest =
                     std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->_toUuid(self->_sessionInfo.uid()), std::make_shared<RpcPacket>(packet));
-                self->_inputAction(rpcRequest);
+                boost::asio::post(self->_rpcPrivateStrand.wrap([self, rpcRequest]() { self->_inputAction(std::move(rpcRequest)); }));
             }
 
             self->UdpAsyncRead();
@@ -581,6 +589,7 @@ void Session::UdpAsyncRead()
     );
 }
 
+// 사용 안함
 void Session::UdpAsyncWrite(std::shared_ptr<std::string> data)
 {
     // make udp packet
