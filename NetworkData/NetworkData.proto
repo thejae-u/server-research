@@ -1,4 +1,4 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 package NetworkData;
 import "google/protobuf/timestamp.proto";
 
@@ -12,6 +12,13 @@ message MoveData
   float vertical = 4; // -1.0 to 1.0
   float horizontal = 5; // -1.0 to 1.0
   float speed = 6; // Speed of the movement
+}
+
+message AtkData 
+{
+  string from = 1;
+  string to = 2;
+  int32 dmg = 3;
 }
 
 message RpcPacket
@@ -54,10 +61,13 @@ message AccessToken
 
 enum RpcMethod
 {
-  IN_GAME_NONE = 0;
-  MOVE = 1;
+  InGameNone = 0;
+  Move = 1;
   MoveStart = 2;
   MoveStop = 3;
+  Atk = 4;
+  Hit = 5;
+  Dead = 6;
   
   // Network Settings
   NETWORK_NONE = 500;
