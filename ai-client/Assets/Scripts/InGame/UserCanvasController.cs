@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Network;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class UserCanvasController : MonoBehaviour
@@ -18,5 +19,6 @@ public class UserCanvasController : MonoBehaviour
     private void OnClickBackButton()
     {
         // Disconnect From Logic Server
+        LogicServerConnector.Instance.disconnectAction?.Invoke();
     }
 }

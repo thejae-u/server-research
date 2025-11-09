@@ -43,7 +43,7 @@ public class SyncManager : Singleton<SyncManager>
                 continue;
             }
 
-            var newUser = CreateSyncObject(user, Vector3.zero);
+            var newUser = CreateSyncObject(user, Vector3.up);
             if(newUser is null)
             {
                 Debug.LogError($"{user.Username} is already exist");
@@ -81,21 +81,31 @@ public class SyncManager : Singleton<SyncManager>
         return syncObject;
     }
 
-    public void SyncObjectPosition(Guid uid, MoveData moveData)
+    public void SyncObjectPosition(Guid userId, MoveData moveData)
     {
-        Debug.Log($"Received SyncObjectPosition - {uid} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
-        if (uid == Guid.Empty)
+        if (userId == _authManager.UserGuid)
+            return;
+
+        Debug.Log($"Received SyncObjectPosition - {userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+        if (userId == Guid.Empty)
         {
             Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
             _connector.IncrementErrorCount();
             return;
         }
 
-        var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
-        if (!_syncObjects.TryGetValue(uid, out var syncObject))
+        if(!_userInfos.TryGetValue(userId, out var user))
         {
-            Debug.LogError($"Invalid Situation: {uid} is not exist in syncObjects");
+            Debug.LogError($"Invalid Situation: {userId} is not exist in syncObjects");
             return;
+        }
+
+        var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
+        if (!_syncObjects.TryGetValue(userId, out var syncObject))
+        {
+            var newSyncObject = CreateSyncObject(user, startPosition);
+            _syncObjects.Add(userId, newSyncObject);
+            syncObject = newSyncObject;
         }
 
         var syncObjectComponent = syncObject.GetComponent<SyncObject>();

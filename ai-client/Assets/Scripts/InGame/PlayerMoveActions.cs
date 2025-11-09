@@ -8,6 +8,8 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
     public Action onMoveStartAction;
     public Action<Vector2> onMoveAction;
     public Action onMoveStopAction;
+
+    public Action onAttackAction;
     
     private static IA_Base _iaBase;
     private void OnEnable()
@@ -34,21 +36,28 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
     {
         if (context.started)
         {
-            var input = context.ReadValue<Vector2>();
-            onMoveAction?.Invoke(input);
+            onMoveStartAction?.Invoke();
             return;
         }
-        
+
         if (context.canceled)
         {
             onMoveStopAction?.Invoke();
             return;
         }
-        
+
         if (!context.performed)
             return;
-        
-        //var input = context.ReadValue<Vector2>();
-        //onMoveAction?.Invoke(input);
+
+        var input = context.ReadValue<Vector2>();
+        onMoveAction?.Invoke(input);
+    }
+
+    public void OnAttack(InputAction.CallbackContext context)
+    {
+        if(!context.started)
+            return;
+
+        onAttackAction?.Invoke();
     }
 }

@@ -161,6 +161,16 @@ namespace Network
             DisconnectFromServer();
         }
 
+        private void OnEnable()
+        {
+            disconnectAction += DisconnectFromServer;
+        }
+
+        private void OnDisable()
+        {
+            disconnectAction -= DisconnectFromServer;
+        }
+
         private void Update()
         {
             if (!IsOnline) 
@@ -861,6 +871,12 @@ namespace Network
 
                     // Call SyncManager to sync the object position
                     SyncManager.Instance.SyncObjectPosition(Guid.Parse(data.Uid), moveData);
+                    break;
+
+                case RpcMethod.Atk:
+                    
+                    break;
+                case RpcMethod.Hit:
                     break;
 
                 case RpcMethod.LastRtt:

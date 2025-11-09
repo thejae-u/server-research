@@ -89,74 +89,6 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
     ""name"": ""IA_Base"",
     ""maps"": [
         {
-            ""name"": ""Network"",
-            ""id"": ""21d6f454-180a-4690-9932-0993b0895be8"",
-            ""actions"": [
-                {
-                    ""name"": ""ConnectToServer"",
-                    ""type"": ""Button"",
-                    ""id"": ""349deb2b-db12-49f5-bde3-6000dc06b048"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
-                },
-                {
-                    ""name"": ""Disconnect"",
-                    ""type"": ""Button"",
-                    ""id"": ""5823f075-5197-4189-b710-8f44ec0e99e6"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""SendPacketToggle"",
-                    ""type"": ""Button"",
-                    ""id"": ""3d5c7944-3714-4566-839b-f9bc6509ca70"",
-                    ""expectedControlType"": """",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                }
-            ],
-            ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""eecca1df-e3f7-49e9-8f80-e9ba167c36d8"",
-                    ""path"": ""<Keyboard>/f1"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""ConnectToServer"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""28f9ad0c-598c-4b01-ad11-8c90e7d4e573"",
-                    ""path"": ""<Keyboard>/f2"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Disconnect"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""bdac7f5d-8952-4558-9e50-9976c54e249e"",
-                    ""path"": ""<Keyboard>/space"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""SendPacketToggle"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                }
-            ]
-        },
-        {
             ""name"": ""Player"",
             ""id"": ""2828c5d7-6798-4e0a-9301-e5d268c5d007"",
             ""actions"": [
@@ -168,6 +100,15 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Attack"",
+                    ""type"": ""Button"",
+                    ""id"": ""0407c435-e394-44ba-bff0-62c115a2efeb"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -225,25 +166,31 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
                     ""action"": ""Move"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7df4a22d-ae2e-4b16-80f1-c5b3b2c6a7b0"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Attack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
     ],
     ""controlSchemes"": []
 }");
-        // Network
-        m_Network = asset.FindActionMap("Network", throwIfNotFound: true);
-        m_Network_ConnectToServer = m_Network.FindAction("ConnectToServer", throwIfNotFound: true);
-        m_Network_Disconnect = m_Network.FindAction("Disconnect", throwIfNotFound: true);
-        m_Network_SendPacketToggle = m_Network.FindAction("SendPacketToggle", throwIfNotFound: true);
         // Player
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
+        m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
     }
 
     ~@IA_Base()
     {
-        UnityEngine.Debug.Assert(!m_Network.enabled, "This will cause a leak and performance issues, IA_Base.Network.Disable() has not been called.");
         UnityEngine.Debug.Assert(!m_Player.enabled, "This will cause a leak and performance issues, IA_Base.Player.Disable() has not been called.");
     }
 
@@ -317,128 +264,11 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
         return asset.FindBinding(bindingMask, out action);
     }
 
-    // Network
-    private readonly InputActionMap m_Network;
-    private List<INetworkActions> m_NetworkActionsCallbackInterfaces = new List<INetworkActions>();
-    private readonly InputAction m_Network_ConnectToServer;
-    private readonly InputAction m_Network_Disconnect;
-    private readonly InputAction m_Network_SendPacketToggle;
-    /// <summary>
-    /// Provides access to input actions defined in input action map "Network".
-    /// </summary>
-    public struct NetworkActions
-    {
-        private @IA_Base m_Wrapper;
-
-        /// <summary>
-        /// Construct a new instance of the input action map wrapper class.
-        /// </summary>
-        public NetworkActions(@IA_Base wrapper) { m_Wrapper = wrapper; }
-        /// <summary>
-        /// Provides access to the underlying input action "Network/ConnectToServer".
-        /// </summary>
-        public InputAction @ConnectToServer => m_Wrapper.m_Network_ConnectToServer;
-        /// <summary>
-        /// Provides access to the underlying input action "Network/Disconnect".
-        /// </summary>
-        public InputAction @Disconnect => m_Wrapper.m_Network_Disconnect;
-        /// <summary>
-        /// Provides access to the underlying input action "Network/SendPacketToggle".
-        /// </summary>
-        public InputAction @SendPacketToggle => m_Wrapper.m_Network_SendPacketToggle;
-        /// <summary>
-        /// Provides access to the underlying input action map instance.
-        /// </summary>
-        public InputActionMap Get() { return m_Wrapper.m_Network; }
-        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
-        public void Enable() { Get().Enable(); }
-        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
-        public void Disable() { Get().Disable(); }
-        /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
-        public bool enabled => Get().enabled;
-        /// <summary>
-        /// Implicitly converts an <see ref="NetworkActions" /> to an <see ref="InputActionMap" /> instance.
-        /// </summary>
-        public static implicit operator InputActionMap(NetworkActions set) { return set.Get(); }
-        /// <summary>
-        /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
-        /// </summary>
-        /// <param name="instance">Callback instance.</param>
-        /// <remarks>
-        /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
-        /// </remarks>
-        /// <seealso cref="NetworkActions" />
-        public void AddCallbacks(INetworkActions instance)
-        {
-            if (instance == null || m_Wrapper.m_NetworkActionsCallbackInterfaces.Contains(instance)) return;
-            m_Wrapper.m_NetworkActionsCallbackInterfaces.Add(instance);
-            @ConnectToServer.started += instance.OnConnectToServer;
-            @ConnectToServer.performed += instance.OnConnectToServer;
-            @ConnectToServer.canceled += instance.OnConnectToServer;
-            @Disconnect.started += instance.OnDisconnect;
-            @Disconnect.performed += instance.OnDisconnect;
-            @Disconnect.canceled += instance.OnDisconnect;
-            @SendPacketToggle.started += instance.OnSendPacketToggle;
-            @SendPacketToggle.performed += instance.OnSendPacketToggle;
-            @SendPacketToggle.canceled += instance.OnSendPacketToggle;
-        }
-
-        /// <summary>
-        /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
-        /// </summary>
-        /// <remarks>
-        /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
-        /// </remarks>
-        /// <seealso cref="NetworkActions" />
-        private void UnregisterCallbacks(INetworkActions instance)
-        {
-            @ConnectToServer.started -= instance.OnConnectToServer;
-            @ConnectToServer.performed -= instance.OnConnectToServer;
-            @ConnectToServer.canceled -= instance.OnConnectToServer;
-            @Disconnect.started -= instance.OnDisconnect;
-            @Disconnect.performed -= instance.OnDisconnect;
-            @Disconnect.canceled -= instance.OnDisconnect;
-            @SendPacketToggle.started -= instance.OnSendPacketToggle;
-            @SendPacketToggle.performed -= instance.OnSendPacketToggle;
-            @SendPacketToggle.canceled -= instance.OnSendPacketToggle;
-        }
-
-        /// <summary>
-        /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="NetworkActions.UnregisterCallbacks(INetworkActions)" />.
-        /// </summary>
-        /// <seealso cref="NetworkActions.UnregisterCallbacks(INetworkActions)" />
-        public void RemoveCallbacks(INetworkActions instance)
-        {
-            if (m_Wrapper.m_NetworkActionsCallbackInterfaces.Remove(instance))
-                UnregisterCallbacks(instance);
-        }
-
-        /// <summary>
-        /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
-        /// </summary>
-        /// <remarks>
-        /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
-        /// </remarks>
-        /// <seealso cref="NetworkActions.AddCallbacks(INetworkActions)" />
-        /// <seealso cref="NetworkActions.RemoveCallbacks(INetworkActions)" />
-        /// <seealso cref="NetworkActions.UnregisterCallbacks(INetworkActions)" />
-        public void SetCallbacks(INetworkActions instance)
-        {
-            foreach (var item in m_Wrapper.m_NetworkActionsCallbackInterfaces)
-                UnregisterCallbacks(item);
-            m_Wrapper.m_NetworkActionsCallbackInterfaces.Clear();
-            AddCallbacks(instance);
-        }
-    }
-    /// <summary>
-    /// Provides a new <see cref="NetworkActions" /> instance referencing this action map.
-    /// </summary>
-    public NetworkActions @Network => new NetworkActions(this);
-
     // Player
     private readonly InputActionMap m_Player;
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Move;
+    private readonly InputAction m_Player_Attack;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -454,6 +284,10 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Move".
         /// </summary>
         public InputAction @Move => m_Wrapper.m_Player_Move;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Attack".
+        /// </summary>
+        public InputAction @Attack => m_Wrapper.m_Player_Attack;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -483,6 +317,9 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
             @Move.started += instance.OnMove;
             @Move.performed += instance.OnMove;
             @Move.canceled += instance.OnMove;
+            @Attack.started += instance.OnAttack;
+            @Attack.performed += instance.OnAttack;
+            @Attack.canceled += instance.OnAttack;
         }
 
         /// <summary>
@@ -497,6 +334,9 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
             @Move.started -= instance.OnMove;
             @Move.performed -= instance.OnMove;
             @Move.canceled -= instance.OnMove;
+            @Attack.started -= instance.OnAttack;
+            @Attack.performed -= instance.OnAttack;
+            @Attack.canceled -= instance.OnAttack;
         }
 
         /// <summary>
@@ -531,35 +371,6 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
     /// </summary>
     public PlayerActions @Player => new PlayerActions(this);
     /// <summary>
-    /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Network" which allows adding and removing callbacks.
-    /// </summary>
-    /// <seealso cref="NetworkActions.AddCallbacks(INetworkActions)" />
-    /// <seealso cref="NetworkActions.RemoveCallbacks(INetworkActions)" />
-    public interface INetworkActions
-    {
-        /// <summary>
-        /// Method invoked when associated input action "ConnectToServer" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnConnectToServer(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "Disconnect" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnDisconnect(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "SendPacketToggle" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSendPacketToggle(InputAction.CallbackContext context);
-    }
-    /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Player" which allows adding and removing callbacks.
     /// </summary>
     /// <seealso cref="PlayerActions.AddCallbacks(IPlayerActions)" />
@@ -573,5 +384,12 @@ public partial class @IA_Base: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMove(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Attack" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnAttack(InputAction.CallbackContext context);
     }
 }
