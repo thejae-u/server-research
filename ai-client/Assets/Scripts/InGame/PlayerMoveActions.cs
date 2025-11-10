@@ -8,6 +8,7 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
     public Action onMoveStartAction;
     public Action<Vector2> onMoveAction;
     public Action onMoveStopAction;
+    private Vector2 _lastMoveInput = Vector2.zero;
 
     public Action onAttackAction;
     
@@ -42,15 +43,36 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
 
         if (context.canceled)
         {
-            onMoveStopAction?.Invoke();
+            if(_lastMoveInput != Vector2.zero)
+            {
+                onMoveStopAction?.Invoke();
+                _lastMoveInput = Vector2.zero;
+            }
+
             return;
         }
 
-        if (!context.performed)
-            return;
+        if (context.performed)
+        {
+            var input = context.ReadValue<Vector2>();
 
-        var input = context.ReadValue<Vector2>();
-        onMoveAction?.Invoke(input);
+            if (input == Vector2.zero)
+            {
+                if(_lastMoveInput != Vector2.zero)
+                {
+                    onMoveStopAction?.Invoke();
+                    _lastMoveInput = Vector2.zero;
+                }
+            }
+            else
+            {
+                if(input != _lastMoveInput)
+                {
+                    onMoveAction?.Invoke(input);
+                    _lastMoveInput = input;
+                }
+            }
+        }
     }
 
     public void OnAttack(InputAction.CallbackContext context)

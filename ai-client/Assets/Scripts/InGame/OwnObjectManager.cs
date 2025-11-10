@@ -90,7 +90,6 @@ public class OwnObjectManager : MonoBehaviour
             return;
 
         MoveTo();
-        SendMovementPacket(RpcMethod.Move);
     }
 
     private void SendMovementPacket(RpcMethod method, bool isForce = false)
@@ -136,6 +135,7 @@ public class OwnObjectManager : MonoBehaviour
         _moveData.Horizontal = dir.x;
         _moveData.Vertical = dir.z;
         _moveData.Speed = _playerStatData.speed;
+        SendMovementPacket(RpcMethod.Move);
     }
 
     private void OnMoveStop()

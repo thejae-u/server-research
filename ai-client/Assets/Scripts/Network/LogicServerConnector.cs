@@ -31,7 +31,10 @@ namespace Network
         private IPEndPoint _clientUdpEndPoint;
         private NetworkStream _tcpStream;
 
-        private readonly ConcurrentQueue<byte[]> _processQueue = new();
+        private readonly ConcurrentQueue<byte[]> _rawQueue = new();
+
+        private Task _parsingRawPacketTask;
+        private readonly ConcurrentQueue<RpcPacket> _readyQueue = new();
 
         private int _maxRetries = 5;
         private const uint MAX_PACKET_SIZE = 65536; // 64KB
@@ -69,9 +72,9 @@ namespace Network
         private volatile int _lastRtt = 0;
         private readonly List<int> _rttList = new();
 
-        public int RttAverage 
-        { 
-            get 
+        public int RttAverage
+        {
+            get
             {
                 return Interlocked.CompareExchange(ref _rttAverage, 0, 0);
             }
@@ -123,7 +126,7 @@ namespace Network
 
         public bool IsOnline
         {
-            get 
+            get
             {
                 return Interlocked.CompareExchange(ref _isOnline, 0, 0) == 1;
             }
@@ -173,7 +176,7 @@ namespace Network
 
         private void Update()
         {
-            if (!IsOnline) 
+            if (!IsOnline)
                 return;
 
             ProcessRpc();
@@ -241,7 +244,7 @@ namespace Network
                         return false;
                     }
                 }
-                catch(OperationCanceledException)
+                catch (OperationCanceledException)
                 {
                     Debug.LogWarning("Cancelled");
                     return false;
@@ -300,6 +303,8 @@ namespace Network
 
             _sendRpcPacketByUdpTask = Task.Run(() => AsyncWriteByUdp(destroyCancellationToken), destroyCancellationToken); // rpc send by tcp Task start
             _sendRpcPacketByTcpTask = Task.Run(() => AsyncWriteByTcp(destroyCancellationToken), destroyCancellationToken); // rpc send by udp Task start
+
+            _parsingRawPacketTask = Task.Run(() => AsyncParsingRawPacket(destroyCancellationToken), destroyCancellationToken);
         }
 
         private async Task<bool> AsyncExchangeUdpPort(CancellationToken ct)
@@ -309,7 +314,7 @@ namespace Network
                 var readPacketNetSize = new byte[4];
 
                 // Read the size of the incoming data
-                if(!await ReadTcpExactlyAsync(_tcpStream, readPacketNetSize, readPacketNetSize.Length, ct))
+                if (!await ReadTcpExactlyAsync(_tcpStream, readPacketNetSize, readPacketNetSize.Length, ct))
                 {
                     return false;
                 }
@@ -322,7 +327,7 @@ namespace Network
                 var readDataBuffer = new byte[readPacketHostSize];
 
                 // Read the rest of the data
-                if(!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
+                if (!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
                 {
                     return false;
                 }
@@ -413,7 +418,7 @@ namespace Network
                 // Read Data
                 var readPacketHostSize = BitConverter.ToInt32(readPacketNetSize, 0);
                 var readDataBuffer = new byte[readPacketHostSize];
-                if(!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
+                if (!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
                 {
                     return false;
                 }
@@ -460,7 +465,7 @@ namespace Network
             try
             {
                 var readPacketNetSize = new byte[4];
-                if(!await ReadTcpExactlyAsync(_tcpStream, readPacketNetSize, readPacketNetSize.Length, ct))
+                if (!await ReadTcpExactlyAsync(_tcpStream, readPacketNetSize, readPacketNetSize.Length, ct))
                 {
                     return false;
                 }
@@ -471,7 +476,7 @@ namespace Network
                 var readPacketHostSize = BitConverter.ToInt32(readPacketNetSize, 0);
                 var readDataBuffer = new byte[readPacketHostSize];
 
-                if(!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
+                if (!await ReadTcpExactlyAsync(_tcpStream, readDataBuffer, readDataBuffer.Length, ct))
                 {
                     return false;
                 }
@@ -692,14 +697,14 @@ namespace Network
                         return;
                     }
 
-                    EnqueueInternalProcess(dataBuffer);
+                    EnqueueRawQueue(dataBuffer);
                 }
                 catch (OperationCanceledException)
                 {
                     _dispatcher.Enqueue(() => Debug.Log($"cancelled"));
                     return;
                 }
-                catch(ObjectDisposedException)
+                catch (ObjectDisposedException)
                 {
                     _dispatcher.Enqueue(() => Debug.Log($"stream closed"));
                     return;
@@ -720,12 +725,12 @@ namespace Network
         {
             await Awaitable.BackgroundThreadAsync();
             int totalBytesRead = 0;
-            while(totalBytesRead < length)
+            while (totalBytesRead < length)
             {
                 try
                 {
                     int bytesRead = await stream.ReadAsync(buffer, totalBytesRead, length - totalBytesRead, ct); // 총 길이 - 현재 길이 만큼 더 받음
-                    if(bytesRead == 0)
+                    if (bytesRead == 0)
                     {
                         _dispatcher.Enqueue(() => Debug.LogWarning("(EOF) disconnected"));
                         return false;
@@ -733,12 +738,12 @@ namespace Network
 
                     totalBytesRead += bytesRead;
                 }
-                catch(OperationCanceledException)
+                catch (OperationCanceledException)
                 {
                     _dispatcher.Enqueue(() => Debug.Log($"cancelled"));
                     return false;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _dispatcher.Enqueue(() => Debug.LogError($"error ReadTcpExactly: {ex.Message}"));
                     return false;
@@ -783,7 +788,7 @@ namespace Network
                     var payload = new byte[payloadSize];
                     Buffer.BlockCopy(readData, 2, payload, 0, payloadSize);
 
-                    EnqueueInternalProcess(payload);
+                    EnqueueRawQueue(payload);
                     Interlocked.Increment(ref _receivedPacketCount); // Increment received packet count by atomic
                     _dispatcher.Enqueue(() => { Debug.Log($"read data in udp all passed"); });
                 }
@@ -812,17 +817,17 @@ namespace Network
         /// <summary>
         /// called in background thread
         /// </summary>
-        private void EnqueueInternalProcess(byte[] data)
+        private void EnqueueRawQueue(byte[] data)
         {
-            _processQueue.Enqueue(data);
+            _rawQueue.Enqueue(data);
         }
 
         /// <summary>
         /// called in main thrad
         /// </summary>
-        private byte[] DequeueInternalProcess()
+        private byte[] DequeueRawQueue()
         {
-            if (!_processQueue.TryDequeue(out var data))
+            if (!_rawQueue.TryDequeue(out var data))
             {
                 return null;
             }
@@ -830,82 +835,123 @@ namespace Network
             return data;
         }
 
+        private void EnqueueReadyQueue(RpcPacket nextPacket)
+        {
+            _readyQueue.Enqueue(nextPacket);
+        }
+
+        private RpcPacket DequeueReadyQueue()
+        {
+            if (!_readyQueue.TryDequeue(out var nextPacket))
+            {
+                return null;
+            }
+
+            return nextPacket;
+        }
+
+        private async Task AsyncParsingRawPacket(CancellationToken ct)
+        {
+            await Awaitable.BackgroundThreadAsync();
+
+            while (!ct.IsCancellationRequested && IsOnline)
+            {
+                try
+                {
+                    var nextPacket = DequeueRawQueue();
+                    if (nextPacket is null)
+                    {
+                        await Task.Delay(5, ct);
+                        continue;
+                    }
+
+                    var data = RpcPacket.Parser.ParseFrom(nextPacket);
+                    if (data is null)
+                    {
+                        LogManager.Instance.Log($"parsing error occured");
+                        continue;
+                    }
+
+                    EnqueueReadyQueue(data);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"invalid error occured: {ex.Message}");
+                    return;
+                }
+            }
+        }
+
         /// <summary>
         /// called in main thread
         /// </summary>
         private void ProcessRpc()
         {
-            var nextProcess = DequeueInternalProcess();
-            if (nextProcess is null)
+            var data = DequeueReadyQueue();
+            while (data is not null) // all packets in queue processed per frame
             {
-                return;
-            }
+                switch (data.Method)
+                {
+                    case RpcMethod.Ping:
+                        var pongPacket = new RpcPacket
+                        {
+                            Method = RpcMethod.Pong,
+                            Uid = _authManager.UserGuid.ToString()
+                        };
 
-            var data = RpcPacket.Parser.ParseFrom(nextProcess);
-            if (data is null)
-            {
-                Debug.Log($"Data is null");
-                return;
-            }
+                        EnqueueRpcPacketForTcp(pongPacket);
+                        break;
 
-            if(data.Method == RpcMethod.Move)
-                Debug.Log($"Data parsing passed: {data.Uid} {data.Method}");
+                    case RpcMethod.MoveStart:
+                    case RpcMethod.MoveStop:
+                    case RpcMethod.Move:
+                        LogManager.Instance.Log($"{data.Uid} : {data.Method}");
+                        // Deserialize MoveData
+                        MoveData moveData = MoveData.Parser.ParseFrom(data.Data);
+                        SyncManager.Instance.SyncObjectPosition(Guid.Parse(data.Uid), moveData);
+                        break;
 
-            switch (data.Method)
-            {
-                case RpcMethod.Ping:
-                    var pongPacket = new RpcPacket
-                    {
-                        Method = RpcMethod.Pong,
-                        Uid = _authManager.UserGuid.ToString()
-                    };
+                    case RpcMethod.Atk:
+                        LogManager.Instance.Log($"{data.Uid} : {data.Method}");
+                        // Deserialize AtkData
+                        AtkData atkData = AtkData.Parser.ParseFrom(data.Data);
+                        SyncManager.Instance.TestAttackProcess(Guid.Parse(data.Uid), atkData);
+                        break;
 
-                    EnqueueRpcPacketForTcp(pongPacket);
-                    break;
+                    case RpcMethod.Hit:
+                        break;
 
-                case RpcMethod.MoveStart:
-                case RpcMethod.MoveStop:
-                case RpcMethod.Move:
-                    // Deserialize the data
-                    MoveData moveData = MoveData.Parser.ParseFrom(data.Data);
+                    case RpcMethod.LastRtt:
+                        LastRtt = int.Parse(data.Data.ToStringUtf8());
+                        _rttList.Add(LastRtt);
 
-                    // Call SyncManager to sync the object position
-                    SyncManager.Instance.SyncObjectPosition(Guid.Parse(data.Uid), moveData);
-                    break;
+                        RttAverage = (int)_rttList.Average(x => x);
+                        break;
 
-                case RpcMethod.Atk:
-                    
-                    break;
-                case RpcMethod.Hit:
-                    break;
+                    case RpcMethod.PacketCount:
+                    case RpcMethod.NetworkNone:
+                        Debug.Assert(false, "Not Implemented");
+                        break;
 
-                case RpcMethod.LastRtt:
-                    LastRtt = int.Parse(data.Data.ToStringUtf8());
-                    _rttList.Add(LastRtt);
+                    case RpcMethod.Pong:
+                        Debug.Assert(false, "Not Client Method");
+                        break;
 
-                    RttAverage = (int)_rttList.Average(x => x);
-                    break;
+                    // Network Initialize
+                    case RpcMethod.UdpPort:
+                    case RpcMethod.UserInfo:
+                    case RpcMethod.GroupInfo:
+                    case RpcMethod.InGameNone:
+                    default:
+                        Debug.Assert(false, "Invalid Method");
+                        break;
+                }
 
-                case RpcMethod.PacketCount:
-                case RpcMethod.NetworkNone:
-                    Debug.Assert(false, "Not Implemented");
-                    break;
-
-                case RpcMethod.Pong:
-                    Debug.Assert(false, "Not Client Method");
-                    break;
-
-                case RpcMethod.UdpPort:
-                    Debug.Assert(false, "Not Sync Method");
-                    break;
-
-                // Network Initialize
-                case RpcMethod.UserInfo:
-                case RpcMethod.GroupInfo:
-                case RpcMethod.InGameNone:
-                default:
-                    Debug.Assert(false, "Invalid Method");
-                    break;
+                data = DequeueReadyQueue();
             }
         }
     }

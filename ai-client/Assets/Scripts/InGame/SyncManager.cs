@@ -83,10 +83,12 @@ public class SyncManager : Singleton<SyncManager>
 
     public void SyncObjectPosition(Guid userId, MoveData moveData)
     {
+        LogManager.Instance.Log($"{userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
         if (userId == _authManager.UserGuid)
             return;
 
         Debug.Log($"Received SyncObjectPosition - {userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+
         if (userId == Guid.Empty)
         {
             Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
@@ -110,6 +112,13 @@ public class SyncManager : Singleton<SyncManager>
 
         var syncObjectComponent = syncObject.GetComponent<SyncObject>();
         syncObjectComponent.EnqueueMoveData(moveData);
+    }
+
+    public void TestAttackProcess(Guid userId, AtkData atkData)
+    {
+        string hitUser = string.IsNullOrEmpty(atkData.To) ? "none" : atkData.To;
+
+        LogManager.Instance.Log($"{userId} : attack {hitUser}, damage {atkData.Dmg}");
     }
 
     public void SyncObjectNone(Guid objectId)
