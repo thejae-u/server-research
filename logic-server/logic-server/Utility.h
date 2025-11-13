@@ -10,35 +10,31 @@ using namespace NetworkData;
 
 namespace Utility
 {
+    struct SPos
+    {
+        std::int32_t x;
+        std::int32_t y;
+        std::int32_t z;
+
+        void SetPosition(std::int32_t newX, std::int32_t newY, std::int32_t newZ)
+        {
+            x = newX;
+            y = newY;
+            z = newZ;
+        }
+    };
+
+    struct SGameState
+    {
+        std::int32_t hp;
+        SPos position;
+    };
+
 	struct UserSimpleDto
 	{
 		boost::uuids::uuid userId;
 		std::string name;
 	};
-
-	static std::string GuidToBytes(boost::uuids::uuid uuid)
-	{
-		std::string bytes(uuid.begin(), uuid.end());
-
-		// Reverse the byte order for the first 8 bytes (to little-endian)
-		std::reverse(bytes.begin(), bytes.begin() + 4);
-		std::reverse(bytes.begin() + 4, bytes.begin() + 6);
-		std::reverse(bytes.begin() + 6, bytes.begin() + 8);
-		return bytes;
-	}
-
-	static uuid BytesToUuid(const std::string& bytes)
-	{
-		if (bytes.size() != 16) throw std::invalid_argument("invalid uuid size");
-		boost::uuids::uuid uuid;
-		std::copy(bytes.begin(), bytes.end(), uuid.begin());
-
-		// Reverse the byte order for the first 8 bytes (to big-endian)
-		std::reverse(uuid.begin(), uuid.begin() + 4);
-		std::reverse(uuid.begin() + 4, uuid.begin() + 6);
-		std::reverse(uuid.begin() + 6, uuid.begin() + 8);
-		return uuid;
-	}
 
 	static std::chrono::high_resolution_clock::time_point StartStopwatch()
 	{

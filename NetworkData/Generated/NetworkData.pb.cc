@@ -262,6 +262,32 @@ struct GroupDtoDefaultTypeInternal {
 
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 GroupDtoDefaultTypeInternal _GroupDto_default_instance_;
+
+inline constexpr GameData::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : _cached_size_{0},
+        position_{nullptr},
+        hp_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR GameData::GameData(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct GameDataDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR GameDataDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~GameDataDefaultTypeInternal() {}
+  union {
+    GameData _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 GameDataDefaultTypeInternal _GameData_default_instance_;
 }  // namespace NetworkData
 static const ::_pb::EnumDescriptor* file_level_enum_descriptors_NetworkData_2eproto[1];
 static constexpr const ::_pb::ServiceDescriptor**
@@ -294,6 +320,18 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::NetworkData::AtkData, _impl_.from_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::AtkData, _impl_.to_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::AtkData, _impl_.dmg_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::GameData, _impl_._has_bits_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::GameData, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::NetworkData::GameData, _impl_.hp_),
+        PROTOBUF_FIELD_OFFSET(::NetworkData::GameData, _impl_.position_),
+        ~0u,
+        0,
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _impl_._has_bits_),
         PROTOBUF_FIELD_OFFSET(::NetworkData::RpcPacket, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -371,16 +409,18 @@ static const ::_pbi::MigrationSchema
     schemas[] ABSL_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
         {0, -1, -1, sizeof(::NetworkData::MoveData)},
         {14, -1, -1, sizeof(::NetworkData::AtkData)},
-        {25, 37, -1, sizeof(::NetworkData::RpcPacket)},
-        {41, -1, -1, sizeof(::NetworkData::UserSimpleDto)},
-        {51, 60, -1, sizeof(::NetworkData::InternalData)},
-        {61, -1, -1, sizeof(::NetworkData::LoginDto)},
-        {71, 83, -1, sizeof(::NetworkData::GroupDto)},
-        {87, -1, -1, sizeof(::NetworkData::AccessToken)},
+        {25, 35, -1, sizeof(::NetworkData::GameData)},
+        {37, 49, -1, sizeof(::NetworkData::RpcPacket)},
+        {53, -1, -1, sizeof(::NetworkData::UserSimpleDto)},
+        {63, 72, -1, sizeof(::NetworkData::InternalData)},
+        {73, -1, -1, sizeof(::NetworkData::LoginDto)},
+        {83, 95, -1, sizeof(::NetworkData::GroupDto)},
+        {99, -1, -1, sizeof(::NetworkData::AccessToken)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::NetworkData::_MoveData_default_instance_._instance,
     &::NetworkData::_AtkData_default_instance_._instance,
+    &::NetworkData::_GameData_default_instance_._instance,
     &::NetworkData::_RpcPacket_default_instance_._instance,
     &::NetworkData::_UserSimpleDto_default_instance_._instance,
     &::NetworkData::_InternalData_default_instance_._instance,
@@ -395,24 +435,26 @@ const char descriptor_table_protodef_NetworkData_2eproto[] ABSL_ATTRIBUTE_SECTIO
     "\001x\030\001 \001(\002\022\t\n\001y\030\002 \001(\002\022\t\n\001z\030\003 \001(\002\022\020\n\010vertic"
     "al\030\004 \001(\002\022\022\n\nhorizontal\030\005 \001(\002\022\r\n\005speed\030\006 "
     "\001(\002\"0\n\007AtkData\022\014\n\004from\030\001 \001(\t\022\n\n\002to\030\002 \001(\t"
-    "\022\013\n\003dmg\030\003 \001(\005\"}\n\tRpcPacket\022\013\n\003uid\030\001 \001(\t\022"
-    "&\n\006method\030\002 \001(\0162\026.NetworkData.RpcMethod\022"
-    "\014\n\004data\030\003 \001(\014\022-\n\ttimestamp\030\004 \001(\0132\032.googl"
-    "e.protobuf.Timestamp\".\n\rUserSimpleDto\022\013\n"
-    "\003uid\030\001 \001(\t\022\020\n\010username\030\002 \001(\t\"7\n\014Internal"
-    "Data\022\'\n\010internal\030\001 \001(\0132\025.NetworkData.Log"
-    "inDto\".\n\010LoginDto\022\020\n\010username\030\001 \001(\t\022\020\n\010p"
-    "assword\030\002 \001(\t\"\204\001\n\010GroupDto\022\017\n\007groupId\030\001 "
-    "\001(\t\022\014\n\004name\030\002 \001(\t\022)\n\005owner\030\003 \001(\0132\032.Netwo"
-    "rkData.UserSimpleDto\022.\n\nplayerList\030\004 \003(\013"
-    "2\032.NetworkData.UserSimpleDto\"\"\n\013AccessTo"
-    "ken\022\023\n\013accessToken\030\001 \001(\t*\331\001\n\tRpcMethod\022\016"
-    "\n\nInGameNone\020\000\022\010\n\004Move\020\001\022\r\n\tMoveStart\020\002\022"
-    "\014\n\010MoveStop\020\003\022\007\n\003Atk\020\004\022\007\n\003Hit\020\005\022\010\n\004Dead\020"
-    "\006\022\021\n\014NETWORK_NONE\020\364\003\022\r\n\010UDP_PORT\020\365\003\022\016\n\tU"
-    "SER_INFO\020\366\003\022\017\n\nGROUP_INFO\020\367\003\022\t\n\004PING\020\370\003\022"
-    "\t\n\004PONG\020\371\003\022\021\n\014PACKET_COUNT\020\372\003\022\r\n\010LAST_RT"
-    "T\020\373\003b\006proto3"
+    "\022\013\n\003dmg\030\003 \001(\005\"\?\n\010GameData\022\n\n\002hp\030\001 \001(\005\022\'\n"
+    "\010position\030\002 \001(\0132\025.NetworkData.MoveData\"}"
+    "\n\tRpcPacket\022\013\n\003uid\030\001 \001(\t\022&\n\006method\030\002 \001(\016"
+    "2\026.NetworkData.RpcMethod\022\014\n\004data\030\003 \001(\014\022-"
+    "\n\ttimestamp\030\004 \001(\0132\032.google.protobuf.Time"
+    "stamp\".\n\rUserSimpleDto\022\013\n\003uid\030\001 \001(\t\022\020\n\010u"
+    "sername\030\002 \001(\t\"7\n\014InternalData\022\'\n\010interna"
+    "l\030\001 \001(\0132\025.NetworkData.LoginDto\".\n\010LoginD"
+    "to\022\020\n\010username\030\001 \001(\t\022\020\n\010password\030\002 \001(\t\"\204"
+    "\001\n\010GroupDto\022\017\n\007groupId\030\001 \001(\t\022\014\n\004name\030\002 \001"
+    "(\t\022)\n\005owner\030\003 \001(\0132\032.NetworkData.UserSimp"
+    "leDto\022.\n\nplayerList\030\004 \003(\0132\032.NetworkData."
+    "UserSimpleDto\"\"\n\013AccessToken\022\023\n\013accessTo"
+    "ken\030\001 \001(\t*\360\001\n\tRpcMethod\022\016\n\nInGameNone\020\000\022"
+    "\010\n\004Move\020\001\022\r\n\tMoveStart\020\002\022\014\n\010MoveStop\020\003\022\007"
+    "\n\003Atk\020\004\022\007\n\003Hit\020\005\022\010\n\004Dead\020\006\022\021\n\014NETWORK_NO"
+    "NE\020\364\003\022\r\n\010UDP_PORT\020\365\003\022\016\n\tUSER_INFO\020\366\003\022\017\n\n"
+    "GROUP_INFO\020\367\003\022\t\n\004PING\020\370\003\022\t\n\004PONG\020\371\003\022\021\n\014P"
+    "ACKET_COUNT\020\372\003\022\r\n\010LAST_RTT\020\373\003\022\025\n\020CLIENT_"
+    "GAME_INFO\020\330\004b\006proto3"
 };
 static const ::_pbi::DescriptorTable* const descriptor_table_NetworkData_2eproto_deps[1] =
     {
@@ -422,13 +464,13 @@ static ::absl::once_flag descriptor_table_NetworkData_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_NetworkData_2eproto = {
     false,
     false,
-    892,
+    980,
     descriptor_table_protodef_NetworkData_2eproto,
     "NetworkData.proto",
     &descriptor_table_NetworkData_2eproto_once,
     descriptor_table_NetworkData_2eproto_deps,
     1,
-    8,
+    9,
     schemas,
     file_default_instances,
     TableStruct_NetworkData_2eproto::offsets,
@@ -441,7 +483,7 @@ const ::google::protobuf::EnumDescriptor* RpcMethod_descriptor() {
   return file_level_enum_descriptors_NetworkData_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t RpcMethod_internal_data_[] = {
-    458752u, 524288u, 504u, 502u, 506u, 501u, 503u, 505u, 507u, 500u, };
+    458752u, 589824u, 505u, 503u, 507u, 501u, 504u, 506u, 600u, 500u, 502u, };
 bool RpcMethod_IsValid(int value) {
   return ::_pbi::ValidateEnum(value, RpcMethod_internal_data_);
 }
@@ -1050,6 +1092,292 @@ void AtkData::InternalSwap(AtkData* PROTOBUF_RESTRICT other) {
 }
 
 ::google::protobuf::Metadata AtkData::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class GameData::_Internal {
+ public:
+  using HasBits =
+      decltype(std::declval<GameData>()._impl_._has_bits_);
+  static constexpr ::int32_t kHasBitsOffset =
+      8 * PROTOBUF_FIELD_OFFSET(GameData, _impl_._has_bits_);
+};
+
+GameData::GameData(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:NetworkData.GameData)
+}
+inline PROTOBUF_NDEBUG_INLINE GameData::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
+    const Impl_& from, const ::NetworkData::GameData& from_msg)
+      : _has_bits_{from._has_bits_},
+        _cached_size_{0} {}
+
+GameData::GameData(
+    ::google::protobuf::Arena* arena,
+    const GameData& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  GameData* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+  ::uint32_t cached_has_bits = _impl_._has_bits_[0];
+  _impl_.position_ = (cached_has_bits & 0x00000001u) ? ::google::protobuf::Message::CopyConstruct<::NetworkData::MoveData>(
+                              arena, *from._impl_.position_)
+                        : nullptr;
+  _impl_.hp_ = from._impl_.hp_;
+
+  // @@protoc_insertion_point(copy_constructor:NetworkData.GameData)
+}
+inline PROTOBUF_NDEBUG_INLINE GameData::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : _cached_size_{0} {}
+
+inline void GameData::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  ::memset(reinterpret_cast<char *>(&_impl_) +
+               offsetof(Impl_, position_),
+           0,
+           offsetof(Impl_, hp_) -
+               offsetof(Impl_, position_) +
+               sizeof(Impl_::hp_));
+}
+GameData::~GameData() {
+  // @@protoc_insertion_point(destructor:NetworkData.GameData)
+  SharedDtor(*this);
+}
+inline void GameData::SharedDtor(MessageLite& self) {
+  GameData& this_ = static_cast<GameData&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  delete this_._impl_.position_;
+  this_._impl_.~Impl_();
+}
+
+inline void* GameData::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) GameData(arena);
+}
+constexpr auto GameData::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(GameData),
+                                            alignof(GameData));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull GameData::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_GameData_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &GameData::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<GameData>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &GameData::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<GameData>(), &GameData::ByteSizeLong,
+            &GameData::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(GameData, _impl_._cached_size_),
+        false,
+    },
+    &GameData::kDescriptorMethods,
+    &descriptor_table_NetworkData_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* GameData::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<1, 2, 1, 0, 2> GameData::_table_ = {
+  {
+    PROTOBUF_FIELD_OFFSET(GameData, _impl_._has_bits_),
+    0, // no _extensions_
+    2, 8,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967292,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    2,  // num_field_entries
+    1,  // num_aux_entries
+    offsetof(decltype(_table_), aux_entries),
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::NetworkData::GameData>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // .NetworkData.MoveData position = 2;
+    {::_pbi::TcParser::FastMtS1,
+     {18, 0, 0, PROTOBUF_FIELD_OFFSET(GameData, _impl_.position_)}},
+    // int32 hp = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(GameData, _impl_.hp_), 63>(),
+     {8, 63, 0, PROTOBUF_FIELD_OFFSET(GameData, _impl_.hp_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // int32 hp = 1;
+    {PROTOBUF_FIELD_OFFSET(GameData, _impl_.hp_), -1, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kInt32)},
+    // .NetworkData.MoveData position = 2;
+    {PROTOBUF_FIELD_OFFSET(GameData, _impl_.position_), _Internal::kHasBitsOffset + 0, 0,
+    (0 | ::_fl::kFcOptional | ::_fl::kMessage | ::_fl::kTvTable)},
+  }}, {{
+    {::_pbi::TcParser::GetTable<::NetworkData::MoveData>()},
+  }}, {{
+  }},
+};
+
+PROTOBUF_NOINLINE void GameData::Clear() {
+// @@protoc_insertion_point(message_clear_start:NetworkData.GameData)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  cached_has_bits = _impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
+    ABSL_DCHECK(_impl_.position_ != nullptr);
+    _impl_.position_->Clear();
+  }
+  _impl_.hp_ = 0;
+  _impl_._has_bits_.Clear();
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* GameData::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const GameData& this_ = static_cast<const GameData&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* GameData::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const GameData& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:NetworkData.GameData)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // int32 hp = 1;
+          if (this_._internal_hp() != 0) {
+            target = ::google::protobuf::internal::WireFormatLite::
+                WriteInt32ToArrayWithField<1>(
+                    stream, this_._internal_hp(), target);
+          }
+
+          cached_has_bits = this_._impl_._has_bits_[0];
+          // .NetworkData.MoveData position = 2;
+          if (cached_has_bits & 0x00000001u) {
+            target = ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
+                2, *this_._impl_.position_, this_._impl_.position_->GetCachedSize(), target,
+                stream);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:NetworkData.GameData)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t GameData::ByteSizeLong(const MessageLite& base) {
+          const GameData& this_ = static_cast<const GameData&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t GameData::ByteSizeLong() const {
+          const GameData& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:NetworkData.GameData)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+           {
+            // .NetworkData.MoveData position = 2;
+            cached_has_bits = this_._impl_._has_bits_[0];
+            if (cached_has_bits & 0x00000001u) {
+              total_size += 1 +
+                            ::google::protobuf::internal::WireFormatLite::MessageSize(*this_._impl_.position_);
+            }
+          }
+           {
+            // int32 hp = 1;
+            if (this_._internal_hp() != 0) {
+              total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
+                  this_._internal_hp());
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void GameData::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<GameData*>(&to_msg);
+  auto& from = static_cast<const GameData&>(from_msg);
+  ::google::protobuf::Arena* arena = _this->GetArena();
+  // @@protoc_insertion_point(class_specific_merge_from_start:NetworkData.GameData)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  cached_has_bits = from._impl_._has_bits_[0];
+  if (cached_has_bits & 0x00000001u) {
+    ABSL_DCHECK(from._impl_.position_ != nullptr);
+    if (_this->_impl_.position_ == nullptr) {
+      _this->_impl_.position_ =
+          ::google::protobuf::Message::CopyConstruct<::NetworkData::MoveData>(arena, *from._impl_.position_);
+    } else {
+      _this->_impl_.position_->MergeFrom(*from._impl_.position_);
+    }
+  }
+  if (from._internal_hp() != 0) {
+    _this->_impl_.hp_ = from._impl_.hp_;
+  }
+  _this->_impl_._has_bits_[0] |= cached_has_bits;
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void GameData::CopyFrom(const GameData& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:NetworkData.GameData)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void GameData::InternalSwap(GameData* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  swap(_impl_._has_bits_[0], other->_impl_._has_bits_[0]);
+  ::google::protobuf::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(GameData, _impl_.hp_)
+      + sizeof(GameData::_impl_.hp_)
+      - PROTOBUF_FIELD_OFFSET(GameData, _impl_.position_)>(
+          reinterpret_cast<char*>(&_impl_.position_),
+          reinterpret_cast<char*>(&other->_impl_.position_));
+}
+
+::google::protobuf::Metadata GameData::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // ===================================================================

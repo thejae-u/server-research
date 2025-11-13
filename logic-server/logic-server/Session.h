@@ -8,12 +8,12 @@
 #include <memory>
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/string_generator.hpp>
-
 #include <queue>
 
 #include "Base.h"
 #include "Scheduler.h"
 #include "NetworkData.pb.h"
+#include "Utility.h"
 
 using namespace NetworkData;
 
@@ -48,13 +48,6 @@ public:
     void Start() override;
     void Stop() override;
 
-    using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
-    void SetStopCallbackByGroup(StopCallback stopCallback);
-    void SetStopCallbackByServer(StopCallback stopCallback);
-
-    using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
-    void SetCollectInputAction(SessionInput inputAction);
-
     tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
     void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 
@@ -70,51 +63,21 @@ public:
     bool IsValid() const { return _isConnected; }
     uuid GetSessionUuid() { return _toUuid(_sessionInfo.uid()); }
 
-    using SendDataByUdp = std::function<void(std::shared_ptr<std::pair<udp::endpoint, std::string>>)>;
-    void SetSendDataByUdpAction(SendDataByUdp enqueueAction);
-
     void CollectInput(std::shared_ptr<RpcPacket> receivePacket);
     void EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets);
 
-private:
-    using TcpSocket = tcp::socket;
-    using UdpSocket = udp::socket;
+public: // Callback Functions
+    using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
+    void SetStopCallbackByGroup(StopCallback stopCallback);
+    void SetStopCallbackByServer(StopCallback stopCallback);
 
-    std::shared_ptr<ContextManager> _normalCtxManager;
-    std::shared_ptr<ContextManager> _rpcCtxManager;
+    using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
+    void SetCollectInputAction(SessionInput inputAction);
 
-    boost::asio::io_context::strand _normalPrivateStrand;
-    boost::asio::io_context::strand _rpcPrivateStrand;
+    using SendDataByUdp = std::function<void(std::shared_ptr<std::pair<udp::endpoint, std::string>>)>;
+    void SetSendDataByUdpAction(SendDataByUdp enqueueAction);
 
-    std::shared_ptr<TcpSocket> _tcpSocketPtr;
-    std::shared_ptr<UdpSocket> _udpSocketPtr;
-    udp::endpoint _udpSendEp;
-
-    std::atomic<bool> _isConnected = false;
-
-    boost::uuids::string_generator _toUuid;
-    UserSimpleDto _sessionInfo;
-    NetworkData::GroupDto _groupDto;
-
-    std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
-
-    std::shared_ptr<Scheduler> _pingTimer;
-    const std::uint32_t _pingDelay = 500;
-    std::chrono::high_resolution_clock::time_point _pingTime;
-    std::uint64_t _lastRtt;
-
-    StopCallback _onStopCallbackByGroup;
-    StopCallback _onStopCallbackByServer;
-
-    SessionInput _inputAction;
-    SendDataByUdp _sendDataByUdp;
-
-    std::uint32_t _tcpNetSize = 0;
-    std::uint32_t _tcpDataSize = 0;
-
-    std::mutex _sendQueueMutex;
-    std::queue<RpcPacket> _sendPacketQueue;
-
+private: // internal private functions
     RpcPacket DequeueSendPacket();
     void SerializeRpcPacketAndEnqueueData();
 
@@ -128,4 +91,67 @@ private:
 
     void UdpAsyncRead();
     void UdpAsyncWrite(std::shared_ptr<std::string> data);
+
+    void UpdateOwnState(CompletionHandler onComplete);
+
+private:
+    using TcpSocket = tcp::socket;
+    using UdpSocket = udp::socket;
+
+    // uuid parser
+    boost::uuids::string_generator _toUuid;
+
+    // boost asio context
+    std::shared_ptr<ContextManager> _normalCtxManager;
+    std::shared_ptr<ContextManager> _rpcCtxManager;
+    boost::asio::io_context::strand _normalPrivateStrand;
+    boost::asio::io_context::strand _rpcPrivateStrand;
+
+    // boost asio sockets
+    std::shared_ptr<TcpSocket> _tcpSocketPtr;
+    std::shared_ptr<UdpSocket> _udpSocketPtr;
+    udp::endpoint _udpSendEp;
+
+    // tcp net size cache
+    std::uint32_t _tcpNetSize = 0;
+    std::uint32_t _tcpDataSize = 0;
+
+    // client connected state
+    std::atomic<bool> _isConnected = false;
+
+    // group
+    std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
+    UserSimpleDto _sessionInfo;
+    GroupDto _groupDto;
+
+    // rtt timer
+    std::shared_ptr<Scheduler> _pingTimer;
+    const std::uint32_t _pingDelay = 1000;
+    std::chrono::high_resolution_clock::time_point _pingTime;
+    std::uint64_t _lastRtt;
+
+    // update state timer
+    std::shared_ptr<Scheduler> _updateTimer;
+    const std::int32_t _updateTick = 1;
+
+    // callback handlers
+    StopCallback _onStopCallbackByGroup;
+    StopCallback _onStopCallbackByServer;
+    SessionInput _inputAction;
+    SendDataByUdp _sendDataByUdp;
+
+    // packet queue
+    std::mutex _sendQueueMutex;
+    std::queue<RpcPacket> _sendPacketQueue;
+
+    // own state
+    std::mutex _stateMutex;
+    Utility::SGameState _gameState;
+    std::mutex _updatePacketMutex;
+    std::queue<RpcPacket> _updatePacketQueue;
+
+private:
+    std::shared_ptr<Scheduler> _testTimer;
+    const std::uint32_t _delay = 500;
+    void SendTestPacket(CompletionHandler onComplete);
 };

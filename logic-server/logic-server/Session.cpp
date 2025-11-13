@@ -12,13 +12,26 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
     _normalPrivateStrand(_normalCtxManager->GetContext()),
     _rpcPrivateStrand(_rpcCtxManager->GetContext())
 {
+    _gameState = {};
 }
 
 void Session::Start()
 {
     auto self(shared_from_this());
+
+	// Set Timers
     _pingTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_pingDelay), [self](CompletionHandler onComplete) {
         self->SendPingPacket(onComplete);
+        }
+    );
+
+	_updateTimer = std::make_shared<Scheduler>(_rpcPrivateStrand, std::chrono::milliseconds(_updateTick), [self](CompletionHandler onComplete) {
+		self->UpdateOwnState(onComplete);
+		}
+	);
+
+    _testTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_delay), [self](CompletionHandler onComplete) {
+        self->SendTestPacket(onComplete);
         }
     );
 
@@ -28,6 +41,8 @@ void Session::Start()
     SerializeRpcPacketAndEnqueueData();
 
     _pingTimer->Start();
+	_updateTimer->Start();
+    _testTimer->Start(); // Delete this
     _isConnected = true;
 
     spdlog::info("session {} started", _sessionInfo.uid());
@@ -42,6 +57,8 @@ void Session::Stop()
     //_udpSocketPtr->close(); // close udp socket for aysnc function exit
 
     _pingTimer->Stop();
+	_updateTimer->Stop();
+    _testTimer->Stop(); // Delete this
     _onStopCallbackByGroup(shared_from_this());
     _onStopCallbackByServer(shared_from_this());
 }
@@ -347,7 +364,15 @@ void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
             std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->GetSessionUuid(), std::move(receivePacket));
 
         boost::asio::post(self->_rpcPrivateStrand.wrap([self, rpcRequest]() { self->_inputAction(std::move(rpcRequest)); }));
-        })
+        boost::asio::post(self->_rpcPrivateStrand.wrap([self, rpcRequest]() {
+            if (rpcRequest->second->method() == RpcMethod::Atk)
+                return;
+
+            {
+                std::lock_guard<std::mutex> updateQueueLock(self->_updatePacketMutex);
+                self->_updatePacketQueue.push(*rpcRequest->second);
+            }})
+        ); })
     );
 }
 
@@ -614,4 +639,93 @@ void Session::UdpAsyncWrite(std::shared_ptr<std::string> data)
             }
         )
     );
+}
+
+void Session::UpdateOwnState(CompletionHandler onComplete)
+{
+	auto self(shared_from_this());
+
+	// Dequeue rpc packets and update state
+	RpcPacket nextPacket;
+	{
+		std::lock_guard<std::mutex> lock(_updatePacketMutex);
+        if (_updatePacketQueue.empty())
+        {
+            onComplete();
+            return;
+        }
+
+		nextPacket = _updatePacketQueue.front();
+		_updatePacketQueue.pop();
+	}
+
+    std::lock_guard<std::mutex> stateLock(_stateMutex);
+    switch (nextPacket.method())
+    {
+    case RpcMethod::MoveStart:
+    case RpcMethod::Move:
+	case RpcMethod::MoveStop:
+	{
+		MoveData newMoveData;
+		// parsing move data and apply
+		if (!newMoveData.ParseFromString(nextPacket.data()))
+		{
+			spdlog::error("{} error parsing move data for update own state", _sessionInfo.uid());
+			onComplete();
+			return;
+		}
+
+		_gameState.position.SetPosition(newMoveData.x(), newMoveData.y(), newMoveData.z());
+		break;
+	}
+    case RpcMethod::Hit:
+    {
+        // 값 만큼 hp 감소
+        std::int32_t value = stoi(nextPacket.data());
+        _gameState.hp -= value;
+        break;
+    }
+
+    default:
+        spdlog::error("{} invalid method in update state: {}", _sessionInfo.uid(), Utility::MethodToString(nextPacket.method()));
+        break;
+    }
+
+	onComplete();
+}
+
+void Session::SendTestPacket(CompletionHandler onComplete)
+{
+    RpcPacket packet;
+    packet.set_method(CLIENT_GAME_INFO);
+
+    GameData gameData;
+    {
+        std::lock_guard<std::mutex> lock(_stateMutex);
+        MoveData* moveData = gameData.mutable_position();
+        moveData->set_x(_gameState.position.x);
+        moveData->set_y(_gameState.position.y);
+        moveData->set_z(_gameState.position.z);
+
+        gameData.set_hp(_gameState.hp);
+    }
+
+    auto serializedGameData = gameData.SerializeAsString();
+    packet.set_data(serializedGameData);
+
+    const auto serializedTestPacket = std::make_shared<std::string>(packet.SerializeAsString());
+    const uint32_t sendDataSize = static_cast<uint32_t>(serializedTestPacket->size());
+    const uint32_t sendNetSize = htonl(sendDataSize);
+
+    error_code ec;
+    boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
+    if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(*serializedTestPacket));
+
+    // error occured log
+    if (ec)
+    {
+        spdlog::error("{} : network error occured ({})", _sessionInfo.uid(), ec.message());
+    }
+
+    onComplete();
 }

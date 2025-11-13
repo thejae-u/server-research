@@ -21,6 +21,12 @@ message AtkData
   int32 dmg = 3;
 }
 
+message GameData
+{
+  int32 hp = 1;
+  MoveData position = 2;
+}
+
 message RpcPacket
 {
   string uid = 1;
@@ -78,4 +84,7 @@ enum RpcMethod
   PONG = 505;
   PACKET_COUNT = 506;
   LAST_RTT = 507;
+
+  // TEST
+  CLIENT_GAME_INFO = 600;
 }
