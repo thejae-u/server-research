@@ -13,7 +13,7 @@
 #include "Base.h"
 #include "Scheduler.h"
 #include "NetworkData.pb.h"
-#include "Utility.h"
+#include "Util.h"
 
 using namespace NetworkData;
 
@@ -39,10 +39,10 @@ public:
     Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager);
     ~Session() override
     {
-        if (_sessionInfo.uid() != "")
-            spdlog::info("{} : session destoryed", _sessionInfo.uid());
-        else
+        if (_sessionInfo.uid().empty())
             spdlog::info("empty session destroyed");
+        else
+            spdlog::info("{} : session destroyed", _sessionInfo.uid());
     }
 
     void Start() override;
@@ -58,13 +58,15 @@ public:
     void AsyncReceiveUserInfo(std::function<void(bool success)> onComplete);
 
     bool ReceiveGroupInfo(std::shared_ptr<GroupDto>& groupInfo);
-    void AysncReceiveGroupInfo(std::function<void(bool success, std::shared_ptr<GroupDto> groupInfo)> onComlete);
+    void AsyncReceiveGroupInfo(std::function<void(bool success, std::shared_ptr<GroupDto> groupInfo)> onComplete);
 
     bool IsValid() const { return _isConnected; }
-    uuid GetSessionUuid() { return _toUuid(_sessionInfo.uid()); }
+    uuid GetSessionUuid() const { return _toUuid(_sessionInfo.uid()); }
 
     void CollectInput(std::shared_ptr<RpcPacket> receivePacket);
-    void EnqueueSendPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets);
+    void EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets);
+
+    Util::SGameState GetGameState() const { return _gameState; }
 
 public: // Callback Functions
     using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
@@ -75,10 +77,10 @@ public: // Callback Functions
     void SetCollectInputAction(SessionInput inputAction);
 
     using SendDataByUdp = std::function<void(std::shared_ptr<std::pair<udp::endpoint, std::string>>)>;
-    void SetSendDataByUdpAction(SendDataByUdp enqueueAction);
+    void SetSendDataByUdpAction(SendDataByUdp sendDataFunction);
 
 private: // internal private functions
-    RpcPacket DequeueSendPacket();
+    RpcPacket DequeueSendUdpPackets();
     void SerializeRpcPacketAndEnqueueData();
 
     void SendPingPacket(CompletionHandler onComplete);
@@ -88,9 +90,6 @@ private: // internal private functions
 
 	void TcpAsyncReadSize();
     void TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer);
-
-    void UdpAsyncRead();
-    void UdpAsyncWrite(std::shared_ptr<std::string> data);
 
     void UpdateOwnState(CompletionHandler onComplete);
 
@@ -146,7 +145,7 @@ private:
 
     // own state
     std::mutex _stateMutex;
-    Utility::SGameState _gameState;
+    Util::SGameState _gameState;
     std::mutex _updatePacketMutex;
     std::queue<RpcPacket> _updatePacketQueue;
 

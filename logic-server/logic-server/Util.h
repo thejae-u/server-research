@@ -8,19 +8,38 @@
 #include "NetworkData.pb.h"
 using namespace NetworkData;
 
-namespace Utility
+namespace Util
 {
     struct SPos
     {
-        std::int32_t x;
-        std::int32_t y;
-        std::int32_t z;
+        float x;
+        float y;
+        float z;
 
-        void SetPosition(std::int32_t newX, std::int32_t newY, std::int32_t newZ)
+        void SetPosition(float newX, float newY, float newZ)
         {
             x = newX;
             y = newY;
             z = newZ;
+        }
+    };
+
+    struct SAABB
+    {
+        float minX, minY, minZ;
+        float maxX, maxY, maxZ;
+
+        static SAABB MakeAABB(float x, float y, float z, float halfSize) 
+        {
+            return { x - halfSize, y - halfSize, z - halfSize, x + halfSize, y + halfSize, z + halfSize };
+        }
+
+        bool operator==(const SAABB& rhs) const
+        {
+            return (
+                maxX >= rhs.minX && rhs.maxX >= minX &&
+                maxY >= rhs.minY && rhs.maxY >= minY &&
+                maxZ >= rhs.minZ && rhs.maxZ >= minZ);
         }
     };
 

@@ -87,7 +87,7 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession)
                 return;
             }
 
-            newSession->AysncReceiveGroupInfo([self, newSession](bool success, std::shared_ptr<GroupDto> groupInfo) {
+            newSession->AsyncReceiveGroupInfo([self, newSession](bool success, std::shared_ptr<GroupDto> groupInfo) {
                 if (!success)
                 {
                     spdlog::error("new session failed to exchange user info");
@@ -152,9 +152,6 @@ void Server::AsyncReceiveUdpData()
                 boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
                 return;
             }
-
-            // valid data collected to lockstep group
-            //self->_groupManager->CollectInput(std::make_shared<RpcPacket>(receivedRpcPacket));
 
             // valid data collected to session and lockstep group
             auto id = self->_toUuid(receivedRpcPacket.uid());

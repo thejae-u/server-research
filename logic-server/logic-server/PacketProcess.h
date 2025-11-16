@@ -13,10 +13,10 @@
 using namespace boost::uuids;
 using namespace NetworkData;
 
-static void MakeHitPacket(uuid from, std::string to, std::shared_ptr<RpcPacket>& out)
+static void MakeHitPacket(uuid from, uuid to, std::shared_ptr<RpcPacket>& out)
 {
     RpcPacket hitPacket;
-    hitPacket.set_uid(to);
+    hitPacket.set_uid(to_string(to));
     hitPacket.set_method(RpcMethod::Hit);
     hitPacket.set_data(to_string(from));
 

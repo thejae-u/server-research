@@ -154,7 +154,7 @@
     <ClInclude Include="Scheduler.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Session.h" />
-    <ClInclude Include="Utility.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

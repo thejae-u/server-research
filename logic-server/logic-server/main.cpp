@@ -8,6 +8,7 @@
 #include "ContextManager.h"
 #include "InternalConnector.h"
 
+const bool TEST_MODE = true;
 constexpr unsigned short SERVER_PORT = 53200;
 using namespace boost::asio::ip;
 
@@ -23,14 +24,17 @@ int main()
     auto rpcThreadContext = ContextManager::Create("rpc",
         static_cast<std::size_t>(rpcCtxThreadCount * 0.3f), static_cast<std::size_t>(rpcCtxThreadCount * 0.7f)); // rpc thread for udp network callback
 
-    auto internalConnector = std::make_shared<InternalConnector>();
-    if (!internalConnector->GetAccessTokenFromInternal())
+    if (!TEST_MODE)
     {
-        spdlog::error("initialize failed close server...");
+        auto internalConnector = std::make_shared<InternalConnector>();
+        if (!internalConnector->GetAccessTokenFromInternal())
+        {
+            spdlog::error("initialize failed close server...");
 
-        workThreadContext->Stop();
-        rpcThreadContext->Stop();
-        return -1;
+            workThreadContext->Stop();
+            rpcThreadContext->Stop();
+            return -1;
+        }
     }
 
     spdlog::info("initialize complete");
