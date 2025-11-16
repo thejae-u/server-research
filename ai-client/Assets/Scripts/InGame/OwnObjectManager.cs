@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
@@ -50,6 +46,7 @@ public class OwnObjectManager : MonoBehaviour
         if (SyncManager.Instance.isManualMode)
         {
             _isManualMode = true;
+            _isMoving = false;
             return;
         }
 
@@ -79,7 +76,18 @@ public class OwnObjectManager : MonoBehaviour
     private void Update()
     {
         if (_isManualMode)
+        {
+            if (!ManualConnector.Instance.IsOnline)
+                return;
+
+            _lastSendDeltaTime += Time.deltaTime * 1000.0f; // Convert to milliseconds
+
+            if (!_isMoving)
+                return;
+
+            MoveTo();
             return;
+        }
 
         if (!_connector.IsOnline)
             return;
@@ -112,7 +120,10 @@ public class OwnObjectManager : MonoBehaviour
         _sendPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
         _sendPacket.Data = _moveData.ToByteString();
 
-        _connector.EnqueueRpcPacketForUdp(_sendPacket);
+        if (_isManualMode)
+            ManualConnector.Instance.EnqueueRpcPacketForUdp(_sendPacket);
+        else
+            _connector.EnqueueRpcPacketForUdp(_sendPacket);
     }
 
     public void MoveTo()
@@ -156,7 +167,10 @@ public class OwnObjectManager : MonoBehaviour
             Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
         };
 
-        _connector.EnqueueRpcPacketForUdp(attackPacket);
+        if (_isManualMode)
+            ManualConnector.Instance.EnqueueRpcPacketForUdp(attackPacket);
+        else
+            _connector.EnqueueRpcPacketForUdp(attackPacket);
         PlayAttackMotion();
     }
 

@@ -1835,7 +1835,7 @@ MonoBehaviour:
   _syncObjectPrefab: {fileID: 8359559712123438274, guid: 51329a126a8c91f4f80e32edcfab30f4, type: 3}
   _syncObjectNameTagPrefab: {fileID: 8244260517521272030, guid: 2930264bf459f914b8bc039473ebabd3, type: 3}
   _syncObjectCanvas: {fileID: 268621951}
-  isManualMode: 0
+  isManualMode: 1
 --- !u!1 &1361508375
 GameObject:
   m_ObjectHideFlags: 0
@@ -2121,6 +2121,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2056710669}
   m_CullTransparentMesh: 1
+--- !u!1 &2135105895
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2135105896}
+  - component: {fileID: 2135105897}
+  - component: {fileID: 2135105898}
+  m_Layer: 0
+  m_Name: ManualConnector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2135105896
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2135105895}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2135105897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2135105895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27801920de16efc4a82a26c685ea36f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Network.MannualConnector
+--- !u!114 &2135105898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2135105895}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a7f5b16ce6009e4bbefd63e9f7ddc17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MainThreadDispatcher
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2136,3 +2193,4 @@ SceneRoots:
   - {fileID: 1636076982}
   - {fileID: 83029642}
   - {fileID: 1361508376}
+  - {fileID: 2135105896}

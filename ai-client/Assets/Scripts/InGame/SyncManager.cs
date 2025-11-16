@@ -14,16 +14,21 @@ public class SyncManager : Singleton<SyncManager>
     public bool isManualMode = false;
 
     private LogicServerConnector _connector;
+    private ManualConnector _manualConnector;
     private AuthManager _authManager;
 
     private readonly Dictionary<Guid, GameObject> _syncObjects = new();
     private readonly Dictionary<Guid, UserSimpleDto> _userInfos = new();
 
+    private void Awake()
+    {
+    }
+
     private void Start()
     {
-        if (isManualMode)
+        if(isManualMode)
         {
-            CreateTestSyncObject();
+            _manualConnector = ManualConnector.Instance;
             return;
         }
 
@@ -83,6 +88,38 @@ public class SyncManager : Singleton<SyncManager>
 
     public void SyncObjectPosition(Guid userId, MoveData moveData)
     {
+        if (isManualMode)
+        {
+            LogManager.Instance.Log($"{userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+            if (_manualConnector.UserId == userId)
+                return;
+
+            if (userId == Guid.Empty)
+            {
+                Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
+                _connector.IncrementErrorCount();
+                return;
+            }
+
+            if (!_userInfos.TryGetValue(userId, out var manualUser))
+            {
+                Debug.LogError($"Invalid Situation: {userId} is not exist in syncObjects");
+                return;
+            }
+
+            var manualStartPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
+            if (!_syncObjects.TryGetValue(userId, out var manualSyncObject))
+            {
+                var newSyncObject = CreateSyncObject(manualUser, manualStartPosition);
+                _syncObjects.Add(userId, newSyncObject);
+                manualSyncObject = newSyncObject;
+            }
+
+            var manualSyncObjectComponent = manualSyncObject.GetComponent<SyncObject>();
+            manualSyncObjectComponent.EnqueueMoveData(moveData);
+            return;
+        }
+
         LogManager.Instance.Log($"{userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
         if (userId == _authManager.UserGuid)
             return;

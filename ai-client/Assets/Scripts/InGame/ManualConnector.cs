@@ -13,13 +13,13 @@ using System.Threading.Tasks;
 
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
-using NetworkData;
+using NetworkData; // UserSimpleDto, GroupDto가 포함되어 있다고 가정합니다.
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Network
 {
-    public class LogicServerConnector : Singleton<LogicServerConnector>
+    public class ManualConnector : Singleton<ManualConnector>
     {
         public string Host { get; private set; }
         public ushort Port { get; private set; }
@@ -40,7 +40,7 @@ namespace Network
         private int _maxRetries = 5;
         private const uint MAX_PACKET_SIZE = 65536; // 64KB
 
-        private int SentPacketCount
+        public int SentPacketCount
         {
             get
             {
@@ -49,7 +49,7 @@ namespace Network
         }
         private volatile int _sentPacketCount = 0;
 
-        private int ReceivedPacketCount
+        public int ReceivedPacketCount
         {
             get
             {
@@ -97,9 +97,13 @@ namespace Network
         private volatile int _errorCount = 0;
         public void IncrementErrorCount() { Interlocked.Increment(ref _errorCount); }
 
+        // Manual User infos
+        public Guid UserId { get; private set; }
+        public string Name { get; private set; }
+
+        // make randomly
         public List<UserSimpleDto> Users => _currentGroupDto.PlayerList.ToList();
         private GroupDto _currentGroupDto = null;
-        private AuthManager _authManager;
 
         private Task _tcpReadTask;
         private Task _udpReadTask;
@@ -146,7 +150,9 @@ namespace Network
 
         private void Start()
         {
-            _authManager = AuthManager.Instance;
+            UserId = Guid.NewGuid();
+            Name = $"Player_{UserId.ToString().Substring(0, 6)}"; // 랜덤 UID 기반 이름
+
             _dispatcher = MainThreadDispatcher.Instance;
             IsSendPacketOn = false;
 
@@ -177,12 +183,44 @@ namespace Network
         private void Update()
         {
             if (!IsOnline)
+            {
+                // [수정됨] F1 키로 연결 시도 로직 구현
+                if (Input.GetKeyDown(KeyCode.F1))
+                {
+                    // Try Connect
+                    Debug.Log("F1 키 입력: 서버 연결을 시도합니다...");
+
+                    // 1. 고정된 Group ID 정의
+                    string fixedGroupId = "a1b2c3d4-0000-0000-0000-1234567890ab"; // 예시용 고정 ID
+
+                    // 2. 현재 유저 정보 생성 (Start에서 생성된 랜덤 UID와 이름 사용)
+                    var currentUser = new UserSimpleDto
+                    {
+                        Uid = UserId.ToString(),
+                        Username = Name
+                    };
+
+                    // 3. 서버에 전달할 GroupDto 생성
+                    var groupInfo = new GroupDto
+                    {
+                        GroupId = fixedGroupId,
+                        PlayerList = { currentUser } // Protobuf RepeatedField에 추가
+                    };
+
+                    // 5. 서버 연결 시도 (예시 IP 및 포트)
+                    string hostIp = "127.0.0.1"; // 로컬 호스트
+                    ushort hostPort = 53200; // 예시 포트
+
+                    // 비동기 메서드 호출 (Update에서 await 불가능하므로 Task 실행)
+                    _ = TryConnectToServer(groupInfo, hostIp, hostPort);
+                }
                 return;
+            }
 
             ProcessRpc();
         }
 
-        public async Task<bool> TryConnectToServer(InRoomManager roomManager, GroupDto groupInfo, string ip, ushort port)
+        public async Task<bool> TryConnectToServer(GroupDto groupInfo, string ip, ushort port)
         {
             if (IsOnline)
             {
@@ -209,6 +247,7 @@ namespace Network
                 return false;
             }
 
+            StartGameTask();
             return true;
         }
 
@@ -428,12 +467,11 @@ namespace Network
                 if (userInfoData.Method != RpcMethod.UserInfo)
                     return false;
 
-                // send packet ready
                 RpcPacket sendUserInfoData = new()
                 {
-                    Uid = _authManager.UserGuid.ToString(),
+                    Uid = UserId.ToString(), // 랜덤 UID 사용
                     Method = RpcMethod.UserInfo,
-                    Data = ByteString.CopyFrom(Encoding.UTF8.GetBytes(_authManager.Username))
+                    Data = ByteString.CopyFrom(Encoding.UTF8.GetBytes(Name)) // Start에서 설정된 이름 사용
                 };
 
                 byte[] sendData = sendUserInfoData.ToByteArray(); // Serialize rpc packet to byte[]
@@ -485,14 +523,11 @@ namespace Network
                 if (readPacket.Method != RpcMethod.GroupInfo)
                     return false;
 
-                var sendDtoString = JsonFormatter.Default.Format(_currentGroupDto);
-                _dispatcher.Enqueue(() => Debug.Log($"Send Dto String : {sendDtoString}"));
-
                 RpcPacket sendPacket = new()
                 {
                     Method = RpcMethod.GroupInfo,
-                    Uid = _authManager.UserGuid.ToString(),
-                    Data = ByteString.CopyFrom(Encoding.UTF8.GetBytes(sendDtoString))
+                    Uid = UserId.ToString(), // 랜덤 UID 사용
+                    Data = _currentGroupDto.ToByteString() 
                 };
 
                 byte[] sendPacketData = sendPacket.ToByteArray(); // serialize rpc packet to byte[]
@@ -555,7 +590,8 @@ namespace Network
                     }
 
                     await Awaitable.MainThreadAsync();
-                    data.Uid = _authManager.UserGuid.ToString(); // main thread function (MonoBehaviour)
+                    // [수정됨] _authManager 대신 이 클래스의 UserId 속성 사용
+                    data.Uid = UserId.ToString(); // main thread function (MonoBehaviour)
 
                     await Awaitable.BackgroundThreadAsync();
                     byte[] payload = data.ToByteArray();
@@ -574,7 +610,7 @@ namespace Network
                     Interlocked.Increment(ref _sentPacketCount); // sent packet count increment by atomic
 
                     _dispatcher.Enqueue(() => Debug.Log($"Sent Rpc Packet To Server {Utility.Util.ConvertTimestampToString(data.Timestamp)}" +
-                              $" {data.Uid}: {data.Method}"));
+                        $" {data.Uid}: {data.Method}"));
                 }
                 catch (OperationCanceledException)
                 {
@@ -868,7 +904,8 @@ namespace Network
                     var data = RpcPacket.Parser.ParseFrom(nextPacket);
                     if (data is null)
                     {
-                        LogManager.Instance.Log($"parsing error occured");
+                        // LogManager.Instance.Log($"parsing error occured");
+                        Debug.LogWarning("Parsing error occurred"); // LogManager가 없을 경우 대비
                         continue;
                     }
 
@@ -900,7 +937,7 @@ namespace Network
                         var pongPacket = new RpcPacket
                         {
                             Method = RpcMethod.Pong,
-                            Uid = _authManager.UserGuid.ToString()
+                            Uid = UserId.ToString()
                         };
 
                         EnqueueRpcPacketForTcp(pongPacket);
@@ -909,14 +946,14 @@ namespace Network
                     case RpcMethod.MoveStart:
                     case RpcMethod.MoveStop:
                     case RpcMethod.Move:
-                        LogManager.Instance.Log($"{data.Uid} : {data.Method}");
+                        // LogManager.Instance.Log($"{data.Uid} : {data.Method}");
                         // Deserialize MoveData
                         MoveData moveData = MoveData.Parser.ParseFrom(data.Data);
                         SyncManager.Instance.SyncObjectPosition(Guid.Parse(data.Uid), moveData);
                         break;
 
                     case RpcMethod.Atk:
-                        LogManager.Instance.Log($"{data.Uid} : {data.Method}");
+                        // LogManager.Instance.Log($"{data.Uid} : {data.Method}");
                         // Deserialize AtkData
                         AtkData atkData = AtkData.Parser.ParseFrom(data.Data);
                         SyncManager.Instance.TestAttackProcess(Guid.Parse(data.Uid), atkData);
