@@ -51,6 +51,7 @@ public:
     tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
     void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 
+public: // first handshaking functions
     bool ExchangeUdpPort(std::uint16_t udpPort);
     void AsyncExchangeUdpPortWork(std::uint16_t udpPort, std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
 
@@ -60,6 +61,14 @@ public:
     bool ReceiveGroupInfo(std::shared_ptr<GroupDto>& groupInfo);
     void AsyncReceiveGroupInfo(std::function<void(bool success, std::shared_ptr<GroupDto> groupInfo)> onComplete);
 
+private: // internal private functions
+    void SerializeRpcPacketAndEnqueueData();
+    RpcPacket DequeueSendUdpPackets();
+
+    void SendPingPacket(CompletionHandler onComplete);
+    void ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet);
+
+public: // default session functions
     bool IsValid() const { return _isConnected; }
     uuid GetSessionUuid() const { return _toUuid(_sessionInfo.uid()); }
 
@@ -68,32 +77,23 @@ public:
 
     Util::SGameState GetGameState() const { return _gameState; }
 
-public: // Callback Functions
-    using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
-    void SetStopCallbackByGroup(StopCallback stopCallback);
-    void SetStopCallbackByServer(StopCallback stopCallback);
+private: // tcp functions
+    std::mutex _sendTcpQueueMutex;
+    std::queue<std::shared_ptr<std::string>> _sendTcpQueue;
 
-    using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
-    void SetCollectInputAction(SessionInput inputAction);
-
-    using SendDataByUdp = std::function<void(std::shared_ptr<std::pair<udp::endpoint, std::string>>)>;
-    void SetSendDataByUdpAction(SendDataByUdp sendDataFunction);
-
-private: // internal private functions
-    RpcPacket DequeueSendUdpPackets();
-    void SerializeRpcPacketAndEnqueueData();
-
-    void SendPingPacket(CompletionHandler onComplete);
-    void ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet);
-
-    void TcpAsyncWrite(const std::shared_ptr<std::string> data);
-
+    void EnqueueTcpSendData(std::shared_ptr<std::string> data);
+    void TcpAsyncWrite();
 	void TcpAsyncReadSize();
     void TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer);
 
     void UpdateOwnState(CompletionHandler onComplete);
+    void SendGameStatePacket(CompletionHandler onComplete);
 
-private:
+private: // udp network members
+    std::mutex _sendUdpQueueMutex;
+    std::queue<RpcPacket> _sendUdpPacketQueue;
+
+private: // default members
     using TcpSocket = tcp::socket;
     using UdpSocket = udp::socket;
 
@@ -123,34 +123,40 @@ private:
     UserSimpleDto _sessionInfo;
     GroupDto _groupDto;
 
-    // rtt timer
+private: // rtt timer
     std::shared_ptr<Scheduler> _pingTimer;
     const std::uint32_t _pingDelay = 1000;
     std::chrono::high_resolution_clock::time_point _pingTime;
     std::uint64_t _lastRtt;
 
-    // update state timer
+private: // update state timer
     std::shared_ptr<Scheduler> _updateTimer;
-    const std::int32_t _updateTick = 1;
+    const std::uint32_t _updateDelay = 1;
 
-    // callback handlers
+public: // callback functions 
+    using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
+    void SetStopCallbackByGroup(StopCallback stopCallback);
+    void SetStopCallbackByServer(StopCallback stopCallback);
+
+    using SessionInput = std::function<void(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>>)>;
+    void SetCollectInputAction(SessionInput inputAction);
+
+    using SendDataByUdp = std::function<void(std::shared_ptr<std::pair<udp::endpoint, std::string>>)>;
+    void SetSendDataByUdpAction(SendDataByUdp sendDataFunction);
+
+private: // callback handlers
     StopCallback _onStopCallbackByGroup;
     StopCallback _onStopCallbackByServer;
     SessionInput _inputAction;
     SendDataByUdp _sendDataByUdp;
 
-    // packet queue
-    std::mutex _sendQueueMutex;
-    std::queue<RpcPacket> _sendPacketQueue;
-
-    // own state
+private: // own state
     std::mutex _stateMutex;
     Util::SGameState _gameState;
+
     std::mutex _updatePacketMutex;
     std::queue<RpcPacket> _updatePacketQueue;
 
-private:
-    std::shared_ptr<Scheduler> _testTimer;
-    const std::uint32_t _delay = 500;
-    void SendTestPacket(CompletionHandler onComplete);
+    std::shared_ptr<Scheduler> _sendStateTimer;
+    const std::uint32_t _sendStateDelay = 500;
 };

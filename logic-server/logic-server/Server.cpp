@@ -189,7 +189,7 @@ void Server::AsyncSendUdpData()
             self->_sendDataQueue.pop();
         }
 
-        spdlog::info("send packet to client {}:{}", ep.address().to_string(), ep.port());
+        //spdlog::info("send packet to client {}:{}", ep.address().to_string(), ep.port());
         const std::uint16_t payloadSize = static_cast<std::uint16_t>(sendData.size());
         const std::uint16_t payloadNetSize = htons(payloadSize);
 
@@ -206,7 +206,7 @@ void Server::AsyncSendUdpData()
                     return;
                 }
 
-                spdlog::info("send udp packet complete to {}", ep.address().to_string());
+                //spdlog::info("send udp packet complete to {}", ep.address().to_string());
                 self->AsyncSendUdpData();
                 }
             ));
