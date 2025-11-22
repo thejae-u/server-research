@@ -912,7 +912,7 @@ namespace Network
                         LogManager.Instance.Log($"{data.Uid} : {data.Method}");
                         // Deserialize MoveData
                         MoveData moveData = MoveData.Parser.ParseFrom(data.Data);
-                        SyncManager.Instance.SyncObjectPosition(Guid.Parse(data.Uid), moveData);
+                        SyncManager.Instance.Enqueue(Guid.Parse(data.Uid), moveData);
                         break;
 
                     case RpcMethod.Atk:

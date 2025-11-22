@@ -14,7 +14,9 @@ public class NameTagController : MonoBehaviour
     private TMP_Text _nameTagText;
     private GameObject _nameTag;
 
-    public void Init(UserSimpleDto user, GameObject syncObject)
+    private bool _isManualMode = false;
+
+    public void Init(UserSimpleDto user, GameObject syncObject, bool manualMode = false)
     {
         _user = user;
         _syncObject = syncObject;
@@ -25,6 +27,8 @@ public class NameTagController : MonoBehaviour
         _nameTagText = transform.GetComponentInChildren<TMP_Text>();
         _nameTagText.text = _user.Username;
         _nameTag = transform.GetChild(0).gameObject;
+
+        _isManualMode = manualMode;
     }
 
     /// <summary>
@@ -75,8 +79,17 @@ public class NameTagController : MonoBehaviour
             Destroy(gameObject);
         }
 
-        if (Guid.Parse(_user.Uid) == AuthManager.Instance.UserGuid)
-            return false;
+
+        if (!_isManualMode)
+        {
+            if (Guid.Parse(_user.Uid) == AuthManager.Instance.UserGuid)
+                return false;
+        }
+        else
+        {
+            if (Guid.Parse(_user.Uid) == ManualConnector.Instance.UserId)
+                return false;
+        }
 
         Vector3 viewportPoint = _camera.WorldToViewportPoint(_syncObjectTransform.position);
 

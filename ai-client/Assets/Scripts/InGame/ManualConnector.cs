@@ -35,10 +35,13 @@ namespace Network
         private readonly ConcurrentQueue<byte[]> _rawQueue = new();
 
         private Task _parsingRawPacketTask;
-        private readonly ConcurrentQueue<RpcPacket> _readyQueue = new();
+        private readonly ConcurrentQueue<Tuple<RpcPacket, object>> _readyQueue = new();
 
         private int _maxRetries = 5;
         private const uint MAX_PACKET_SIZE = 65536; // 64KB
+
+        private readonly byte[] _receiveBufferHeader = new byte[sizeof(uint)];
+        private readonly byte[] _receiveBufferData = new byte[MAX_PACKET_SIZE];
 
         public int SentPacketCount
         {
@@ -527,7 +530,7 @@ namespace Network
                 {
                     Method = RpcMethod.GroupInfo,
                     Uid = UserId.ToString(), // 랜덤 UID 사용
-                    Data = _currentGroupDto.ToByteString() 
+                    Data = _currentGroupDto.ToByteString()
                 };
 
                 byte[] sendPacketData = sendPacket.ToByteArray(); // serialize rpc packet to byte[]
@@ -578,22 +581,18 @@ namespace Network
 
         private async Task AsyncWriteByUdp(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
                 {
-                    await Awaitable.BackgroundThreadAsync();
                     if (!_sendPacketQueueForUdp.TryDequeue(out var data))
                     {
                         await Task.Yield();
                         continue;
                     }
 
-                    await Awaitable.MainThreadAsync();
-                    // [수정됨] _authManager 대신 이 클래스의 UserId 속성 사용
-                    data.Uid = UserId.ToString(); // main thread function (MonoBehaviour)
-
-                    await Awaitable.BackgroundThreadAsync();
+                    data.Uid = UserId.ToString(); 
                     byte[] payload = data.ToByteArray();
                     var payloadSize = (short)payload.Length;
                     byte[] sizeBuffer = BitConverter.GetBytes(payloadSize);
@@ -608,7 +607,6 @@ namespace Network
                     await _udpClient.SendAsync(packet, packet.Length, _serverUdpEndPoint);
 
                     Interlocked.Increment(ref _sentPacketCount); // sent packet count increment by atomic
-
                     _dispatcher.Enqueue(() => Debug.Log($"Sent Rpc Packet To Server {Utility.Util.ConvertTimestampToString(data.Timestamp)}" +
                         $" {data.Uid}: {data.Method}"));
                 }
@@ -691,10 +689,8 @@ namespace Network
             {
                 try
                 {
-                    var sizeBuffer = new byte[sizeof(uint)]; // 4 bytes read size buffer
-
-                    // Read Size first for data receive
-                    if (!await ReadTcpExactlyAsync(_tcpStream, sizeBuffer, sizeBuffer.Length, ct))
+                    Array.Clear(_receiveBufferHeader, 0, 4); // buffer clear
+                    if (!await ReadTcpExactlyAsync(_tcpStream, _receiveBufferHeader, sizeof(uint), ct))
                     {
                         _dispatcher.Enqueue(() =>
                         {
@@ -706,24 +702,22 @@ namespace Network
 
                     // Convert the size from bytes to uint
                     if (BitConverter.IsLittleEndian)
-                        Array.Reverse(sizeBuffer);
+                        Array.Reverse(_receiveBufferHeader);
 
-                    uint netSize = BitConverter.ToUInt32(sizeBuffer, 0);
-
-                    if (netSize == 0 || netSize > MAX_PACKET_SIZE)
+                    var dataSize = BitConverter.ToInt32(_receiveBufferHeader, 0);
+                    if (dataSize <= 0 || dataSize > MAX_PACKET_SIZE)
                     {
                         _dispatcher.Enqueue(() =>
                         {
-                            Debug.LogError($"Invalid Packet Size received {netSize}.");
+                            Debug.LogError($"[TCP READ ERROR] Invalid Packet Size received: {dataSize}. Disconnecting.");
                             DisconnectFromServer();
                         });
+
                         return;
                     }
 
-                    var dataBuffer = new byte[netSize]; // real data buffer sizeof netSize
-
                     // Read the rest of the data
-                    if (!await ReadTcpExactlyAsync(_tcpStream, dataBuffer, dataBuffer.Length, ct))
+                    if (!await ReadTcpExactlyAsync(_tcpStream, _receiveBufferData, dataSize, ct))
                     {
                         _dispatcher.Enqueue(() =>
                         {
@@ -733,7 +727,9 @@ namespace Network
                         return;
                     }
 
-                    EnqueueRawQueue(dataBuffer);
+                    var finalPacket = new byte[dataSize];
+                    Buffer.BlockCopy(_receiveBufferData, 0, finalPacket, 0, dataSize);
+                    EnqueueRawQueue(finalPacket);
                 }
                 catch (OperationCanceledException)
                 {
@@ -871,12 +867,12 @@ namespace Network
             return data;
         }
 
-        private void EnqueueReadyQueue(RpcPacket nextPacket)
+        private void EnqueueReadyQueue(Tuple<RpcPacket, object> nextPacket)
         {
             _readyQueue.Enqueue(nextPacket);
         }
 
-        private RpcPacket DequeueReadyQueue()
+        private Tuple<RpcPacket, object> DequeueReadyQueue()
         {
             if (!_readyQueue.TryDequeue(out var nextPacket))
             {
@@ -901,15 +897,63 @@ namespace Network
                         continue;
                     }
 
-                    var data = RpcPacket.Parser.ParseFrom(nextPacket);
-                    if (data is null)
+                    var packetData = RpcPacket.Parser.ParseFrom(nextPacket);
+                    if (packetData is null)
                     {
-                        // LogManager.Instance.Log($"parsing error occured");
-                        Debug.LogWarning("Parsing error occurred"); // LogManager가 없을 경우 대비
+                        _dispatcher.Enqueue(() => { Debug.LogError($"parsing error occured in raw packet"); });
                         continue;
                     }
 
-                    EnqueueReadyQueue(data);
+
+                    switch (packetData.Method)
+                    {
+                        case RpcMethod.Move:
+                        case RpcMethod.MoveStart:
+                        case RpcMethod.MoveStop:
+                            MoveData moveData = MoveData.Parser.ParseFrom(packetData.Data);
+                            if(moveData is null)
+                            {
+                                _dispatcher.Enqueue(() => { Debug.LogError($"parsing move data error occured in raw packet parser"); });
+                                continue;
+                            }
+
+                            EnqueueReadyQueue(new Tuple<RpcPacket, object>(packetData, moveData));
+                            break;
+
+                        case RpcMethod.Atk:
+                            AtkData atkData = AtkData.Parser.ParseFrom(packetData.Data);
+                            if(atkData is null)
+                            {
+                                _dispatcher.Enqueue(() => { Debug.LogError($"parsing atk data error occured in raw packet parser"); });
+                                continue;
+                            }
+
+                            EnqueueReadyQueue(new Tuple<RpcPacket, object>(packetData, atkData));
+                            break;
+                        case RpcMethod.Hit:
+                            break;
+                        case RpcMethod.Dead:
+                            break;
+
+                        case RpcMethod.ClientGameInfo:
+                            GameData gameData = GameData.Parser.ParseFrom(packetData.Data);
+                            if (gameData is null)
+                            {
+                                _dispatcher.Enqueue(() => { Debug.LogError($"parsing game client data error occured in raw packet parser"); });
+                                continue;
+                            }
+
+                            EnqueueReadyQueue(new Tuple<RpcPacket, object>(packetData, gameData));
+                            break;
+
+                        case RpcMethod.Ping:
+                        case RpcMethod.LastRtt:
+                            EnqueueReadyQueue(new Tuple<RpcPacket, object>(packetData, null)); // by-pass
+                            break;
+
+                        default:
+                            break;
+                    }
                 }
                 catch (OperationCanceledException)
                 {
@@ -917,7 +961,7 @@ namespace Network
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"invalid error occured: {ex.Message}");
+                    _dispatcher.Enqueue(() => { Debug.LogError($"invalid error occured: {ex.Message}"); });
                     return;
                 }
             }
@@ -931,7 +975,7 @@ namespace Network
             var data = DequeueReadyQueue();
             while (data is not null) // all packets in queue processed per frame
             {
-                switch (data.Method)
+                switch (data.Item1.Method)
                 {
                     case RpcMethod.Ping:
                         var pongPacket = new RpcPacket
@@ -946,27 +990,25 @@ namespace Network
                     case RpcMethod.MoveStart:
                     case RpcMethod.MoveStop:
                     case RpcMethod.Move:
-                        // LogManager.Instance.Log($"{data.Uid} : {data.Method}");
-                        // Deserialize MoveData
-                        MoveData moveData = MoveData.Parser.ParseFrom(data.Data);
-                        SyncManager.Instance.SyncObjectPosition(Guid.Parse(data.Uid), moveData);
+                        var moveData = (MoveData)data.Item2;
+                        SyncManager.Instance.Enqueue(Guid.Parse(data.Item1.Uid), moveData);
                         break;
 
                     case RpcMethod.Atk:
-                        // LogManager.Instance.Log($"{data.Uid} : {data.Method}");
                         // Deserialize AtkData
-                        AtkData atkData = AtkData.Parser.ParseFrom(data.Data);
-                        SyncManager.Instance.TestAttackProcess(Guid.Parse(data.Uid), atkData);
+                        var atkData = (AtkData)data.Item2;
+                        SyncManager.Instance.TestAttackProcess(Guid.Parse(data.Item1.Uid), atkData);
                         break;
 
                     case RpcMethod.Hit:
                         break;
 
                     case RpcMethod.LastRtt:
-                        LastRtt = int.Parse(data.Data.ToStringUtf8());
+                        LastRtt = int.Parse(data.Item1.Data.ToStringUtf8());
                         _rttList.Add(LastRtt);
 
                         RttAverage = (int)_rttList.Average(x => x);
+                        LogManager.Instance.Log($"Get Rtt: {LastRtt}");
                         break;
 
                     case RpcMethod.PacketCount:
@@ -979,8 +1021,8 @@ namespace Network
                         break;
 
                     case RpcMethod.ClientGameInfo:
-                        GameData gameData = GameData.Parser.ParseFrom(data.Data);
-                        LogManager.Instance.Log($"{data.Uid} info : {gameData.Hp}, ({gameData.Position.X}, {gameData.Position.Y}, {gameData.Position.Z})");
+                        var gameData = (GameData)data.Item2;
+                        LogManager.Instance.Log($"{data.Item1.Uid} info : {gameData.Hp}, ({gameData.Position.X}, {gameData.Position.Y}, {gameData.Position.Z})");
                         break;
 
                     // Network Initialize

@@ -17,7 +17,7 @@ public class SyncObject : MonoBehaviour
     private MeshRenderer _meshRenderer;
 
     private Vector3 _lastNetworkPosition;
-    private readonly Queue<MoveData> _moveQueue;
+    private readonly Queue<MoveData> _moveQueue = new();
     private IEnumerator _syncPositionRoutine = null;
 
     private bool _isMyObject => Guid.Parse(_user.Uid) == _authManager.UserGuid;
@@ -49,6 +49,21 @@ public class SyncObject : MonoBehaviour
         StartCoroutine(_syncPositionRoutine);
     }
 
+    public void ManualModeInit(UserSimpleDto user)
+    {
+        _isMannualMode = true;
+
+        _user = user;
+        _meshRenderer = GetComponent<MeshRenderer>();
+
+        if(Guid.Parse(_user.Uid) == ManualConnector.Instance.UserId)
+        {
+            _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
+        }
+
+        _syncPositionRoutine = null;
+    }
+
     public void EnqueueMoveData(MoveData moveData)
     {
         _moveQueue.Enqueue(moveData);
@@ -62,19 +77,50 @@ public class SyncObject : MonoBehaviour
                 continue;
 
             MoveData nextData = _moveQueue.Dequeue();
-
-            Debug.Log($"{_user.Uid} next Data : {nextData.X},{nextData.Y},{nextData.Z}");
-
             yield return null;
         }
 
         _syncPositionRoutine = null;
     }
 
+    public void Sync()
+    {
+        if (_syncPositionRoutine is not null)
+        {
+            return;
+        }
+
+        _syncPositionRoutine = ManualSyncPosition();
+        StartCoroutine(_syncPositionRoutine);
+    }
+
+    public IEnumerator ManualSyncPosition()
+    {
+        if(ManualConnector.Instance.IsOnline)
+        {
+            if (_moveQueue.Count == 0)
+            {
+                _syncPositionRoutine = null;
+                yield break;
+            }
+
+            MoveData nextData = _moveQueue.Dequeue();
+            LogManager.Instance.Log($"{_user.Uid} next Data : {nextData.X},{nextData.Y},{nextData.Z}");
+            transform.position = new Vector3(nextData.X, nextData.Y, nextData.Z);
+            yield return null;
+        }
+
+        _syncPositionRoutine = null;
+    }
+
+
     private void Update()
     {
         if (_isMannualMode)
+        {
+            Sync();
             return;
+        }
 
         if (!_connector.IsOnline)
             return;
