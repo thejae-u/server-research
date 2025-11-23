@@ -53,7 +53,7 @@ public:
 
 public: // first handshaking functions
     bool ExchangeUdpPort(std::uint16_t udpPort);
-    void AsyncExchangeUdpPortWork(std::uint16_t udpPort, std::function<void(bool success)> onComplete); // separate real logic to avoid long blocking
+    void AsyncExchangeUdpPortWork(std::uint16_t udpPort, std::function<void(bool success)> onComplete);
 
     bool ReceiveUserInfo();
     void AsyncReceiveUserInfo(std::function<void(bool success)> onComplete);
@@ -81,8 +81,8 @@ private: // tcp functions
     std::mutex _sendTcpQueueMutex;
     std::queue<std::shared_ptr<std::string>> _sendTcpQueue;
 
-    void EnqueueTcpSendData(std::shared_ptr<std::string> data);
-    void TcpAsyncWrite();
+    void EnqueueTcpSendData(std::shared_ptr<std::string> data); // tcp data for sent to client
+    void TcpAsyncWrite(); // Tcp data must be sent through this function
 	void TcpAsyncReadSize();
     void TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer);
 

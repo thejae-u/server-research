@@ -463,14 +463,13 @@ void Session::TcpAsyncWrite()
     const std::int32_t netSize = htonl(dataSize); // 4 byte size Big-Endian
 
     boost::asio::async_write(*_tcpSocketPtr, boost::asio::buffer(&netSize, sizeof(netSize)),
-        _normalPrivateStrand.wrap([self, nextData, netSize, dataSize](const boost::system::error_code& sizeEc, std::size_t) {
+        _normalPrivateStrand.wrap([self, nextData] (const boost::system::error_code& sizeEc, std::size_t) {
             if (sizeEc)
             {
                 spdlog::error("{} : TCP error sending size ({})", self->_sessionInfo.uid(), sizeEc.message());
                 return;
             }
 
-            spdlog::info("{} [TCP] send size: net size {}, data size {}", self->_sessionInfo.uid(), netSize, dataSize);
             boost::asio::async_write(*self->_tcpSocketPtr, boost::asio::buffer(*nextData),
                 self->_normalPrivateStrand.wrap([self, nextData](const boost::system::error_code& dataEc, std::size_t) {
                     if (dataEc)
