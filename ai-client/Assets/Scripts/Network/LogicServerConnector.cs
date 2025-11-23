@@ -919,7 +919,7 @@ namespace Network
                         LogManager.Instance.Log($"{data.Uid} : {data.Method}");
                         // Deserialize AtkData
                         AtkData atkData = AtkData.Parser.ParseFrom(data.Data);
-                        SyncManager.Instance.TestAttackProcess(Guid.Parse(data.Uid), atkData);
+                        SyncManager.Instance.EnqueueAttackData(Guid.Parse(data.Uid), atkData);
                         break;
 
                     case RpcMethod.Hit:

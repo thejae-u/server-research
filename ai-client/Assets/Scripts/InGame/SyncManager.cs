@@ -21,6 +21,7 @@ public class SyncManager : Singleton<SyncManager>
     private readonly Dictionary<Guid, UserSimpleDto> _userInfos = new();
 
     private readonly Queue<Tuple<Guid, MoveData>> _moveDataQueue = new();
+    private readonly Queue<Tuple<Guid, AtkData>> _atkDataQueue = new();
 
     private void Awake()
     {
@@ -62,6 +63,7 @@ public class SyncManager : Singleton<SyncManager>
     private void Update()
     {
         SyncObjectPosition();
+        SyncAttack();
     }
 
     public void Enqueue(Guid userId, MoveData moveData)
@@ -116,16 +118,12 @@ public class SyncManager : Singleton<SyncManager>
             return;
         }
 
-        Debug.Log($"move data dequeued");
         var userId = data.Item1;
         var moveData = data.Item2;
 
         if (isManualMode)
         {
             LogManager.Instance.Log($"{userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
-            if (_manualConnector.UserId == userId)
-                return;
-
             if (userId == Guid.Empty)
             {
                 Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
@@ -133,23 +131,13 @@ public class SyncManager : Singleton<SyncManager>
                 return;
             }
 
-            var manualStartPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
-            if (!_syncObjects.TryGetValue(userId, out var manualSyncObject))
-            {
-                UserSimpleDto newUserDto = new()
-                {
-                    Uid = userId.ToString(),
-                    Username = $"test{_userInfos.Count}"
-                };
-
-                var newSyncObject = CreateSyncObject(newUserDto, manualStartPosition);
-                manualSyncObject = newSyncObject;
-            }
-
-            var manualSyncObjectComponent = manualSyncObject.GetComponent<SyncObject>();
+            var movePosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
+            var manualSyncObjectComponent = GetValidObject(userId, movePosition);
             manualSyncObjectComponent.EnqueueMoveData(moveData);
             return;
         }
+
+        // ---------------------------------------------------------------------------------------------------------
 
         LogManager.Instance.Log($"{userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
         if (userId == _authManager.UserGuid)
@@ -164,28 +152,48 @@ public class SyncManager : Singleton<SyncManager>
             return;
         }
 
-        if(!_userInfos.TryGetValue(userId, out var user))
-        {
-            Debug.LogError($"Invalid Situation: {userId} is not exist in syncObjects");
-            return;
-        }
-
         var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
-        if (!_syncObjects.TryGetValue(userId, out var syncObject))
-        {
-            var newSyncObject = CreateSyncObject(user, startPosition);
-            _syncObjects.Add(userId, newSyncObject);
-            syncObject = newSyncObject;
-        }
-
-        var syncObjectComponent = syncObject.GetComponent<SyncObject>();
+        var syncObjectComponent = GetValidObject(userId, startPosition);
         syncObjectComponent.EnqueueMoveData(moveData);
     }
 
-    public void TestAttackProcess(Guid userId, AtkData atkData)
+    private void SyncAttack()
     {
+        if(!_atkDataQueue.TryDequeue(out var result))
+        {
+            return;
+        }
+
+        var uid = result.Item1;
+        var atkData = result.Item2;
+
+        var syncObject = GetValidObject(uid, Vector3.zero);
+        syncObject.EnqueueAtkData(atkData);
+    }
+
+    public void EnqueueAttackData(Guid userId, AtkData atkData)
+    {
+        _atkDataQueue.Enqueue(new Tuple<Guid, AtkData>(userId, atkData));
+
         string hitUser = string.IsNullOrEmpty(atkData.To) ? "none" : atkData.To;
         LogManager.Instance.Log($"{userId} : attack {hitUser}, damage {atkData.Dmg}");
+    }
+
+    private SyncObject GetValidObject(Guid userId, Vector3 initPos)
+    {
+        if (!_syncObjects.TryGetValue(userId, out var syncObject))
+        {
+            UserSimpleDto newUserDto = new()
+            {
+                Uid = userId.ToString(),
+                Username = $"test{_userInfos.Count}"
+            };
+
+            var newSyncObject = CreateSyncObject(newUserDto, initPos);
+            syncObject = newSyncObject;
+        }
+
+        return syncObject.GetComponent<SyncObject>();
     }
 
     public void SyncObjectNone(Guid objectId)

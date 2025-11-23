@@ -31,6 +31,11 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
         if (_iaBase == null) return;
         _iaBase.Player.SetCallbacks(null);
         _iaBase = null;
+
+        onMoveStartAction = null;
+        onMoveAction = null;
+        onMoveStopAction = null;
+        onAttackAction = null;
     }
 
     public void OnMove(InputAction.CallbackContext context)

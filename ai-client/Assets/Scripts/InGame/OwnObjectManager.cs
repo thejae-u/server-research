@@ -160,17 +160,6 @@ public class OwnObjectManager : MonoBehaviour
         if (IsOnAttack)
             return;
 
-        RpcPacket attackPacket = new()
-        {
-            Method = RpcMethod.Atk,
-            Data = ByteString.Empty,
-            Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
-        };
-
-        if (_isManualMode)
-            ManualConnector.Instance.EnqueueRpcPacketForUdp(attackPacket);
-        else
-            _connector.EnqueueRpcPacketForUdp(attackPacket);
         PlayAttackMotion();
     }
 
@@ -185,6 +174,18 @@ public class OwnObjectManager : MonoBehaviour
 
     private IEnumerator AttackMotionRoutine()
     {
+        RpcPacket attackPacket = new()
+        {
+            Method = RpcMethod.Atk,
+            Data = ByteString.Empty,
+            Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
+        };
+
+        if (_isManualMode)
+            ManualConnector.Instance.EnqueueRpcPacketForUdp(attackPacket);
+        else
+            _connector.EnqueueRpcPacketForUdp(attackPacket);
+
         const float duration = 0.5f;
         float delta = 0.0f;
 

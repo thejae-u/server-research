@@ -997,7 +997,7 @@ namespace Network
                     case RpcMethod.Atk:
                         // Deserialize AtkData
                         var atkData = (AtkData)data.Item2;
-                        SyncManager.Instance.TestAttackProcess(Guid.Parse(data.Item1.Uid), atkData);
+                        SyncManager.Instance.EnqueueAttackData(Guid.Parse(data.Item1.Uid), atkData);
                         break;
 
                     case RpcMethod.Hit:
