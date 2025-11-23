@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <string>
 #include <chrono>
 
@@ -8,37 +8,52 @@
 #include "NetworkData.pb.h"
 using namespace NetworkData;
 
-namespace Utility
+namespace Util
 {
+    struct SPos
+    {
+        float x;
+        float y;
+        float z;
+
+        void SetPosition(float newX, float newY, float newZ)
+        {
+            x = newX;
+            y = newY;
+            z = newZ;
+        }
+    };
+
+    struct SAABB
+    {
+        float minX, minY, minZ;
+        float maxX, maxY, maxZ;
+
+        static SAABB MakeAABB(float x, float y, float z, float halfSize) 
+        {
+            return { x - halfSize, y - halfSize, z - halfSize, x + halfSize, y + halfSize, z + halfSize };
+        }
+
+        bool operator==(const SAABB& rhs) const
+        {
+            return (
+                maxX >= rhs.minX && rhs.maxX >= minX &&
+                maxY >= rhs.minY && rhs.maxY >= minY &&
+                maxZ >= rhs.minZ && rhs.maxZ >= minZ);
+        }
+    };
+
+    struct SGameState
+    {
+        std::int32_t hp;
+        SPos position;
+    };
+
 	struct UserSimpleDto
 	{
 		boost::uuids::uuid userId;
 		std::string name;
 	};
-
-	static std::string GuidToBytes(boost::uuids::uuid uuid)
-	{
-		std::string bytes(uuid.begin(), uuid.end());
-
-		// Reverse the byte order for the first 8 bytes (to little-endian)
-		std::reverse(bytes.begin(), bytes.begin() + 4);
-		std::reverse(bytes.begin() + 4, bytes.begin() + 6);
-		std::reverse(bytes.begin() + 6, bytes.begin() + 8);
-		return bytes;
-	}
-
-	static uuid BytesToUuid(const std::string& bytes)
-	{
-		if (bytes.size() != 16) throw std::invalid_argument("invalid uuid size");
-		boost::uuids::uuid uuid;
-		std::copy(bytes.begin(), bytes.end(), uuid.begin());
-
-		// Reverse the byte order for the first 8 bytes (to big-endian)
-		std::reverse(uuid.begin(), uuid.begin() + 4);
-		std::reverse(uuid.begin() + 4, uuid.begin() + 6);
-		std::reverse(uuid.begin() + 6, uuid.begin() + 8);
-		return uuid;
-	}
 
 	static std::chrono::high_resolution_clock::time_point StartStopwatch()
 	{
@@ -76,8 +91,8 @@ namespace Utility
 			result = "GroupInfo";
 			break;
 
-		case MOVE:
-			result = "MOVE";
+		case Move:
+			result = "Move";
 			break;
 
 		case MoveStart:
@@ -87,6 +102,12 @@ namespace Utility
 		case MoveStop:
 			result = "MoveStop";
 			break;
+
+        case Atk:
+            result = "Atk";
+            break;
+        case Dead:
+            result = "Dead";
 
 		case PACKET_COUNT:
 			result = "PacketCount";

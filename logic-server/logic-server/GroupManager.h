@@ -30,7 +30,6 @@ public:
     GroupManager(const std::shared_ptr<ContextManager>& ctxManager);
     void AddSession(const std::shared_ptr<GroupDto> groupDto, const std::shared_ptr<Session>& newSession);
     void RemoveEmptyGroup(const std::shared_ptr<LockstepGroup> emptyGroup);
-    void CollectInput(std::shared_ptr<RpcPacket> input);
 
 private:
     std::shared_ptr<ContextManager> _ctxManager;

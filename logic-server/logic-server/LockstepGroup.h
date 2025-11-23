@@ -19,6 +19,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 #include "Base.h"
+#include "PacketProcess.h"
 #include "NetworkData.pb.h"
 
 using IoContext = boost::asio::io_context;
@@ -56,7 +57,7 @@ public:
 	void Stop() override;
 	void AddMember(const std::shared_ptr<Session>& newSession);
 	void RemoveMember(const std::shared_ptr<Session>& session);
-	void CollectInput(const std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);
+	void CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);
 	void Tick(CompletionHandler onComplete);
 
 	uuid GetGroupId() const { return _toUuid(_groupInfo->groupid()); }
@@ -67,6 +68,8 @@ public:
 		return _members.size() == _maxSessionCount;
 	}
 
+    void AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket);
+
 private:
 	std::shared_ptr<ContextManager> _ctxManager;
     boost::asio::io_context::strand _privateStrand;
@@ -75,7 +78,7 @@ private:
 	std::shared_ptr<GroupDto> _groupInfo;
 
 	std::mutex _memberMutex;
-	std::set<std::shared_ptr<Session>> _members;
+	std::unordered_map<uuid, std::shared_ptr<Session>> _members;
 	const std::size_t _maxSessionCount = 4;
 
 	std::size_t _fixedDeltaMs;

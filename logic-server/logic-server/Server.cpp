@@ -67,7 +67,7 @@ void Server::AcceptClientAsync()
     );
 }
 
-void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession) const
+void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession)
 {
     auto self(shared_from_this());
     newSession->AsyncExchangeUdpPortWork(_allocatedUdpPort, [self, newSession](bool success) {
@@ -87,7 +87,7 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession) cons
                 return;
             }
 
-            newSession->AysncReceiveGroupInfo([self, newSession](bool success, std::shared_ptr<GroupDto> groupInfo) {
+            newSession->AsyncReceiveGroupInfo([self, newSession](bool success, std::shared_ptr<GroupDto> groupInfo) {
                 if (!success)
                 {
                     spdlog::error("new session failed to exchange user info");
@@ -97,9 +97,13 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession) cons
 
                 spdlog::info("group {} set session {}", groupInfo->groupid(), to_string(newSession->GetSessionUuid()));
                 self->_groupManager->AddSession(groupInfo, newSession);
-                }
-            ); }
-        ); }
+                self->AddSession(newSession);
+                newSession->SetStopCallbackByServer([self](const std::shared_ptr<Session>& session) {
+                    self->RemoveSession(session->GetSessionUuid());
+                    });
+                }); 
+            }); 
+        }
     );
 }
 
@@ -149,8 +153,10 @@ void Server::AsyncReceiveUdpData()
                 return;
             }
 
-            // valid data collected to lockstep group
-            self->_groupManager->CollectInput(std::make_shared<RpcPacket>(receivedRpcPacket));
+            // valid data collected to session and lockstep group
+            auto id = self->_toUuid(receivedRpcPacket.uid());
+            self->_sessions[id]->CollectInput(std::make_shared<RpcPacket>(receivedRpcPacket));
+
             boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
             }
         )
@@ -183,7 +189,7 @@ void Server::AsyncSendUdpData()
             self->_sendDataQueue.pop();
         }
 
-        spdlog::info("send packet to client {}:{}", ep.address().to_string(), ep.port());
+        //spdlog::info("send packet to client {}:{}", ep.address().to_string(), ep.port());
         const std::uint16_t payloadSize = static_cast<std::uint16_t>(sendData.size());
         const std::uint16_t payloadNetSize = htons(payloadSize);
 
@@ -200,11 +206,24 @@ void Server::AsyncSendUdpData()
                     return;
                 }
 
-                spdlog::info("send udp packet complete to {}", ep.address().to_string());
+                //spdlog::info("send udp packet complete to {}", ep.address().to_string());
                 self->AsyncSendUdpData();
                 }
             ));
         })
     );
+}
+
+void Server::AddSession(std::shared_ptr<Session> newSession)
+{
+    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    _sessions[newSession->GetSessionUuid()] = newSession;
+}
+
+void Server::RemoveSession(uuid sessionId)
+{
+    std::lock_guard<std::mutex> lock(_sessionsMutex);
+    _sessions.erase(sessionId);
+	spdlog::info("Session {} removed from server session map", to_string(sessionId));
 }
 

@@ -14,16 +14,25 @@ public class SyncManager : Singleton<SyncManager>
     public bool isManualMode = false;
 
     private LogicServerConnector _connector;
+    private ManualConnector _manualConnector;
     private AuthManager _authManager;
 
     private readonly Dictionary<Guid, GameObject> _syncObjects = new();
     private readonly Dictionary<Guid, UserSimpleDto> _userInfos = new();
 
+    private readonly Queue<Tuple<Guid, MoveData>> _moveDataQueue = new();
+    private readonly Queue<Tuple<Guid, AtkData>> _atkDataQueue = new();
+
+    private void Awake()
+    {
+        isManualMode = true;
+    }
+
     private void Start()
     {
-        if (isManualMode)
+        if(isManualMode)
         {
-            CreateTestSyncObject();
+            _manualConnector = ManualConnector.Instance;
             return;
         }
 
@@ -43,12 +52,23 @@ public class SyncManager : Singleton<SyncManager>
                 continue;
             }
 
-            var newUser = CreateSyncObject(user, Vector3.zero);
+            var newUser = CreateSyncObject(user, Vector3.up);
             if(newUser is null)
             {
                 Debug.LogError($"{user.Username} is already exist");
             }
         }
+    }
+
+    private void Update()
+    {
+        SyncObjectPosition();
+        SyncAttack();
+    }
+
+    public void Enqueue(Guid userId, MoveData moveData)
+    {
+        _moveDataQueue.Enqueue(new Tuple<Guid, MoveData>(userId, moveData));
     }
 
     private GameObject CreateSyncObject(UserSimpleDto user, Vector3 position)
@@ -57,11 +77,21 @@ public class SyncManager : Singleton<SyncManager>
 
         syncObject.transform.SetParent(transform); // Set parent to SyncManager
         syncObject.name = user.Username; // Set the name to the objectId
-        syncObject.GetComponent<SyncObject>().Init(user); // Initialize SyncObject
+
+        if (isManualMode)
+        {
+            syncObject.GetComponent<SyncObject>().ManualModeInit(user);
+            Debug.Log($"Create manual mode object");
+        }
+        else
+        {
+            Debug.Log($"Create non-manual mode object");
+            syncObject.GetComponent<SyncObject>().Init(user); // Initialize SyncObject
+        }
 
         // Create the name tag
         GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
-        nameTag.GetComponent<NameTagController>().Init(user, syncObject);
+        nameTag.GetComponent<NameTagController>().Init(user, syncObject, isManualMode);
 
         var userId = Guid.Parse(user.Uid);
         if (!_syncObjects.TryAdd(userId, syncObject)) // Add to dict
@@ -81,10 +111,41 @@ public class SyncManager : Singleton<SyncManager>
         return syncObject;
     }
 
-    public void SyncObjectPosition(Guid uid, MoveData moveData)
+    private void SyncObjectPosition()
     {
-        Debug.Log($"Received SyncObjectPosition - {uid} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
-        if (uid == Guid.Empty)
+        if(!_moveDataQueue.TryDequeue(out var data))
+        {
+            return;
+        }
+
+        var userId = data.Item1;
+        var moveData = data.Item2;
+
+        if (isManualMode)
+        {
+            LogManager.Instance.Log($"{userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+            if (userId == Guid.Empty)
+            {
+                Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
+                _connector.IncrementErrorCount();
+                return;
+            }
+
+            var movePosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
+            var manualSyncObjectComponent = GetValidObject(userId, movePosition);
+            manualSyncObjectComponent.EnqueueMoveData(moveData);
+            return;
+        }
+
+        // ---------------------------------------------------------------------------------------------------------
+
+        LogManager.Instance.Log($"{userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+        if (userId == _authManager.UserGuid)
+            return;
+
+        Debug.Log($"Received SyncObjectPosition - {userId} : {moveData.X}, {moveData.Y}, {moveData.Z}, Speed: {moveData.Speed}");
+
+        if (userId == Guid.Empty)
         {
             Debug.Log($"Empty ObjectId received in SyncObjectPosition. Ignoring.");
             _connector.IncrementErrorCount();
@@ -92,14 +153,47 @@ public class SyncManager : Singleton<SyncManager>
         }
 
         var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
-        if (!_syncObjects.TryGetValue(uid, out var syncObject))
+        var syncObjectComponent = GetValidObject(userId, startPosition);
+        syncObjectComponent.EnqueueMoveData(moveData);
+    }
+
+    private void SyncAttack()
+    {
+        if(!_atkDataQueue.TryDequeue(out var result))
         {
-            Debug.LogError($"Invalid Situation: {uid} is not exist in syncObjects");
             return;
         }
 
-        var syncObjectComponent = syncObject.GetComponent<SyncObject>();
-        syncObjectComponent.EnqueueMoveData(moveData);
+        var uid = result.Item1;
+        var atkData = result.Item2;
+
+        var syncObject = GetValidObject(uid, Vector3.zero);
+        syncObject.EnqueueAtkData(atkData);
+    }
+
+    public void EnqueueAttackData(Guid userId, AtkData atkData)
+    {
+        _atkDataQueue.Enqueue(new Tuple<Guid, AtkData>(userId, atkData));
+
+        string hitUser = string.IsNullOrEmpty(atkData.To) ? "none" : atkData.To;
+        LogManager.Instance.Log($"{userId} : attack {hitUser}, damage {atkData.Dmg}");
+    }
+
+    private SyncObject GetValidObject(Guid userId, Vector3 initPos)
+    {
+        if (!_syncObjects.TryGetValue(userId, out var syncObject))
+        {
+            UserSimpleDto newUserDto = new()
+            {
+                Uid = userId.ToString(),
+                Username = $"test{_userInfos.Count}"
+            };
+
+            var newSyncObject = CreateSyncObject(newUserDto, initPos);
+            syncObject = newSyncObject;
+        }
+
+        return syncObject.GetComponent<SyncObject>();
     }
 
     public void SyncObjectNone(Guid objectId)
@@ -120,7 +214,7 @@ public class SyncManager : Singleton<SyncManager>
             GameObject randomObject = Instantiate(_syncObjectPrefab, Vector3.up, Quaternion.identity);
             randomObject.transform.SetParent(transform);
             randomObject.name = $"user {i + 1}";
-            randomObject.GetComponent<SyncObject>().Init(null);
+            randomObject.GetComponent<SyncObject>().ManualModeInit(null);
 
             randomObject.transform.position = new Vector3(Random.Range(0, 10), 1, Random.Range(0, 10));
 

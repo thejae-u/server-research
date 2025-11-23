@@ -3,7 +3,7 @@
 #include "LockstepGroup.h"
 #include "Session.h"
 #include "ContextManager.h"
-#include "Utility.h"
+#include "Util.h"
 
 GroupManager::GroupManager(const std::shared_ptr<ContextManager>& ctxManager) : _ctxManager(ctxManager), _privateStrand(_ctxManager->GetContext())
 {
@@ -43,8 +43,8 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
         std::lock_guard<std::mutex> groupLock(_groupMutex);
         _groups[newGroup->GetGroupId()] = newGroup;
 
-        std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
-        _groupsBySession[newSession->GetSessionUuid()] = newGroup;
+        //std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
+        //_groupsBySession[newSession->GetSessionUuid()] = newGroup;
     }
 }
 
@@ -78,19 +78,4 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup> emptyGr
     _groups.erase(it);
 
     spdlog::info("removed empty group {}", to_string(emptyGroup->GetGroupId()));
-}
-
-void GroupManager::CollectInput(std::shared_ptr<RpcPacket> input)
-{
-    auto uid = _toUuid(input->uid());
-
-    std::lock_guard<std::mutex> lock(_groupBySessionMutex);
-    if (_groupsBySession.find(uid) == _groupsBySession.end())
-    {
-        spdlog::error("no group by {}", input->uid());
-        return;
-    }
-
-    auto collectInput = std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(std::make_pair(uid, std::move(input)));
-    _groupsBySession[uid]->CollectInput(collectInput);
 }

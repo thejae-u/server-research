@@ -32,5 +32,5 @@ private:
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> _workGuard;
     std::vector<std::shared_ptr<std::thread>> _ctxThreads;
 
-    std::string _contextName;
+    std::string_view _contextName;
 };
