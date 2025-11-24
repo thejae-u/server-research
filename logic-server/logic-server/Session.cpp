@@ -13,7 +13,7 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
 {
     _isTcpSending = false;
     _isSerializingUdp = false;
-    _gameState = {};
+    _userState = {};
 }
 
 void Session::Start()
@@ -26,11 +26,6 @@ void Session::Start()
         }
     );
 
-    _updateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_updateDelay), [self](CompletionHandler onComplete) {
-        self->UpdateOwnState(onComplete);
-        }
-    );
-
     _sendStateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_sendStateDelay), [self](CompletionHandler onComplete) {
         self->SendGameStatePacket(onComplete);
         }
@@ -40,7 +35,6 @@ void Session::Start()
     TcpAsyncReadSize();
 
     _pingTimer->Start();
-    _updateTimer->Start();
     _sendStateTimer->Start();
     _isConnected = true;
 
@@ -55,7 +49,6 @@ void Session::Stop()
     _tcpSocketPtr->close();
 
     _pingTimer->Stop();
-    _updateTimer->Stop();
     _sendStateTimer->Stop();
 
     _onStopCallbackByGroup(shared_from_this());
@@ -371,10 +364,19 @@ void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
                 return;
 
             {
-                std::lock_guard<std::mutex> updateQueueLock(self->_updatePacketMutex);
-                self->_updatePacketQueue.push(*rpcRequest->second);
-            }})
-        ); })
+                std::lock_guard<std::mutex> updateQueueLock(self->_statesQueueMutex);
+                self->_statesQueue.push(*rpcRequest->second);
+
+                // wake-up update own state function
+                if (!self->_isOwnStateUpdating)
+                {
+                    self->_isOwnStateUpdating = true;
+                    boost::asio::post(self->_normalPrivateStrand.wrap([self]() { self->AsyncUpdateOwnState(); }));
+                }
+            }
+            
+            })); 
+        })
     );
 }
 
@@ -580,57 +582,79 @@ void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
     );
 }
 
-void Session::UpdateOwnState(CompletionHandler onComplete)
+void Session::AsyncUpdateOwnState()
 {
-	auto self(shared_from_this());
-
-	// Dequeue rpc packets and update state
-	RpcPacket nextPacket;
-	{
-		std::lock_guard<std::mutex> lock(_updatePacketMutex);
-        if (_updatePacketQueue.empty())
+    auto self(shared_from_this());
+    boost::asio::post(_normalPrivateStrand.wrap([self]() {
+        std::queue<RpcPacket> localQueue;
         {
-            onComplete();
+            std::lock_guard<std::mutex> lock(self->_statesQueueMutex);
+            if (self->_statesQueue.empty())
+            {
+                self->_isOwnStateUpdating = false;
+                return;
+            }
+
+            // all update packets moved local queue
+            self->_statesQueue.swap(localQueue);
+        }
+
+        // dequeue and process moved local queue
+        while (!localQueue.empty())
+        {
+            const auto nextPacket = localQueue.front();
+            localQueue.pop();
+
+            switch (nextPacket.method())
+            {
+            case RpcMethod::MoveStart:
+            case RpcMethod::Move:
+            case RpcMethod::MoveStop:
+            {
+                MoveData newMoveData;
+                // parsing move data and apply
+                if (!newMoveData.ParseFromString(nextPacket.data()))
+                {
+                    spdlog::error("{} error parsing move data for update own state", self->_sessionInfo.uid());
+                    return;
+                }
+
+                std::lock_guard<std::mutex> stateLock(self->_stateMutex);
+                self->_userState.position.SetPosition(newMoveData.x(), newMoveData.y(), newMoveData.z());
+                break;
+            }
+            case RpcMethod::Hit:
+            {
+                // 값 만큼 hp 감소
+                std::int32_t value = stoi(nextPacket.data());
+
+                if (value < 0)
+                {
+                    spdlog::error("[internal] invalid value from hit damage: {}, owner: {}", value, nextPacket.uid());
+                    break;
+                }
+
+                std::lock_guard<std::mutex> stateLock(self->_stateMutex);
+                self->_userState.hp -= value;
+                break;
+            }
+            default:
+                spdlog::error("{} invalid method in update state: {}", self->_sessionInfo.uid(), Util::MethodToString(nextPacket.method()));
+                break;
+            }
+        }
+
+        std::lock_guard<std::mutex> lock(self->_statesQueueMutex);
+        if (self->_statesQueue.empty())
+        {
+            self->_isOwnStateUpdating = false;
             return;
         }
 
-		nextPacket = _updatePacketQueue.front();
-		_updatePacketQueue.pop();
-	}
-
-    std::lock_guard<std::mutex> stateLock(_stateMutex);
-    switch (nextPacket.method())
-    {
-    case RpcMethod::MoveStart:
-    case RpcMethod::Move:
-	case RpcMethod::MoveStop:
-	{
-		MoveData newMoveData;
-		// parsing move data and apply
-		if (!newMoveData.ParseFromString(nextPacket.data()))
-		{
-			spdlog::error("{} error parsing move data for update own state", _sessionInfo.uid());
-			onComplete();
-			return;
-		}
-
-		_gameState.position.SetPosition(newMoveData.x(), newMoveData.y(), newMoveData.z());
-		break;
-	}
-    case RpcMethod::Hit:
-    {
-        // 값 만큼 hp 감소
-        std::int32_t value = stoi(nextPacket.data());
-        _gameState.hp -= value;
-        break;
-    }
-
-    default:
-        spdlog::error("{} invalid method in update state: {}", _sessionInfo.uid(), Util::MethodToString(nextPacket.method()));
-        break;
-    }
-
-	onComplete();
+        // if queue is not empty -> re process
+        boost::asio::post([self]() { self->AsyncUpdateOwnState(); });
+        })
+    );
 }
 
 void Session::SendGameStatePacket(CompletionHandler onComplete)
@@ -638,11 +662,7 @@ void Session::SendGameStatePacket(CompletionHandler onComplete)
     RpcPacket packet;
     packet.set_method(CLIENT_GAME_INFO);
 
-    Util::SGameState curGameState;
-    {
-        std::lock_guard<std::mutex> lock(_stateMutex);
-        curGameState = GetGameState();
-    }
+    Util::SUserState curGameState = GetGameState();
 
     GameData gameData;
     MoveData* moveData = gameData.mutable_position();

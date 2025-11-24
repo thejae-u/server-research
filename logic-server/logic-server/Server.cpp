@@ -166,7 +166,6 @@ void Server::AsyncReceiveUdpData()
             }
 
             sessionIt->second->CollectInput(std::make_shared<RpcPacket>(receivedRpcPacket));
-
             boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
             }
         )

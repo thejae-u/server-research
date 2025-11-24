@@ -25,9 +25,10 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
                 return;
             }
 
-            std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
             group->AddMember(newSession);
-            _groupsBySession[newSession->GetSessionUuid()] = group;
+
+            // std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
+            // _groupsBySession[newSession->GetSessionUuid()] = group;
             spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
             newSession->Start();
             return;

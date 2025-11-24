@@ -43,7 +43,7 @@ namespace Util
         }
     };
 
-    struct SGameState
+    struct SUserState
     {
         std::int32_t hp;
         SPos position;
