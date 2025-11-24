@@ -12,7 +12,7 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
 
     public Action onAttackAction;
     
-    private static IA_Base _iaBase;
+    private IA_Base _iaBase;
     private void OnEnable()
     {
         if (_iaBase == null)
@@ -40,12 +40,6 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
 
     public void OnMove(InputAction.CallbackContext context)
     {
-        if (context.started)
-        {
-            onMoveStartAction?.Invoke();
-            return;
-        }
-
         if (context.canceled)
         {
             if(_lastMoveInput != Vector2.zero)
@@ -63,7 +57,7 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
 
             if (input == Vector2.zero)
             {
-                if(_lastMoveInput != Vector2.zero)
+                if (_lastMoveInput != Vector2.zero)
                 {
                     onMoveStopAction?.Invoke();
                     _lastMoveInput = Vector2.zero;
@@ -71,7 +65,12 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
             }
             else
             {
-                if(input != _lastMoveInput)
+                if (_lastMoveInput == Vector2.zero)
+                {
+                    onMoveStartAction?.Invoke();
+                }
+
+                if (input != _lastMoveInput)
                 {
                     onMoveAction?.Invoke(input);
                     _lastMoveInput = input;
@@ -82,7 +81,7 @@ public class PlayerMoveActions : ScriptableObject, IA_Base.IPlayerActions
 
     public void OnAttack(InputAction.CallbackContext context)
     {
-        if(!context.started)
+        if(!context.performed)
             return;
 
         onAttackAction?.Invoke();

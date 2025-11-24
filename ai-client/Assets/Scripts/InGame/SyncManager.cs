@@ -13,14 +13,13 @@ public class SyncManager : Singleton<SyncManager>
 
     public bool isManualMode = false;
 
-    private LogicServerConnector _connector;
-    private ManualConnector _manualConnector;
+    private BaseConnector _connector;
     private AuthManager _authManager;
 
     private readonly Dictionary<Guid, GameObject> _syncObjects = new();
     private readonly Dictionary<Guid, UserSimpleDto> _userInfos = new();
 
-    private readonly Queue<Tuple<Guid, MoveData>> _moveDataQueue = new();
+    private readonly Queue<Tuple<Guid, RpcMethod, MoveData>> _moveDataQueue = new();
     private readonly Queue<Tuple<Guid, AtkData>> _atkDataQueue = new();
 
     private void Awake()
@@ -32,7 +31,7 @@ public class SyncManager : Singleton<SyncManager>
     {
         if(isManualMode)
         {
-            _manualConnector = ManualConnector.Instance;
+            _connector = ManualConnector.Instance;
             return;
         }
 
@@ -66,9 +65,9 @@ public class SyncManager : Singleton<SyncManager>
         SyncAttack();
     }
 
-    public void Enqueue(Guid userId, MoveData moveData)
+    public void Enqueue(Guid userId, RpcMethod method, MoveData moveData)
     {
-        _moveDataQueue.Enqueue(new Tuple<Guid, MoveData>(userId, moveData));
+        _moveDataQueue.Enqueue(new Tuple<Guid, RpcMethod, MoveData>(userId, method, moveData));
     }
 
     private GameObject CreateSyncObject(UserSimpleDto user, Vector3 position)
@@ -78,16 +77,7 @@ public class SyncManager : Singleton<SyncManager>
         syncObject.transform.SetParent(transform); // Set parent to SyncManager
         syncObject.name = user.Username; // Set the name to the objectId
 
-        if (isManualMode)
-        {
-            syncObject.GetComponent<SyncObject>().ManualModeInit(user);
-            Debug.Log($"Create manual mode object");
-        }
-        else
-        {
-            Debug.Log($"Create non-manual mode object");
-            syncObject.GetComponent<SyncObject>().Init(user); // Initialize SyncObject
-        }
+        syncObject.GetComponent<SyncObject>().Init(user, _connector); // Initialize SyncObject
 
         // Create the name tag
         GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
@@ -119,7 +109,8 @@ public class SyncManager : Singleton<SyncManager>
         }
 
         var userId = data.Item1;
-        var moveData = data.Item2;
+        var method = data.Item2;
+        var moveData = data.Item3;
 
         if (isManualMode)
         {
@@ -133,7 +124,7 @@ public class SyncManager : Singleton<SyncManager>
 
             var movePosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
             var manualSyncObjectComponent = GetValidObject(userId, movePosition);
-            manualSyncObjectComponent.EnqueueMoveData(moveData);
+            manualSyncObjectComponent.SetMovementState(method, moveData);
             return;
         }
 
@@ -154,7 +145,7 @@ public class SyncManager : Singleton<SyncManager>
 
         var startPosition = new Vector3(moveData.X, moveData.Y, moveData.Z);
         var syncObjectComponent = GetValidObject(userId, startPosition);
-        syncObjectComponent.EnqueueMoveData(moveData);
+        syncObjectComponent.SetMovementState(method, moveData);
     }
 
     private void SyncAttack()
@@ -203,25 +194,5 @@ public class SyncManager : Singleton<SyncManager>
             return;
 
         Debug.Log($"SyncObjectNone - {objectId}");
-    }
-
-    private void CreateTestSyncObject()
-    {
-        const int MAX_USER = 4;
-
-        for (int i = 0; i < MAX_USER; ++i)
-        {
-            GameObject randomObject = Instantiate(_syncObjectPrefab, Vector3.up, Quaternion.identity);
-            randomObject.transform.SetParent(transform);
-            randomObject.name = $"user {i + 1}";
-            randomObject.GetComponent<SyncObject>().ManualModeInit(null);
-
-            randomObject.transform.position = new Vector3(Random.Range(0, 10), 1, Random.Range(0, 10));
-
-            GameObject nameTag = Instantiate(_syncObjectNameTagPrefab, _syncObjectCanvas);
-            nameTag.GetComponent<NameTagController>().Init(randomObject.name, randomObject);
-
-            _syncObjects.Add(Guid.NewGuid(), randomObject);
-        }
     }
 }

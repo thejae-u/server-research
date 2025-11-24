@@ -13,139 +13,64 @@ public class SyncObject : MonoBehaviour
     // Several Sync Data can be added to the SyncObject
     public UserSimpleDto _user { get; private set; }
 
-    private LogicServerConnector _connector;
-    private AuthManager _authManager;
+    private BaseConnector _connector;
     private MeshRenderer _meshRenderer;
 
-    private Vector3 _lastNetworkPosition;
-    private readonly Queue<MoveData> _moveQueue = new();
+    private bool _isMoving = false;
+    private Vector3 _direction = Vector3.zero;
+
     private readonly Queue<AtkData> _atkQueue = new();
 
-    private IEnumerator _syncPositionRoutine = null;
     private IEnumerator _syncAttackRoutine = null;
 
     private GameObject _sword;
 
-    private bool IsOwnObject 
-    { 
-        get 
-        {
-            if (_isManualMode)
-                return Guid.Parse(_user.Uid) == ManualConnector.Instance.UserId;
-            return Guid.Parse(_user.Uid) == _authManager.UserGuid; 
-        } 
-    }
-
-    private bool _isManualMode = false;
+    private bool IsOwnObject => Guid.Parse(_user.Uid) == _connector.UserId;
 
     private void Awake()
     {
         _sword = transform.GetChild(0).gameObject;
     }
 
-    public void Init(UserSimpleDto user)
+    public void Init(UserSimpleDto user, BaseConnector connector)
     {
-        if(user is null)
-        {
-            _isManualMode = true;
-            return;
-        }
-
         _user = user;
+        _connector = connector;
         _meshRenderer = GetComponent<MeshRenderer>();
 
-        _connector = LogicServerConnector.Instance;
-        _authManager = AuthManager.Instance;
-
-        if (_connector is null || _authManager is null)
-            return;
-
-        if (Guid.Parse(_user.Uid) == _authManager.UserGuid)
+        if (IsOwnObject)
         {
             _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
         }
-
-        _syncPositionRoutine = SyncPositionRoutine();
-        StartCoroutine(_syncPositionRoutine);
     }
 
-    public void ManualModeInit(UserSimpleDto user)
+    public void SetMovementState(RpcMethod method, MoveData moveData)
     {
-        _isManualMode = true;
+        transform.position = new Vector3(moveData.X, moveData.Y, moveData.Z);
+        _direction = new Vector3(moveData.Horizontal, 0, moveData.Vertical);
 
-        _user = user;
-        _meshRenderer = GetComponent<MeshRenderer>();
-
-        if(Guid.Parse(_user.Uid) == ManualConnector.Instance.UserId)
+        switch (method)
         {
-            _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
+            case RpcMethod.MoveStart:
+                _isMoving = true;
+                break;
+            case RpcMethod.Move:
+                _isMoving = true;
+                break;
+            case RpcMethod.MoveStop:
+                _isMoving = false;
+                break;
         }
-
-        _syncPositionRoutine = null;
-    }
-
-    public void EnqueueMoveData(MoveData moveData)
-    {
-        _moveQueue.Enqueue(moveData);
     }
 
     public void EnqueueAtkData(AtkData atkData)
     {
         _atkQueue.Enqueue(atkData);
     }
-
-    private IEnumerator SyncPositionRoutine()
+    
+    public IEnumerator SyncAttackRoutine()
     {
-        while (_connector.IsOnline)
-        {
-            if (_moveQueue.Count == 0)
-                continue;
-
-            MoveData nextData = _moveQueue.Dequeue();
-            yield return null;
-        }
-
-        _syncPositionRoutine = null;    
-    }
-
-    public void Sync()
-    {
-        if (_syncPositionRoutine is null)
-        {
-            _syncPositionRoutine = ManualSyncPosition();
-            StartCoroutine(_syncPositionRoutine);
-        }
-
-        if(_syncAttackRoutine is null)
-        {
-            _syncAttackRoutine = ManualSyncAttack();
-            StartCoroutine(_syncAttackRoutine);
-        }
-    }
-
-    public IEnumerator ManualSyncPosition()
-    {
-        if(ManualConnector.Instance.IsOnline)
-        {
-            if (_moveQueue.Count == 0)
-            {
-                _syncPositionRoutine = null;
-                yield break;
-            }
-
-            MoveData nextData = _moveQueue.Dequeue();
-            LogManager.Instance.Log($"{_user.Uid} next Data : {nextData.X},{nextData.Y},{nextData.Z}");
-            Vector3 newPosition = new(nextData.X, nextData.Y, nextData.Z);
-            transform.position = Vector3.Lerp(transform.position, newPosition, 1.0f);
-            yield return null;
-        }
-
-        _syncPositionRoutine = null;
-    }
-
-    public IEnumerator ManualSyncAttack()
-    {
-        if (!ManualConnector.Instance.IsOnline)
+        if (!_connector.IsOnline)
             yield break;
 
         if(_atkQueue.Count == 0)
@@ -179,19 +104,21 @@ public class SyncObject : MonoBehaviour
 
     private void Update()
     {
-        if (_isManualMode)
-        {
-            if (IsOwnObject)
-                _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
-
-            Sync();
-            return;
-        }
-
-        if (!_connector.IsOnline)
+        if (_connector == null || !_connector.IsOnline)
             return;
 
         if (IsOwnObject)
             _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
+
+        if (_isMoving)
+        {
+            transform.position += _direction * (_playerStatData.speed * Time.deltaTime);
+        }
+        
+        if(_syncAttackRoutine is null && _atkQueue.Count > 0)
+        {
+            _syncAttackRoutine = SyncAttackRoutine();
+            StartCoroutine(_syncAttackRoutine);
+        }
     }
 }

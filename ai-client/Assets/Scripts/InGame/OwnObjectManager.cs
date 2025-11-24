@@ -16,7 +16,7 @@ public class OwnObjectManager : MonoBehaviour
     private bool IsOnAttack => _attackMotionRoutine is not null;
     private IEnumerator _attackMotionRoutine;
 
-    private LogicServerConnector _connector;
+    private BaseConnector _connector;
 
     private bool _isMoving;
 
@@ -45,22 +45,28 @@ public class OwnObjectManager : MonoBehaviour
     {
         if (SyncManager.Instance.isManualMode)
         {
-            _isManualMode = true;
-            _isMoving = false;
-            return;
+            _connector = ManualConnector.Instance;
         }
-
-        _connector = LogicServerConnector.Instance;
-        _connector.StartGameTask();
+        else
+        {
+            _connector = LogicServerConnector.Instance;
+        }
+        
         _isMoving = false;
     }
 
     private void OnEnable()
     {
+        _playerActions.onMoveStartAction -= OnMoveStart;
         _playerActions.onMoveStartAction += OnMoveStart;
+        
+        _playerActions.onMoveAction -= OnMove;
         _playerActions.onMoveAction += OnMove;
+        
+        _playerActions.onMoveStopAction -= OnMoveStop;
         _playerActions.onMoveStopAction += OnMoveStop;
 
+        _playerActions.onAttackAction -= OnAttack;
         _playerActions.onAttackAction += OnAttack;
     }
 
@@ -75,20 +81,6 @@ public class OwnObjectManager : MonoBehaviour
 
     private void Update()
     {
-        if (_isManualMode)
-        {
-            if (!ManualConnector.Instance.IsOnline)
-                return;
-
-            _lastSendDeltaTime += Time.deltaTime * 1000.0f; // Convert to milliseconds
-
-            if (!_isMoving)
-                return;
-
-            MoveTo();
-            return;
-        }
-
         if (!_connector.IsOnline)
             return;
 
@@ -120,10 +112,7 @@ public class OwnObjectManager : MonoBehaviour
         _sendPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
         _sendPacket.Data = _moveData.ToByteString();
 
-        if (_isManualMode)
-            ManualConnector.Instance.EnqueueRpcPacketForUdp(_sendPacket);
-        else
-            _connector.EnqueueRpcPacketForUdp(_sendPacket);
+        _connector.EnqueueRpcPacketForUdp(_sendPacket);
     }
 
     public void MoveTo()
@@ -181,10 +170,7 @@ public class OwnObjectManager : MonoBehaviour
             Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
         };
 
-        if (_isManualMode)
-            ManualConnector.Instance.EnqueueRpcPacketForUdp(attackPacket);
-        else
-            _connector.EnqueueRpcPacketForUdp(attackPacket);
+        _connector.EnqueueRpcPacketForUdp(attackPacket);
 
         const float duration = 0.5f;
         float delta = 0.0f;
