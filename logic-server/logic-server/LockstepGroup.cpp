@@ -45,7 +45,6 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
     }
 
     auto self(shared_from_this());
-    newSession->SetGroup(self);
     newSession->SetStopCallbackByGroup([self](const std::shared_ptr<Session>& session) {
         self->RemoveMember(session);
         }

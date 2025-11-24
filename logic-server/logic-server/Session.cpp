@@ -11,6 +11,8 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
     _normalPrivateStrand(_normalCtxManager->GetContext()),
     _rpcPrivateStrand(_rpcCtxManager->GetContext())
 {
+    _isTcpSending = false;
+    _isSerializingUdp = false;
     _gameState = {};
 }
 
@@ -36,8 +38,6 @@ void Session::Start()
 
     // Async Functions Start
     TcpAsyncReadSize();
-    TcpAsyncWrite();
-    SerializeRpcPacketAndEnqueueData();
 
     _pingTimer->Start();
     _updateTimer->Start();
@@ -310,34 +310,39 @@ void Session::SerializeRpcPacketAndEnqueueData()
     if (_sendDataByUdp == nullptr)
     {
         spdlog::error("send callback is not set");
+        _isSerializingUdp = false; // Stop the loop if callback is not set
         return;
     }
 
 	auto self(shared_from_this());
 
-	// lock for check empty queue
-	{
-		std::lock_guard<std::mutex> lock(_sendUdpQueueMutex);
-		if (_sendUdpPacketQueue.empty())
-		{
-            boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); }); // restart this function
-			return;
-		}
-	}
-
-	auto nextPacket = DequeueSendUdpPackets(); // this function will lock queue
     std::string serializedData;
-	if(!nextPacket.SerializeToString(&serializedData))
-	{
-		spdlog::error("{} : rpc packet serialize failed", _sessionInfo.uid());
-		boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); }); // restart this function
-		return;
-	}
+    // Dequeue and serialize within the lock to ensure consistency
+    {
+        {
+            std::lock_guard<std::mutex> lock(_sendUdpQueueMutex);
+            if (_sendUdpPacketQueue.empty())
+            {
+                _isSerializingUdp = false; // Stop the loop
+                return;
+            }
+        }
 
-     auto sendDataPair = std::make_shared<std::pair<udp::endpoint, std::string>>(_udpSendEp, serializedData);
+        auto nextPacket = DequeueSendUdpPackets(); // This is called within the lock
+        if (!nextPacket.SerializeToString(&serializedData))
+        {
+            spdlog::error("{} : rpc packet serialize failed", _sessionInfo.uid());
+            // Post again to continue the loop for other packets.
+            boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
+            return;
+        }
+    }
+
+    auto sendDataPair = std::make_shared<std::pair<udp::endpoint, std::string>>(_udpSendEp, serializedData);
     _sendDataByUdp(std::move(sendDataPair));
 
-	boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); }); // restart this function
+    // Post again to process the next item in the queue.
+    boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
 }
 
 // set by server.cpp
@@ -375,6 +380,7 @@ void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
 
 void Session::EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets)
 {
+    std::lock_guard<std::mutex> lock(_sendUdpQueueMutex);
 	for (const auto& packet : sendPackets)
 	{
         // rpc packet deep copy
@@ -382,9 +388,14 @@ void Session::EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>
         listupPacket.CopyFrom(*packet->packet);
 
         // copied RpcPacket push
-	    std::lock_guard<std::mutex> lock(_sendUdpQueueMutex);
 		_sendUdpPacketQueue.push(listupPacket);
 	}
+
+    if (!_isSerializingUdp)
+    {
+        _isSerializingUdp = true;
+        boost::asio::post(_rpcPrivateStrand, [this]() { SerializeRpcPacketAndEnqueueData(); });
+    }
 }
 
 RpcPacket Session::DequeueSendUdpPackets()
@@ -440,6 +451,12 @@ void Session::EnqueueTcpSendData(std::shared_ptr<std::string> data)
 {
     std::lock_guard<std::mutex> lock(_sendTcpQueueMutex);
     _sendTcpQueue.push(std::move(data));
+
+    if (!_isTcpSending)
+    {
+        _isTcpSending = true;
+        boost::asio::post(_normalPrivateStrand.wrap([this]() { TcpAsyncWrite(); }));
+    }
 }
 
 void Session::TcpAsyncWrite()
@@ -451,7 +468,7 @@ void Session::TcpAsyncWrite()
         std::lock_guard<std::mutex> lock(_sendTcpQueueMutex);
         if (_sendTcpQueue.empty())
         {
-            boost::asio::post(_normalPrivateStrand.wrap([self]() { self->TcpAsyncWrite(); }));
+            _isTcpSending = false;
             return;
         }
 
@@ -467,6 +484,8 @@ void Session::TcpAsyncWrite()
             if (sizeEc)
             {
                 spdlog::error("{} : TCP error sending size ({})", self->_sessionInfo.uid(), sizeEc.message());
+                // If an error occurs, we should probably stop the send loop, but for now, we just log and continue the loop to try the next message.
+                boost::asio::post(self->_normalPrivateStrand.wrap([self]() { self->TcpAsyncWrite(); }));
                 return;
             }
 
@@ -475,9 +494,9 @@ void Session::TcpAsyncWrite()
                     if (dataEc)
                     {
                         spdlog::error("TCP error sending data to {} : {}", self->_sessionInfo.uid(), dataEc.message());
-                        return;
                     }
 
+                    // Continue the loop for the next item.
                     boost::asio::post(self->_normalPrivateStrand.wrap([self]() { self->TcpAsyncWrite(); }));
                     }
                 ));

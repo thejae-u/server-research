@@ -15,14 +15,18 @@ using namespace boost::asio::ip;
 int main()
 {
     spdlog::info("initialize start");
-    const auto ctxThreadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 100;
-    const std::size_t rpcCtxThreadCount = ctxThreadCount / 5; // 20% of total threads for RPC
-    const std::size_t workCtxThreadCount = ctxThreadCount - rpcCtxThreadCount; // Remaining threads for work context
+    std::size_t coreCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 2;
+    if (coreCount == 0)
+        coreCount = 4; // least core count
 
-    auto workThreadContext = ContextManager::Create("work", 
-        static_cast<std::size_t>(workCtxThreadCount * 0.3f), static_cast<std::size_t>(workCtxThreadCount * 0.7f)); // work thread for normal network callback
-    auto rpcThreadContext = ContextManager::Create("rpc",
-        static_cast<std::size_t>(rpcCtxThreadCount * 0.3f), static_cast<std::size_t>(rpcCtxThreadCount * 0.7f)); // rpc thread for udp network callback
+    const std::size_t mainIoThreads = coreCount / 2;
+    const std::size_t mainWorkerThreads = coreCount - mainIoThreads;
+
+    const std::size_t rpcIoThreads = coreCount / 2;
+    const std::size_t rpcWorkerThreads = coreCount - rpcIoThreads;
+
+    auto workThreadContext = ContextManager::Create("main", mainIoThreads, mainWorkerThreads);
+    auto rpcThreadContext = ContextManager::Create("rpc", rpcIoThreads, rpcWorkerThreads);
 
     if (!TEST_MODE)
     {

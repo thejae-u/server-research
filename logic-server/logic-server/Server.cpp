@@ -10,6 +10,7 @@ Server::Server(const std::shared_ptr<ContextManager>& mainCtxManager, const std:
 {
     _groupManager = std::make_shared<GroupManager>(_normalCtxManager);
     _isRunning = false;
+    _isSending = false;
     _allocatedUdpPort = _udpSocket->local_endpoint().port();
     spdlog::info("allocated udp port: {}", _allocatedUdpPort);
 }
@@ -19,7 +20,6 @@ void Server::Start()
     _isRunning = true;
     AcceptClientAsync();
     AsyncReceiveUdpData();
-    AsyncSendUdpData();
 
     spdlog::info("server start complete");
 }
@@ -155,7 +155,17 @@ void Server::AsyncReceiveUdpData()
 
             // valid data collected to session and lockstep group
             auto id = self->_toUuid(receivedRpcPacket.uid());
-            self->_sessions[id]->CollectInput(std::make_shared<RpcPacket>(receivedRpcPacket));
+
+            std::lock_guard<std::mutex> sessionsLock(self->_sessionsMutex);
+            auto sessionIt = self->_sessions.find(id);
+            if (sessionIt == self->_sessions.end())
+            {
+                spdlog::error("invalid session id requested (id: {})", receivedRpcPacket.uid());
+                boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
+                return;
+            }
+
+            sessionIt->second->CollectInput(std::make_shared<RpcPacket>(receivedRpcPacket));
 
             boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
             }
@@ -167,51 +177,66 @@ void Server::EnqueueSendData(std::shared_ptr<std::pair<udp::endpoint, std::strin
 {
     std::lock_guard<std::mutex> lock(_sendDataQueueMutex);
     _sendDataQueue.push(sendDataPair);
+    if (!_isSending)
+    {
+        _isSending = true;
+        boost::asio::post(_rpcPrivateStrand.wrap([this]() { AsyncSendUdpData(); }));
+    }
 }
 
 void Server::AsyncSendUdpData()
 {
     auto self(shared_from_this());
     boost::asio::post(_rpcPrivateStrand.wrap([self]() {
-        udp::endpoint ep;
-        std::string sendData;
+        std::queue<std::shared_ptr<std::pair<udp::endpoint, std::string>>> localQueue;
 
         {
             std::lock_guard<std::mutex> lock(self->_sendDataQueueMutex);
             if (self->_sendDataQueue.empty())
             {
-                self->AsyncSendUdpData();
+                self->_isSending = false;
                 return;
             }
 
-            ep = self->_sendDataQueue.front()->first; // endpoint pop
-            sendData = self->_sendDataQueue.front()->second; // send data pop
-            self->_sendDataQueue.pop();
+            self->_sendDataQueue.swap(localQueue);
         }
 
-        //spdlog::info("send packet to client {}:{}", ep.address().to_string(), ep.port());
-        const std::uint16_t payloadSize = static_cast<std::uint16_t>(sendData.size());
-        const std::uint16_t payloadNetSize = htons(payloadSize);
+        while (!localQueue.empty())
+        {
+            auto sendDataPair = localQueue.front();
+            localQueue.pop();
 
-        const auto payload = std::make_shared<std::string>();
-        payload->append(reinterpret_cast<const char*>(&payloadNetSize), sizeof(payloadNetSize));
-        payload->append(sendData);
+            // Lock is released here as the queue has been modified.
+            // Prepare and send data outside the lock scope.
+            udp::endpoint ep = sendDataPair->first;
+            std::string sendData = sendDataPair->second;
 
-        self->_udpSocket->async_send_to(boost::asio::buffer(*payload), ep,
-            self->_rpcPrivateStrand.wrap([self, payload, ep](boost::system::error_code ec, std::size_t) {
-                if (ec)
-                {
-                    spdlog::error("udp send error: {}", ec.message());
-                    self->AsyncSendUdpData();
-                    return;
-                }
+            const std::uint16_t payloadSize = static_cast<std::uint16_t>(sendData.size());
+            const std::uint16_t payloadNetSize = htons(payloadSize);
 
-                //spdlog::info("send udp packet complete to {}", ep.address().to_string());
-                self->AsyncSendUdpData();
-                }
-            ));
-        })
-    );
+            const auto payload = std::make_shared<std::string>();
+            payload->append(reinterpret_cast<const char*>(&payloadNetSize), sizeof(payloadNetSize));
+            payload->append(sendData);
+
+            self->_udpSocket->async_send_to(boost::asio::buffer(*payload), ep,
+                self->_rpcPrivateStrand.wrap([self, payload, ep](boost::system::error_code ec, std::size_t) {
+                    if (ec)
+                    {
+                        spdlog::error("udp send error: {}", ec.message());
+                    }
+                })
+            );
+        }
+
+        std::lock_guard<std::mutex> lock(self->_sendDataQueueMutex);
+        if (!self->_sendDataQueue.empty())
+        {
+            boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncSendUdpData(); }));
+            return;
+        }
+
+        self->_isSending = false;
+    }));
 }
 
 void Server::AddSession(std::shared_ptr<Session> newSession)

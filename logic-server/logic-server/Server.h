@@ -50,6 +50,7 @@ private:
     std::uint16_t _allocatedUdpPort;
 
     std::mutex _sendDataQueueMutex;
+    bool _isSending;
     std::queue<std::shared_ptr<std::pair<udp::endpoint, std::string>>> _sendDataQueue;
 
 	std::shared_ptr<GroupManager> _groupManager;

@@ -49,7 +49,6 @@ public:
     void Stop() override;
 
     tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
-    void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 
 public: // first handshaking functions
     bool ExchangeUdpPort(std::uint16_t udpPort);
@@ -92,6 +91,8 @@ private: // tcp functions
 private: // udp network members
     std::mutex _sendUdpQueueMutex;
     std::queue<RpcPacket> _sendUdpPacketQueue;
+    bool _isTcpSending = false;
+    bool _isSerializingUdp = false;
 
 private: // default members
     using TcpSocket = tcp::socket;
@@ -118,8 +119,7 @@ private: // default members
     // client connected state
     std::atomic<bool> _isConnected = false;
 
-    // group
-    std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
+    // dtos
     UserSimpleDto _sessionInfo;
     GroupDto _groupDto;
 
