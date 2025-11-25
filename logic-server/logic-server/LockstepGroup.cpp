@@ -141,7 +141,14 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
     if (atkPacket->data().empty())
         return;
 
-    victimUid = _toUuid(atkPacket->data());
+    AtkData atkData;
+    if (!atkData.ParseFromString(atkPacket->data()))
+    {
+        spdlog::error("[internal] parsing error by atk data");
+        return;
+    }
+
+    victimUid = _toUuid(atkData.victim());
 
     Util::SUserState attackerState;
     Util::SUserState victimState;
@@ -169,9 +176,9 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
     {
         auto self(shared_from_this());
         spdlog::info("hit {} from {}", to_string(victimUid), to_string(attackerUid));
-        boost::asio::post(_privateStrand.wrap([self, attackerUid, victimUid]() {
+        boost::asio::post(_privateStrand.wrap([self, atkData, attackerUid, victimUid]() {
             auto hitPacket = std::make_shared<RpcPacket>();
-            MakeHitPacket(attackerUid, victimUid, hitPacket);
+            MakeHitPacket(attackerUid, victimUid, hitPacket, atkData.dmg());
 
             // victim hit rpc packet
             auto requestPacket = std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>();

@@ -16,8 +16,13 @@ message MoveData
 
 message AtkData 
 {
-  string from = 1;
-  string to = 2;
+  string victim = 2;
+  int32 dmg = 3;
+}
+
+message HitData
+{
+  string attacker = 1;
   int32 dmg = 3;
 }
 

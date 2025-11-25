@@ -23,7 +23,7 @@ namespace Network
         }
         public override List<UserSimpleDto> Users => _currentGroupDto?.PlayerList.ToList() ?? new List<UserSimpleDto>();
 
-        void Awake()
+        protected override void Awake()
         {
             base.Awake();
             if (Instance != null && Instance != this)

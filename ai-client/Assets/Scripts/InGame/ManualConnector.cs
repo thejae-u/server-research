@@ -18,7 +18,7 @@ namespace Network
         public string Name { get; private set; }
         public override List<UserSimpleDto> Users => _currentGroupDto?.PlayerList.ToList() ?? new List<UserSimpleDto>();
 
-        void Awake()
+        protected override void Awake()
         {
             base.Awake();
             if (Instance != null && Instance != this)
@@ -95,6 +95,8 @@ namespace Network
 
                 await _tcpStream.WriteAsync(sendDataSize, 0, sendDataSize.Length, ct);
                 await _tcpStream.WriteAsync(sendData, 0, sendData.Length, ct);
+
+                _dispatcher.Enqueue(() => Debug.Log($"Exchange User Info Complete"));
                 return true;
             }
             catch (Exception ex)
@@ -131,6 +133,8 @@ namespace Network
 
                 await _tcpStream.WriteAsync(sendPacketSize, 0, sendPacketSize.Length, ct);
                 await _tcpStream.WriteAsync(sendPacketData, 0, sendPacketData.Length, ct);
+
+                _dispatcher.Enqueue(() => Debug.Log($"Exchange Group Info Complete"));
                 return true;
             }
             catch (Exception ex)

@@ -34,8 +34,6 @@ public class OwnObjectManager : MonoBehaviour
 
     private readonly RpcPacket _sendPacket = new();
 
-    private bool _isManualMode = false;
-
     private void Awake()
     {
         _sword = transform.GetChild(0).gameObject;

@@ -124,8 +124,7 @@ namespace Network
             IsTryingToConnect = true;
             _tcpClient = new TcpClient();
 
-            Debug.Log("Connecting to server Start");
-
+            _dispatcher.Enqueue(() => Debug.Log("Connecting to server Start"));
             for (int i = 0; i <= _maxRetries; ++i)
             {
                 try
@@ -179,13 +178,12 @@ namespace Network
                 return false;
             }
 
+            _dispatcher.Enqueue(() => Debug.Log("All Handshake Done. Connection Complete"));
             return true;
         }
 
         public void StartGameTask()
         {
-            _dispatcher.Enqueue(() => Debug.Log($"Called start Task"));
-
             if (IsOnline) return;
 
             Interlocked.Exchange(ref _isOnline, 1);
@@ -293,6 +291,7 @@ namespace Network
 
         private async Task AsyncWriteByUdp(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
@@ -327,6 +326,7 @@ namespace Network
 
         private async Task AsyncWriteByTcp(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
@@ -355,6 +355,7 @@ namespace Network
 
         private async Task TcpAsyncReadData(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
@@ -392,6 +393,7 @@ namespace Network
 
         protected async Task<bool> ReadTcpExactlyAsync(NetworkStream stream, byte[] buffer, int length, CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             int totalBytesRead = 0;
             while (totalBytesRead < length)
             {
@@ -411,6 +413,7 @@ namespace Network
 
         private async Task UdpAsyncReadData(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
@@ -460,6 +463,7 @@ namespace Network
 
         private async Task AsyncParsingRawPacket(CancellationToken ct)
         {
+            await Awaitable.BackgroundThreadAsync();
             while (!ct.IsCancellationRequested && IsOnline)
             {
                 try
