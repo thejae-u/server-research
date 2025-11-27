@@ -175,6 +175,12 @@ namespace Network
                             SyncManager.Instance.EnqueueAttackData(Guid.Parse(packet.Uid), atkData);
                         }
                         break;
+                    case RpcMethod.Hit:
+                        if (parsedData is HitData hitData)
+                        {
+                            SyncManager.Instance.EnqueueHit(Guid.Parse(packet.Uid), hitData);
+                        }
+                        break;
                     case RpcMethod.ClientGameInfo:
                         if (parsedData is GameData gameData)
                         {

@@ -487,6 +487,9 @@ namespace Network
                         case RpcMethod.Atk:
                             parsedDataObject = AtkData.Parser.ParseFrom(packetData.Data);
                             break;
+                        case RpcMethod.Hit:
+                            parsedDataObject = HitData.Parser.ParseFrom(packetData.Data);
+                            break;
                         case RpcMethod.ClientGameInfo:
                             parsedDataObject = GameData.Parser.ParseFrom(packetData.Data);
                             break;

@@ -5,7 +5,9 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Network;
 using NetworkData;
+using Cysharp.Threading.Tasks.Triggers;
 
+[RequireComponent(typeof(MeshRenderer))]
 public class OwnObjectManager : MonoBehaviour
 {
     [SerializeField] private PlayerMoveActions _playerActions;
@@ -13,14 +15,16 @@ public class OwnObjectManager : MonoBehaviour
     [SerializeField] private float _movePacketSendInterval = 16.6f; // in milliseconds
 
     private GameObject _sword;
+    private MeshRenderer _meshRenderer;
     private bool IsOnAttack => _attackMotionRoutine is not null;
     private IEnumerator _attackMotionRoutine;
-
+    
     private BaseConnector _connector;
 
     private bool _isMoving;
 
     private Vector3 _cachedDirection;
+    private Vector3 _lastMoveDirection = Vector3.forward;
     private float _lastSendDeltaTime = 0.0f;
     private MoveData _moveData = new()
     {
@@ -33,10 +37,12 @@ public class OwnObjectManager : MonoBehaviour
     };
 
     private readonly RpcPacket _sendPacket = new();
+    private Collider[] _hitColliders = new Collider[10]; // 미리 할당된 배열
 
     private void Awake()
     {
         _sword = transform.GetChild(0).gameObject;
+        _meshRenderer = GetComponent<MeshRenderer>();
     }
 
     private void Start()
@@ -50,6 +56,7 @@ public class OwnObjectManager : MonoBehaviour
             _connector = LogicServerConnector.Instance;
         }
         
+        SyncManager.Instance.RegisterLocalPlayer(this);
         _isMoving = false;
     }
 
@@ -129,6 +136,10 @@ public class OwnObjectManager : MonoBehaviour
     {
         Vector3 dir = transform.right * move.x + transform.forward * move.y;
         _cachedDirection = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.zero;
+        if (_cachedDirection != Vector3.zero)
+        {
+            _lastMoveDirection = _cachedDirection;
+        }
 
         _moveData.Horizontal = dir.x;
         _moveData.Vertical = dir.z;
@@ -161,10 +172,39 @@ public class OwnObjectManager : MonoBehaviour
 
     private IEnumerator AttackMotionRoutine()
     {
+        // AABB Check
+        Vector3 boxSize = new(1f, 1f, 1f);
+        Vector3 center = transform.position + _lastMoveDirection * 1.0f;
+        int numColliders = Physics.OverlapBoxNonAlloc(center, boxSize / 2, _hitColliders, transform.rotation);
+
+        string victimId = "";
+        int damage = 0;
+
+        for (int i = 0; i < numColliders; i++)
+        {
+            var hitCollider = _hitColliders[i];
+            if(!hitCollider.TryGetComponent(out SyncObject syncObject))
+            {
+                continue;
+            }
+
+            if (syncObject != null)
+            {
+                victimId = syncObject._user.Uid;
+                damage = _playerStatData.damage;
+            }
+        }
+
+        AtkData atkData = new AtkData
+        {
+            Victim = victimId,
+            Dmg = damage
+        };
+
         RpcPacket attackPacket = new()
         {
             Method = RpcMethod.Atk,
-            Data = ByteString.Empty,
+            Data = atkData.ToByteString(),
             Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
         };
 
@@ -189,5 +229,20 @@ public class OwnObjectManager : MonoBehaviour
 
         _sword.transform.localPosition = originalPosition;
         _attackMotionRoutine = null;
+    }
+
+    public void OnDamage(int damage)
+    {
+        StartCoroutine(DamageEffectRoutine());
+    }
+
+    private IEnumerator DamageEffectRoutine()
+    {
+        if (_meshRenderer == null) yield break;
+
+        Color originalColor = _meshRenderer.material.color;
+        _meshRenderer.material.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        _meshRenderer.material.color = originalColor;
     }
 }

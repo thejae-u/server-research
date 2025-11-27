@@ -22,6 +22,14 @@ public class SyncManager : Singleton<SyncManager>
 
     private readonly Queue<Tuple<Guid, RpcMethod, MoveData>> _moveDataQueue = new();
     private readonly Queue<Tuple<Guid, AtkData>> _atkDataQueue = new();
+    private readonly Queue<Tuple<Guid, HitData>> _hitDataQueue = new();
+
+    private OwnObjectManager _localPlayer;
+
+    public void RegisterLocalPlayer(OwnObjectManager localPlayer)
+    {
+        _localPlayer = localPlayer;
+    }
 
     private void Awake()
     {
@@ -64,6 +72,7 @@ public class SyncManager : Singleton<SyncManager>
     {
         SyncObjectPosition();
         SyncAttack();
+        SyncHit();
     }
 
     public void Enqueue(Guid userId, RpcMethod method, MoveData moveData)
@@ -176,9 +185,34 @@ public class SyncManager : Singleton<SyncManager>
         if (syncObjectComponent == null)
         {
             Debug.LogError($"invalid sync object id: {uid}");
+        }
+        else
+        {
+            syncObjectComponent.EnqueueAtkData(atkData);
+        }
+    }
+
+    private void SyncHit()
+    {
+        if(!_hitDataQueue.TryDequeue(out var result))
+        {
             return;
         }
-        syncObjectComponent.EnqueueAtkData(atkData);
+
+        var victimId = result.Item1;
+        var hitData = result.Item2;
+
+        if (_connector != null && victimId == _connector.UserId)
+        {
+            if (_localPlayer != null) _localPlayer.OnDamage(hitData.Dmg);
+        }
+        else
+        {
+            if (_syncObjectComponents.TryGetValue(victimId, out var victimSyncObject))
+            {
+                victimSyncObject.OnDamage(hitData.Dmg);
+            }
+        }
     }
 
     public void EnqueueAttackData(Guid userId, AtkData atkData)
@@ -187,6 +221,12 @@ public class SyncManager : Singleton<SyncManager>
 
         string hitUser = string.IsNullOrEmpty(atkData.Victim) ? "none" : atkData.Victim;
         LogManager.Instance.Log($"{userId} : attack {hitUser}, damage {atkData.Dmg}");
+    }
+
+    public void EnqueueHit(Guid userId, HitData hitData)
+    {
+        _hitDataQueue.Enqueue(new Tuple<Guid, HitData>(userId, hitData));
+        LogManager.Instance.Log($"{userId} : hit by {hitData.Attacker}, damage {hitData.Dmg}");
     }
 
     private SyncObject GetValidObject(Guid userId, Vector3 initPos)

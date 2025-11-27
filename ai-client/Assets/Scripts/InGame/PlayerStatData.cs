@@ -4,4 +4,5 @@ using UnityEngine;
 public class PlayerStatData : ScriptableObject
 {
     public float speed = 5f;
+    public int damage = 10;
 }

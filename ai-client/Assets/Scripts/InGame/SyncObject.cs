@@ -18,6 +18,7 @@ public class SyncObject : MonoBehaviour
 
     private bool _isMoving = false;
     private Vector3 _direction = Vector3.zero;
+    private Vector3 _targetPosition;
 
     private readonly Queue<AtkData> _atkQueue = new();
 
@@ -37,6 +38,7 @@ public class SyncObject : MonoBehaviour
         _user = user;
         _connector = connector;
         _meshRenderer = GetComponent<MeshRenderer>();
+        _targetPosition = transform.position;
 
         if (IsOwnObject)
         {
@@ -46,7 +48,14 @@ public class SyncObject : MonoBehaviour
 
     public void SetMovementState(RpcMethod method, MoveData moveData)
     {
-        transform.position = new Vector3(moveData.X, moveData.Y, moveData.Z);
+        Vector3 newPos = new Vector3(moveData.X, moveData.Y, moveData.Z);
+        
+        if (Vector3.Distance(transform.position, newPos) > 5.0f)
+        {
+            transform.position = newPos;
+        }
+
+        _targetPosition = newPos;
         _direction = new Vector3(moveData.Horizontal, 0, moveData.Vertical);
 
         switch (method)
@@ -66,6 +75,21 @@ public class SyncObject : MonoBehaviour
     public void EnqueueAtkData(AtkData atkData)
     {
         _atkQueue.Enqueue(atkData);
+    }
+
+    public void OnDamage(int damage)
+    {
+        StartCoroutine(DamageEffectRoutine());
+    }
+
+    private IEnumerator DamageEffectRoutine()
+    {
+        if (_meshRenderer == null) yield break;
+
+        Color originalColor = _meshRenderer.material.color;
+        _meshRenderer.material.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        _meshRenderer.material.color = originalColor;
     }
     
     public IEnumerator SyncAttackRoutine()
@@ -110,10 +134,15 @@ public class SyncObject : MonoBehaviour
         if (IsOwnObject)
             _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
 
+        // 1. 로컬 예측 이동 (데드레코닝)
         if (_isMoving)
         {
             transform.position += _direction * (_playerStatData.speed * Time.deltaTime);
         }
+
+        // 2. 서버 위치와의 오차 보정 (보간)
+        // 단순히 Lerp만 쓰면 뒤로 끌려갈 수 있으므로, 현재 위치와 타겟 위치가 다를 때만 부드럽게 보정
+        transform.position = Vector3.Lerp(transform.position, _targetPosition, Time.deltaTime * 10.0f);
         
         if(_syncAttackRoutine is null && _atkQueue.Count > 0)
         {
