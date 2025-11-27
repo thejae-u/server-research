@@ -54,7 +54,7 @@ int main()
     spdlog::warn("press any key to stop server");
     std::cin.get();
 
-    server->Stop();
+    server->Stop(1);
 
     workThreadContext->Stop();
     rpcThreadContext->Stop();

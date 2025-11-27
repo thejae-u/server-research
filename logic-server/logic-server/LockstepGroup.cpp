@@ -21,7 +21,7 @@ void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallba
 void LockstepGroup::Start()
 {
     _isRunning = true;
-    std::weak_ptr<LockstepGroup> weakSelf(shared_from_this());
+    auto weakSelf(weak_from_this());
     _tickTimer = std::make_shared<Scheduler>(_privateStrand, std::chrono::milliseconds(_fixedDeltaMs), [weakSelf](CompletionHandler onComplete) {
         if (auto self = weakSelf.lock())
             self->Tick(onComplete);
@@ -31,10 +31,25 @@ void LockstepGroup::Start()
     _tickTimer->Start();
 }
 
-void LockstepGroup::Stop()
+void LockstepGroup::Stop(bool forceStop)
 {
     _isRunning = false;
-    _tickTimer->Stop();
+    _tickTimer->Stop(1);
+
+    if (forceStop)
+    {
+        std::lock_guard<std::mutex> lock(_memberMutex);
+        if (!_members.empty())
+        {
+            for(const auto& [sessionId, session] : _members)
+            {
+                session->Stop(true);
+            }
+        }
+
+        return;
+    }
+
     _notifyEmptyCallback(shared_from_this());
 }
 
@@ -45,7 +60,7 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
         _members[newSession->GetSessionUuid()] = newSession;
     }
 
-    std::weak_ptr<LockstepGroup> weakSelf(shared_from_this());
+    auto weakSelf(weak_from_this());
     newSession->SetStopCallbackByGroup([weakSelf](const std::shared_ptr<Session>& session) {
         if (auto self = weakSelf.lock())
             self->RemoveMember(session);
@@ -74,7 +89,7 @@ void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
         }
 
         if(isGroupEmpty)
-            Stop();
+            Stop(false);
     }
 }
 
@@ -88,7 +103,7 @@ void LockstepGroup::CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr
         _inputBuffer[_currentBucket].push_back(std::make_shared<SSendPacket>(newInput));
     }
 
-    // spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
+    spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Util::MethodToString(request->method()));
 
     if (request->method() != RpcMethod::Atk)
     {
@@ -172,29 +187,25 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
     }
 
     // Find User
-    auto fromAABB = Util::SAABB::MakeAABB(attackerState.position.x, attackerState.position.y, attackerState.position.z, 0.5f);
-    auto toAABB = Util::SAABB::MakeAABB(victimState.position.x, victimState.position.y, victimState.position.z, 0.5f);
+    auto attackerAABB = Util::SAABB::MakeAABB(attackerState.position.x, attackerState.position.y, attackerState.position.z, 0.5f);
+    auto victimAABB = Util::SAABB::MakeAABB(victimState.position.x, victimState.position.y, victimState.position.z, 0.5f);
 
-    if (fromAABB == toAABB) // Hit
+    if (attackerAABB != victimAABB)
     {
-        auto self(shared_from_this());
-        spdlog::info("hit {} from {}", to_string(victimUid), to_string(attackerUid));
-        boost::asio::post(_privateStrand.wrap([self, atkData, attackerUid, victimUid]() {
-            auto hitPacket = std::make_shared<RpcPacket>();
-            MakeHitPacket(attackerUid, victimUid, hitPacket, atkData.dmg());
-
-            // victim hit rpc packet
-            auto requestPacket = std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>();
-            requestPacket->first = victimUid;
-            requestPacket->second = hitPacket;
-
-            self->CollectInput(std::move(requestPacket));
-            })
-        );
-
         return;
     }
 
-    // No Hit
-    spdlog::info("no hit {} from {}", to_string(victimUid), to_string(attackerUid));
+    auto self(shared_from_this());
+    boost::asio::post(_privateStrand.wrap([self, atkData, attackerUid, victimUid]() {
+        auto hitPacket = std::make_shared<RpcPacket>();
+        MakeHitPacket(attackerUid, victimUid, hitPacket, atkData.dmg());
+
+        // victim hit rpc packet
+        auto requestPacket = std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>();
+        requestPacket->first = victimUid;
+        requestPacket->second = hitPacket;
+
+        self->CollectInput(std::move(requestPacket));
+        })
+    );
 }

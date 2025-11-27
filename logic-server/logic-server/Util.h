@@ -41,6 +41,11 @@ namespace Util
                 maxY >= rhs.minY && rhs.maxY >= minY &&
                 maxZ >= rhs.minZ && rhs.maxZ >= minZ);
         }
+
+        bool operator!=(const SAABB& rhs) const
+        {
+            return !(*this == rhs);
+        }
     };
 
     struct SUserState
@@ -106,8 +111,12 @@ namespace Util
         case Atk:
             result = "Atk";
             break;
+        case Hit:
+            result = "Hit";
+            break;
         case Dead:
             result = "Dead";
+            break;
 
 		case PACKET_COUNT:
 			result = "PacketCount";

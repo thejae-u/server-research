@@ -34,7 +34,7 @@ public:
     ~Server();
 
 	void Start() override;
-	void Stop() override;
+	void Stop(bool forceStop) override;
 
 private:
     using UdpSocket = udp::socket;

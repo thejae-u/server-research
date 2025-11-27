@@ -14,6 +14,17 @@ GroupManager::~GroupManager()
     spdlog::info("group manager destroyed");
 }
 
+void GroupManager::Stop()
+{
+    std::lock_guard<std::mutex> lock(_groupMutex);
+    for (const auto& group : _groups)
+    {
+        group.second->Stop(true);
+    }
+
+    spdlog::info("all groups are stopped (use_count: {})", weak_from_this().use_count());
+}
+
 void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const std::shared_ptr<Session>& newSession)
 {
     uuid joinGroupId = _toUuid(groupDto->groupid());
@@ -32,8 +43,6 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
 
             group->AddMember(newSession);
 
-            // std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
-            // _groupsBySession[newSession->GetSessionUuid()] = group;
             spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
             newSession->Start();
             return;
@@ -48,15 +57,12 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
     {
         std::lock_guard<std::mutex> groupLock(_groupMutex);
         _groups[newGroup->GetGroupId()] = newGroup;
-
-        //std::lock_guard<std::mutex> groupBySessionLock(_groupBySessionMutex);
-        //_groupsBySession[newSession->GetSessionUuid()] = newGroup;
     }
 }
 
 std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup(const std::shared_ptr<GroupDto> groupDto)
 {
-    std::weak_ptr<GroupManager> weakSelf(shared_from_this());
+    auto weakSelf(weak_from_this());
     const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, groupDto);
     newGroup->SetNotifyEmptyCallback(_privateStrand.wrap([weakSelf](const std::shared_ptr<LockstepGroup> emptyGroup) {
         if (auto self = weakSelf.lock())

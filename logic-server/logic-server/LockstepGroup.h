@@ -54,7 +54,7 @@ public:
 	void SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallback);
 
 	void Start() override;
-	void Stop() override;
+	void Stop(bool forceStop) override;
 	void AddMember(const std::shared_ptr<Session>& newSession);
 	void RemoveMember(const std::shared_ptr<Session>& session);
 	void CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);

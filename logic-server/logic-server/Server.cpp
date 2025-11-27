@@ -29,7 +29,7 @@ void Server::Start()
     spdlog::info("server start complete");
 }
 
-void Server::Stop()
+void Server::Stop(bool forceStop)
 {
     spdlog::info("server stopping...");
 
@@ -37,6 +37,8 @@ void Server::Stop()
     _udpSocket->close();
 
     _acceptor.close();
+
+    _groupManager->Stop();
     _groupManager.reset();
 
     spdlog::info("server stopped.");
@@ -83,7 +85,7 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession)
         if (!success)
         {
             spdlog::error("new session failed to excahnge UDP port");
-            newSession->Stop();
+            newSession->Stop(false);
             return;
         }
 
@@ -92,7 +94,7 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession)
             if (!success)
             {
                 spdlog::error("new session failed to exchange user info");
-                newSession->Stop();
+                newSession->Stop(false);
                 return;
             }
 
@@ -100,7 +102,7 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession)
                 if (!success)
                 {
                     spdlog::error("new session failed to exchange user info");
-                    newSession->Stop();
+                    newSession->Stop(false);
                     return;
                 }
 

@@ -18,7 +18,7 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
 
 void Session::Start()
 {
-    std::weak_ptr<Session> weakSelf(shared_from_this());
+    auto weakSelf(weak_from_this());
 
 	// Set Timers
     _pingTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_pingDelay), [weakSelf](CompletionHandler onComplete) {
@@ -43,15 +43,18 @@ void Session::Start()
     spdlog::info("session {} started", _sessionInfo.uid());
 }
 
-void Session::Stop()
+void Session::Stop(bool forceStop)
 {
     spdlog::info("{} session stopped", _sessionInfo.uid());
     _isConnected = false;
 
     _tcpSocketPtr->close();
 
-    _pingTimer->Stop();
-    _sendStateTimer->Stop();
+    _pingTimer->Stop(1);
+    _sendStateTimer->Stop(1);
+
+    if (forceStop)
+        return;
 
     _onStopCallbackByGroup(shared_from_this());
     _onStopCallbackByServer(shared_from_this());
@@ -525,7 +528,7 @@ void Session::TcpAsyncReadSize()
                     || sizeEc == boost::asio::error::operation_aborted)
                 {
                     spdlog::info("session {} : TcpaSyncRead aborted", self->_sessionInfo.uid());
-                    self->Stop();
+                    self->Stop(false);
                     return;
                 }
 
@@ -557,9 +560,12 @@ void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
         _normalPrivateStrand.wrap([self, dataBuffer](const boost::system::error_code& dataEc, std::size_t) {
             if (dataEc)
             {
-                if (dataEc == boost::asio::error::eof || dataEc == boost::asio::error::connection_reset)
+                if (dataEc == boost::asio::error::eof 
+                    || dataEc == boost::asio::error::connection_reset
+                    || dataEc == boost::asio::error::connection_aborted
+                    || dataEc == boost::asio::error::operation_aborted)
                 {
-                    self->Stop();
+                    self->Stop(false);
                     return;
                 }
 

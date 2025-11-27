@@ -46,7 +46,7 @@ public:
     }
 
     void Start() override;
-    void Stop() override;
+    void Stop(bool forceStop) override;
 
     tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
 
