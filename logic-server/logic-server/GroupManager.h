@@ -28,6 +28,7 @@ class GroupManager : public std::enable_shared_from_this<GroupManager>
 {
 public:
     GroupManager(const std::shared_ptr<ContextManager>& ctxManager);
+    ~GroupManager();
     void AddSession(const std::shared_ptr<GroupDto> groupDto, const std::shared_ptr<Session>& newSession);
     void RemoveEmptyGroup(const std::shared_ptr<LockstepGroup> emptyGroup);
 

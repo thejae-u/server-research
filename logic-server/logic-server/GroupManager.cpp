@@ -9,6 +9,11 @@ GroupManager::GroupManager(const std::shared_ptr<ContextManager>& ctxManager) : 
 {
 }
 
+GroupManager::~GroupManager()
+{
+    spdlog::info("group manager destroyed");
+}
+
 void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const std::shared_ptr<Session>& newSession)
 {
     uuid joinGroupId = _toUuid(groupDto->groupid());
@@ -51,10 +56,11 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
 
 std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup(const std::shared_ptr<GroupDto> groupDto)
 {
-    auto self(shared_from_this());
+    std::weak_ptr<GroupManager> weakSelf(shared_from_this());
     const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, groupDto);
-    newGroup->SetNotifyEmptyCallback(_privateStrand.wrap([self](const std::shared_ptr<LockstepGroup> emptyGroup) {
-        self->RemoveEmptyGroup(emptyGroup);
+    newGroup->SetNotifyEmptyCallback(_privateStrand.wrap([weakSelf](const std::shared_ptr<LockstepGroup> emptyGroup) {
+        if (auto self = weakSelf.lock())
+            self->RemoveEmptyGroup(emptyGroup);
         })
     );
 

@@ -15,6 +15,11 @@ Server::Server(const std::shared_ptr<ContextManager>& mainCtxManager, const std:
     spdlog::info("allocated udp port: {}", _allocatedUdpPort);
 }
 
+Server::~Server()
+{
+    spdlog::info("server destroyed");
+}
+
 void Server::Start()
 {
     _isRunning = true;
@@ -29,6 +34,8 @@ void Server::Stop()
     spdlog::info("server stopping...");
 
     _isRunning = false;
+    _udpSocket->close();
+
     _acceptor.close();
     _groupManager.reset();
 
@@ -40,13 +47,15 @@ void Server::AcceptClientAsync()
     if (!_isRunning)
         return;
 
-    auto self(shared_from_this());
+    std::weak_ptr<Server> weakSelf(shared_from_this());
     auto newSession = std::make_shared<Session>(_normalCtxManager, _rpcCtxManager);
-    newSession->SetSendDataByUdpAction([self](std::shared_ptr<std::pair<udp::endpoint, std::string>> sendData) {
-        self->EnqueueSendData(sendData);
+    newSession->SetSendDataByUdpAction([weakSelf](std::shared_ptr<std::pair<udp::endpoint, std::string>> sendData) {
+        if(auto self = weakSelf.lock())
+            self->EnqueueSendData(sendData);
         }
     );
 
+    auto self(shared_from_this());
     _acceptor.async_accept(newSession->GetSocket(), _normalPrivateStrand.wrap([self, newSession](const boost::system::error_code& ec) {
         if (ec)
         {
@@ -98,8 +107,11 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession)
                 spdlog::info("group {} set session {}", groupInfo->groupid(), to_string(newSession->GetSessionUuid()));
                 self->_groupManager->AddSession(groupInfo, newSession);
                 self->AddSession(newSession);
-                newSession->SetStopCallbackByServer([self](const std::shared_ptr<Session>& session) {
-                    self->RemoveSession(session->GetSessionUuid());
+
+                std::weak_ptr<Server> weakSelf(self);
+                newSession->SetStopCallbackByServer([weakSelf](const std::shared_ptr<Session>& session) {
+                    if (auto self = weakSelf.lock())
+                        self->RemoveSession(session->GetSessionUuid());
                     });
                 }); 
             }); 

@@ -29,12 +29,11 @@ ContextManager::~ContextManager()
 
 		_ctx.stop();
 	}
-	spdlog::info("{} context manager thread join complete", _contextName);
 
-	// also blocking threa
+	// also blocking thread
 	_blockingPool.join();
-	spdlog::info("{} context manager blocking pool join complete", _contextName);
-	spdlog::info("{} context manager destroyed and all threads joined.", _contextName);
+	spdlog::info("{} context manager all thread join complete", _contextName);
+	spdlog::info("{} context manager destroyed", _contextName);
 }
 
 void ContextManager::Stop()

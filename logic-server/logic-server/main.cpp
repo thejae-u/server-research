@@ -8,7 +8,7 @@
 #include "ContextManager.h"
 #include "InternalConnector.h"
 
-const bool TEST_MODE = true;
+constexpr bool NO_WEB_SERVER_MODE = true;
 constexpr unsigned short SERVER_PORT = 53200;
 using namespace boost::asio::ip;
 
@@ -28,7 +28,7 @@ int main()
     auto workThreadContext = ContextManager::Create("main", mainIoThreads, mainWorkerThreads);
     auto rpcThreadContext = ContextManager::Create("rpc", rpcIoThreads, rpcWorkerThreads);
 
-    if (!TEST_MODE)
+    if (!NO_WEB_SERVER_MODE)
     {
         auto internalConnector = std::make_shared<InternalConnector>();
         if (!internalConnector->GetAccessTokenFromInternal())

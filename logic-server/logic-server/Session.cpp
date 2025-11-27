@@ -18,16 +18,18 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
 
 void Session::Start()
 {
-    auto self(shared_from_this());
+    std::weak_ptr<Session> weakSelf(shared_from_this());
 
 	// Set Timers
-    _pingTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_pingDelay), [self](CompletionHandler onComplete) {
-        self->SendPingPacket(onComplete);
+    _pingTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_pingDelay), [weakSelf](CompletionHandler onComplete) {
+        if (auto self = weakSelf.lock())
+            self->SendPingPacket(onComplete);
         }
     );
 
-    _sendStateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_sendStateDelay), [self](CompletionHandler onComplete) {
-        self->SendGameStatePacket(onComplete);
+    _sendStateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_sendStateDelay), [weakSelf](CompletionHandler onComplete) {
+        if (auto self = weakSelf.lock())
+            self->SendGameStatePacket(onComplete);
         }
     );
 

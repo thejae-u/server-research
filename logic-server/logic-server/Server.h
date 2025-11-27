@@ -31,6 +31,7 @@ class Server final : public Base<Server>
 {
 public:
 	Server(const std::shared_ptr<ContextManager>& mainCtxManager, const std::shared_ptr<ContextManager>& rpcCtxManager, tcp::acceptor& acceptor);
+    ~Server();
 
 	void Start() override;
 	void Stop() override;

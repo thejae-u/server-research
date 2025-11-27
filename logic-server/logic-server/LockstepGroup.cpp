@@ -21,9 +21,10 @@ void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallba
 void LockstepGroup::Start()
 {
     _isRunning = true;
-    auto self(shared_from_this());
-    _tickTimer = std::make_shared<Scheduler>(_privateStrand, std::chrono::milliseconds(_fixedDeltaMs), [self](CompletionHandler onComplete) {
-        self->Tick(onComplete);
+    std::weak_ptr<LockstepGroup> weakSelf(shared_from_this());
+    _tickTimer = std::make_shared<Scheduler>(_privateStrand, std::chrono::milliseconds(_fixedDeltaMs), [weakSelf](CompletionHandler onComplete) {
+        if (auto self = weakSelf.lock())
+            self->Tick(onComplete);
         }
     );
 
@@ -44,14 +45,16 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
         _members[newSession->GetSessionUuid()] = newSession;
     }
 
-    auto self(shared_from_this());
-    newSession->SetStopCallbackByGroup([self](const std::shared_ptr<Session>& session) {
-        self->RemoveMember(session);
+    std::weak_ptr<LockstepGroup> weakSelf(shared_from_this());
+    newSession->SetStopCallbackByGroup([weakSelf](const std::shared_ptr<Session>& session) {
+        if (auto self = weakSelf.lock())
+            self->RemoveMember(session);
         }
     );
 
-    newSession->SetCollectInputAction([self](std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest) {
-        self->CollectInput(std::move(rpcRequest));
+    newSession->SetCollectInputAction([weakSelf](std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest) {
+        if (auto self = weakSelf.lock())
+            self->CollectInput(std::move(rpcRequest));
         }
     );
 
