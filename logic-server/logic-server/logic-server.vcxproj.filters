@@ -1,91 +1,97 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="소스 파일">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="헤더 파일">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="리소스 파일">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Session.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="Server.cpp">
-      <Filter>소스 파일</Filter>
+    <ClCompile Include="ContextManager.cpp">
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="GroupManager.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="LockstepGroup.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="NetworkData.pb.cc">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="InternalConnector.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="HttpStatus.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="ContextManager.cpp">
-      <Filter>소스 파일</Filter>
+    <ClCompile Include="InternalConnector.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="LockstepGroup.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Monitor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkData.pb.cc">
+      <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="Scheduler.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="Session.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenValidator.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Session.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Server.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="Base.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>header</Filter>
     </ClInclude>
     <ClInclude Include="ContextManager.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>header</Filter>
     </ClInclude>
     <ClInclude Include="GroupManager.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="LockstepGroup.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="NetworkData.pb.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Scheduler.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Util.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="InternalConnector.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>header</Filter>
     </ClInclude>
     <ClInclude Include="HttpStatus.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="InternalConnector.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="LockstepGroup.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="Monitor.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkData.pb.h">
+      <Filter>header</Filter>
     </ClInclude>
     <ClInclude Include="PacketProcess.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="Scheduler.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="Session.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenValidator.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="InternalId.json" />
     <None Include=".editorconfig" />
+    <None Include="InternalId.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="header">
+      <UniqueIdentifier>{af678c47-939c-4f29-9692-ab23a99062f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{11983403-3680-4a33-a68c-edf29cae9174}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

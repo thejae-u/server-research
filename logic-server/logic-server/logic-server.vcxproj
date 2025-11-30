@@ -137,10 +137,12 @@
     <ClCompile Include="InternalConnector.cpp" />
     <ClCompile Include="LockstepGroup.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Monitor.cpp" />
     <ClCompile Include="NetworkData.pb.cc" />
     <ClCompile Include="Scheduler.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="Session.cpp" />
+    <ClCompile Include="TokenValidator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base.h" />
@@ -149,11 +151,13 @@
     <ClInclude Include="HttpStatus.h" />
     <ClInclude Include="InternalConnector.h" />
     <ClInclude Include="LockstepGroup.h" />
+    <ClInclude Include="Monitor.h" />
     <ClInclude Include="NetworkData.pb.h" />
     <ClInclude Include="PacketProcess.h" />
     <ClInclude Include="Scheduler.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="Session.h" />
+    <ClInclude Include="TokenValidator.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>

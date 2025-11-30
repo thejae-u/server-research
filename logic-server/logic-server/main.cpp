@@ -7,6 +7,8 @@
 #include "Server.h"
 #include "ContextManager.h"
 #include "InternalConnector.h"
+#include "Monitor.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
 constexpr bool NO_WEB_SERVER_MODE = true;
 constexpr unsigned short SERVER_PORT = 53200;
@@ -14,6 +16,11 @@ using namespace boost::asio::ip;
 
 int main()
 {
+    auto monitorSink = std::make_shared<MonitorSink_mt>();
+    auto logger = std::make_shared<spdlog::logger>("monitor", monitorSink);
+    spdlog::set_default_logger(logger);
+    ConsoleMonitor::Get().Start();
+
     spdlog::info("initialize start");
     std::size_t coreCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 2;
     if (coreCount == 0)
@@ -51,8 +58,17 @@ int main()
     spdlog::info("start server...");
     server->Start();
 
-    spdlog::warn("press any key to stop server");
-    std::cin.get();
+    std::cin.clear();
+
+    spdlog::warn("Server is running... Press ENTER to exit.");
+    
+    // Wait for monitor to signal exit (ENTER key pressed)
+    while (ConsoleMonitor::Get().IsRunning()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    
+    ConsoleMonitor::Get().Stop();
+    spdlog::set_default_logger(spdlog::stdout_color_mt("console"));
 
     server->Stop(1);
 

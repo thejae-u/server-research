@@ -3,6 +3,7 @@
 
 #include "LockstepGroup.h"
 #include "Util.h"
+#include "Monitor.h"
 
 Session::Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager)
     : _normalCtxManager(contextManager), _rpcCtxManager(rpcContextManager),
@@ -433,6 +434,8 @@ void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet)
         const auto rtt = Util::StopStopwatch(_pingTime);
         _lastRtt = rtt;
 
+        ConsoleMonitor::Get().UpdateLatency(rtt); // latency average calculate
+
         RpcPacket rttPacket;
         rttPacket.set_method(LAST_RTT);
 
@@ -573,6 +576,8 @@ void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
                 self->TcpAsyncReadSize();
                 return;
             }
+
+            ConsoleMonitor::Get().IncrementTcpPacket();
 
             RpcPacket deserializeRpcPacket;
             if (!deserializeRpcPacket.ParseFromArray(dataBuffer->data(), static_cast<int>(dataBuffer->size())))

@@ -2,6 +2,7 @@
 
 #include "Session.h"
 #include "LockstepGroup.h"
+#include "Monitor.h"
 
 Server::Server(const std::shared_ptr<ContextManager>& mainCtxManager, const std::shared_ptr<ContextManager>& rpcCtxManager, tcp::acceptor& acceptor)
     : _normalCtxManager(mainCtxManager), _rpcCtxManager(rpcCtxManager), _acceptor(acceptor),
@@ -148,6 +149,8 @@ void Server::AsyncReceiveUdpData()
                 return;
             }
 
+            ConsoleMonitor::Get().IncrementUdpPacket();
+
             std::uint16_t payloadSize;
             std::memcpy(&payloadSize, receiveBuffer->data(), sizeof(std::uint16_t));
             payloadSize = ntohs(payloadSize);
@@ -256,12 +259,14 @@ void Server::AddSession(std::shared_ptr<Session> newSession)
 {
     std::lock_guard<std::mutex> lock(_sessionsMutex);
     _sessions[newSession->GetSessionUuid()] = newSession;
+    ConsoleMonitor::Get().UpdateClientCount((int)_sessions.size());
 }
 
 void Server::RemoveSession(uuid sessionId)
 {
     std::lock_guard<std::mutex> lock(_sessionsMutex);
     _sessions.erase(sessionId);
+    ConsoleMonitor::Get().UpdateClientCount((int)_sessions.size());
 	spdlog::info("Session {} removed from server session map", to_string(sessionId));
 }
 
