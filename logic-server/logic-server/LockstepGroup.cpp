@@ -22,11 +22,11 @@ void LockstepGroup::Start()
 {
     _isRunning = true;
     auto weakSelf(weak_from_this());
-    _tickTimer = std::make_shared<Scheduler>(_privateStrand, std::chrono::milliseconds(_fixedDeltaMs), [weakSelf](CompletionHandler onComplete) {
+    _tickTimer = std::make_shared<Scheduler>(_privateStrand, std::chrono::milliseconds(_fixedDeltaMs), [weakSelf](CompletionHandler onComplete)
+    {
         if (auto self = weakSelf.lock())
             self->Tick(onComplete);
-        }
-    );
+    });
 
     _tickTimer->Start();
 }
@@ -56,22 +56,22 @@ void LockstepGroup::Stop(bool forceStop)
 void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 {
     {
-        std::lock_guard<std::mutex> lock(_memberMutex); 
+        std::lock_guard<std::mutex> lock(_memberMutex);
         _members[newSession->GetSessionUuid()] = newSession;
     }
 
     auto weakSelf(weak_from_this());
-    newSession->SetStopCallbackByGroup([weakSelf](const std::shared_ptr<Session>& session) {
+    newSession->SetStopCallbackByGroup([weakSelf](const std::shared_ptr<Session>& session)
+    {
         if (auto self = weakSelf.lock())
             self->RemoveMember(session);
-        }
-    );
+    });
 
-    newSession->SetCollectInputAction([weakSelf](std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest) {
+    newSession->SetCollectInputAction([weakSelf](std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest)
+    {
         if (auto self = weakSelf.lock())
             self->CollectInput(std::move(rpcRequest));
-        }
-    );
+    });
 
     spdlog::info("{} : added member {}", _groupInfo->groupid(), to_string(newSession->GetSessionUuid()));
 }
@@ -125,16 +125,18 @@ void LockstepGroup::Tick(CompletionHandler onComplete)
     }
 
     auto self(shared_from_this());
-    boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]() {
+    boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]()
+    {
         std::list<std::shared_ptr<SSendPacket>> currentBucketPackets;
         {
             std::lock_guard<std::mutex> bufferLock(self->_bufferMutex);
             currentBucketPackets = self->_inputBuffer[self->_currentBucket];
         }
 
-        boost::asio::post(self->_privateStrand, [self, onComplete, currentBucketPackets]() {
+        boost::asio::post(self->_privateStrand, [self, onComplete, currentBucketPackets]()
+        {
             std::lock_guard<std::mutex> memberLock(self->_memberMutex);
-            for (const auto& [uid, member]  : self->_members)
+            for (const auto& [uid, member] : self->_members)
             {
                 if (!member->IsValid())
                     continue;
@@ -144,10 +146,9 @@ void LockstepGroup::Tick(CompletionHandler onComplete)
 
             ++self->_currentBucket;
             self->_inputCounter = 0;
-            onComplete(); 
-            }
-        );}
-    );
+            onComplete();
+        });
+    });
 }
 
 void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
@@ -196,7 +197,8 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
     }
 
     auto self(shared_from_this());
-    boost::asio::post(_privateStrand.wrap([self, atkData, attackerUid, victimUid]() {
+    boost::asio::post(_privateStrand.wrap([self, atkData, attackerUid, victimUid]()
+    {
         auto hitPacket = std::make_shared<RpcPacket>();
         MakeHitPacket(attackerUid, victimUid, hitPacket, atkData.dmg());
 
@@ -206,6 +208,5 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
         requestPacket->second = hitPacket;
 
         self->CollectInput(std::move(requestPacket));
-        })
-    );
+    }));
 }

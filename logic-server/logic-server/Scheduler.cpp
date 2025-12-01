@@ -16,7 +16,8 @@ void Scheduler::DoStart()
 {
     auto self(shared_from_this());
     _timer->expires_after(_cycleTime);
-    _timer->async_wait([self](const boost::system::error_code& ec) {
+    _timer->async_wait([self](const boost::system::error_code& ec)
+    {
         if (ec)
         {
             if (ec == boost::asio::error::operation_aborted)
@@ -29,8 +30,8 @@ void Scheduler::DoStart()
             return;
         }
 
-        self->_handler([self]() { self->Start(); }); }
-    );
+        self->_handler([self]() { self->Start(); });
+    });
 }
 
 void Scheduler::Stop(bool forceStop)

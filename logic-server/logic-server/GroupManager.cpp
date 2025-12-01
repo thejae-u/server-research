@@ -64,11 +64,11 @@ std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup(const std::shared_pt
 {
     auto weakSelf(weak_from_this());
     const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, groupDto);
-    newGroup->SetNotifyEmptyCallback(_privateStrand.wrap([weakSelf](const std::shared_ptr<LockstepGroup> emptyGroup) {
+    newGroup->SetNotifyEmptyCallback(_privateStrand.wrap([weakSelf](const std::shared_ptr<LockstepGroup> emptyGroup)
+    {
         if (auto self = weakSelf.lock())
             self->RemoveEmptyGroup(emptyGroup);
-        })
-    );
+    }));
 
     newGroup->Start();
     spdlog::info("created new group {}", to_string(newGroup->GetGroupId()));
