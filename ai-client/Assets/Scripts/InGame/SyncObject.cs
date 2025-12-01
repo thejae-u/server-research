@@ -11,7 +11,7 @@ public class SyncObject : MonoBehaviour
     [SerializeField] private PlayerStatData _playerStatData; // Player Stat Data for the object
 
     // Several Sync Data can be added to the SyncObject
-    public UserSimpleDto _user { get; private set; }
+    public UserSimpleDto User { get; private set; }
 
     private BaseConnector _connector;
     private MeshRenderer _meshRenderer;
@@ -26,7 +26,7 @@ public class SyncObject : MonoBehaviour
 
     private GameObject _sword;
 
-    private bool IsOwnObject => Guid.Parse(_user.Uid) == _connector.UserId;
+    public bool IsOwnObject => Guid.Parse(User.Uid) == _connector.UserId;
 
     private void Awake()
     {
@@ -35,7 +35,7 @@ public class SyncObject : MonoBehaviour
 
     public void Init(UserSimpleDto user, BaseConnector connector)
     {
-        _user = user;
+        User = user;
         _connector = connector;
         _meshRenderer = GetComponent<MeshRenderer>();
         _targetPosition = transform.position;
@@ -134,17 +134,19 @@ public class SyncObject : MonoBehaviour
         if (IsOwnObject)
             _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
 
-        // 1. 로컬 예측 이동 (데드레코닝)
+        // 1. 로컬 예측 이동 (데드레커닝)
         if (_isMoving)
         {
             transform.position += _direction * (_playerStatData.speed * Time.deltaTime);
         }
+        else
+        {
+            // 2. 서버 위치와의 오차 보정 (보간)
+            // 단순히 Lerp만 쓰면 뒤로 끌려갈 수 있으므로, 현재 위치와 타겟 위치가 다를 때만 부드럽게 보정
+            transform.position = Vector3.Lerp(transform.position, _targetPosition, Time.deltaTime * 10.0f);
+        }
 
-        // 2. 서버 위치와의 오차 보정 (보간)
-        // 단순히 Lerp만 쓰면 뒤로 끌려갈 수 있으므로, 현재 위치와 타겟 위치가 다를 때만 부드럽게 보정
-        transform.position = Vector3.Lerp(transform.position, _targetPosition, Time.deltaTime * 10.0f);
-        
-        if(_syncAttackRoutine is null && _atkQueue.Count > 0)
+        if (_syncAttackRoutine is null && _atkQueue.Count > 0)
         {
             _syncAttackRoutine = SyncAttackRoutine();
             StartCoroutine(_syncAttackRoutine);

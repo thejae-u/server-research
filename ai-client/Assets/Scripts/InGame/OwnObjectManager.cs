@@ -188,9 +188,9 @@ public class OwnObjectManager : MonoBehaviour
                 continue;
             }
 
-            if (syncObject != null)
+            if (syncObject != null && !syncObject.IsOwnObject)
             {
-                victimId = syncObject._user.Uid;
+                victimId = syncObject.User.Uid;
                 damage = _playerStatData.damage;
             }
         }
