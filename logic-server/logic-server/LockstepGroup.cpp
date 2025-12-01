@@ -112,7 +112,7 @@ void LockstepGroup::CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr
 
     // make hit packet after check valid attack
     auto self(shared_from_this());
-    boost::asio::post(_privateStrand.wrap([self, request]() { self->AsyncMakeHitPacket(request); }));
+    boost::asio::post(_privateStrand, [self, request]() { self->AsyncMakeHitPacket(request); });
 }
 
 void LockstepGroup::Tick(CompletionHandler onComplete)
@@ -197,7 +197,7 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
     }
 
     auto self(shared_from_this());
-    boost::asio::post(_privateStrand.wrap([self, atkData, attackerUid, victimUid]()
+    boost::asio::post(_privateStrand, [self, atkData, attackerUid, victimUid]()
     {
         auto hitPacket = std::make_shared<RpcPacket>();
         MakeHitPacket(attackerUid, victimUid, hitPacket, atkData.dmg());
@@ -208,5 +208,5 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
         requestPacket->second = hitPacket;
 
         self->CollectInput(std::move(requestPacket));
-    }));
+    });
 }

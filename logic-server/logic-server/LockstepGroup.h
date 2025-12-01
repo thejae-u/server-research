@@ -79,7 +79,7 @@ private:
 
 	std::mutex _memberMutex;
 	std::unordered_map<uuid, std::shared_ptr<Session>> _members;
-	const std::size_t _maxSessionCount = 4;
+	const std::size_t _maxSessionCount = 500;
 
 	std::size_t _fixedDeltaMs;
     std::atomic<std::size_t> _currentBucket = 0;

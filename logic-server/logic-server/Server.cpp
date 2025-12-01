@@ -50,16 +50,17 @@ void Server::AcceptClientAsync()
     if (!_isRunning)
         return;
 
-    std::weak_ptr<Server> weakSelf(shared_from_this());
+    auto weak(weak_from_this());
     auto newSession = std::make_shared<Session>(_normalCtxManager, _rpcCtxManager);
-    newSession->SetSendDataByUdpAction([weakSelf](std::shared_ptr<std::pair<udp::endpoint, std::string>> sendData)
+    newSession->SetSendDataByUdpAction([weak](std::shared_ptr<std::pair<udp::endpoint, std::string>> sendData)
     {
-        if (auto self = weakSelf.lock())
+        if (auto self = weak.lock())
             self->EnqueueSendData(sendData);
     });
 
     auto self(shared_from_this());
-    _acceptor.async_accept(newSession->GetSocket(), _normalPrivateStrand.wrap([self, newSession](const boost::system::error_code& ec)
+    _acceptor.async_accept(newSession->GetSocket(),
+        boost::asio::bind_executor(_normalPrivateStrand, [self, newSession](const boost::system::error_code& ec)
     {
         if (ec)
         {
@@ -75,7 +76,7 @@ void Server::AcceptClientAsync()
         }
 
         self->AcceptClientAsync();
-        boost::asio::post(self->_normalPrivateStrand.wrap([self, newSession]() { self->InitSessionNetwork(newSession); }));
+        boost::asio::post(self->_normalPrivateStrand, [self, newSession]() { self->InitSessionNetwork(newSession); });
     }));
 }
 
@@ -114,10 +115,10 @@ void Server::InitSessionNetwork(const std::shared_ptr<Session>& newSession)
                 self->_groupManager->AddSession(groupInfo, newSession);
                 self->AddSession(newSession);
 
-                std::weak_ptr<Server> weakSelf(self);
-                newSession->SetStopCallbackByServer([weakSelf](const std::shared_ptr<Session>& session)
+                std::weak_ptr<Server> weak(self);
+                newSession->SetStopCallbackByServer([weak](const std::shared_ptr<Session>& session)
                 {
-                    if (auto self = weakSelf.lock())
+                    if (auto self = weak.lock())
                         self->RemoveSession(session->GetSessionUuid());
                 });
             });
@@ -131,7 +132,7 @@ void Server::AsyncReceiveUdpData()
     auto receiveBuffer = std::make_shared<std::vector<char>>(_maxPacketSize);
     auto senderEndPoint = std::make_shared<udp::endpoint>();
     _udpSocket->async_receive_from(boost::asio::buffer(*receiveBuffer), *senderEndPoint,
-        _rpcPrivateStrand.wrap([self, receiveBuffer, senderEndPoint](const boost::system::error_code ec, const std::size_t bytesRead)
+        boost::asio::bind_executor(_rpcPrivateStrand, [self, receiveBuffer, senderEndPoint](const boost::system::error_code ec, const std::size_t bytesRead)
     {
         if (ec)
         {
@@ -142,14 +143,14 @@ void Server::AsyncReceiveUdpData()
             }
 
             spdlog::error("udp read error on {} : {}", senderEndPoint->address().to_string(), ec.message());
-            boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
+            boost::asio::post(self->_rpcPrivateStrand, [self]() { self->AsyncReceiveUdpData(); });
             return;
         }
 
         if (bytesRead < sizeof(std::uint16_t))
         {
             spdlog::error("udp read bytes error on {} : {}", senderEndPoint->address().to_string(), ec.message());
-            boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
+            boost::asio::post(self->_rpcPrivateStrand, [self]() { self->AsyncReceiveUdpData(); });
             return;
         }
 
@@ -162,7 +163,7 @@ void Server::AsyncReceiveUdpData()
         if (payloadSize == 0 || payloadSize + sizeof(std::uint16_t) > bytesRead)
         {
             spdlog::error("udp read nothing or over payload size from {}", senderEndPoint->address().to_string());
-            boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
+            boost::asio::post(self->_rpcPrivateStrand, [self]() { self->AsyncReceiveUdpData(); });
             return;
         }
 
@@ -170,7 +171,7 @@ void Server::AsyncReceiveUdpData()
         if (!receivedRpcPacket.ParseFromArray(receiveBuffer->data() + sizeof(std::uint16_t), payloadSize))
         {
             spdlog::error("rpc packet parsing error from {}", senderEndPoint->address().to_string());
-            boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
+            boost::asio::post(self->_rpcPrivateStrand, [self]() { self->AsyncReceiveUdpData(); });
             return;
         }
 
@@ -182,12 +183,12 @@ void Server::AsyncReceiveUdpData()
         if (sessionIt == self->_sessions.end())
         {
             spdlog::error("invalid session id requested (id: {})", receivedRpcPacket.uid());
-            boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
+            boost::asio::post(self->_rpcPrivateStrand, [self]() { self->AsyncReceiveUdpData(); });
             return;
         }
 
         sessionIt->second->CollectInput(std::make_shared<RpcPacket>(receivedRpcPacket));
-        boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncReceiveUdpData(); }));
+        boost::asio::post(self->_rpcPrivateStrand, [self]() { self->AsyncReceiveUdpData(); });
     }));
 }
 
@@ -198,14 +199,16 @@ void Server::EnqueueSendData(std::shared_ptr<std::pair<udp::endpoint, std::strin
     if (!_isSending)
     {
         _isSending = true;
-        boost::asio::post(_rpcPrivateStrand.wrap([this]() { AsyncSendUdpData(); }));
+        auto self(shared_from_this());
+        boost::asio::post(_rpcPrivateStrand, [self]() { self->AsyncSendUdpData(); });
     }
 }
 
 void Server::AsyncSendUdpData()
 {
     auto self(shared_from_this());
-    boost::asio::post(_rpcPrivateStrand.wrap([self]() {
+    boost::asio::post(_rpcPrivateStrand, [self]() 
+    {
         std::queue<std::shared_ptr<std::pair<udp::endpoint, std::string>>> localQueue;
 
         {
@@ -237,7 +240,7 @@ void Server::AsyncSendUdpData()
             payload->append(sendData);
 
             self->_udpSocket->async_send_to(boost::asio::buffer(*payload), ep,
-                self->_rpcPrivateStrand.wrap([self, payload, ep](boost::system::error_code ec, std::size_t)
+                boost::asio::bind_executor(self->_rpcPrivateStrand, [self, payload, ep](boost::system::error_code ec, std::size_t)
             {
                 if (ec)
                 {
@@ -249,12 +252,12 @@ void Server::AsyncSendUdpData()
         std::lock_guard<std::mutex> lock(self->_sendDataQueueMutex);
         if (!self->_sendDataQueue.empty())
         {
-            boost::asio::post(self->_rpcPrivateStrand.wrap([self]() { self->AsyncSendUdpData(); }));
+            boost::asio::post(self->_rpcPrivateStrand, [self]() { self->AsyncSendUdpData(); });
             return;
         }
 
         self->_isSending = false;
-    }));
+    });
 }
 
 void Server::AddSession(std::shared_ptr<Session> newSession)

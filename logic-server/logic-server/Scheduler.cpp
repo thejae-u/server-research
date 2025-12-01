@@ -9,7 +9,7 @@ Scheduler::Scheduler(IoContext::strand& strand, const std::chrono::milliseconds 
 void Scheduler::Start()
 {
     auto self(shared_from_this());
-    boost::asio::post(_strand.wrap([self] { self->DoStart(); }));
+    boost::asio::post(_strand, [self] { self->DoStart(); });
 }
 
 void Scheduler::DoStart()
@@ -37,5 +37,5 @@ void Scheduler::DoStart()
 void Scheduler::Stop(bool forceStop)
 {
     auto self(shared_from_this());
-    boost::asio::post(_strand.wrap([self] { self->_timer->cancel(); }));
+    boost::asio::post(_strand, [self] { self->_timer->cancel(); });
 }

@@ -19,18 +19,18 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
 
 void Session::Start()
 {
-    auto weakSelf(weak_from_this());
+    auto weak(weak_from_this());
 
 	// Set Timers
-    _pingTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_pingDelay), [weakSelf](CompletionHandler onComplete)
+    _pingTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_pingDelay), [weak](CompletionHandler onComplete)
     {
-        if (auto self = weakSelf.lock())
+        if (auto self = weak.lock())
             self->SendPingPacket(onComplete);
     });
 
-    _sendStateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_sendStateDelay), [weakSelf](CompletionHandler onComplete)
+    _sendStateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_sendStateDelay), [weak](CompletionHandler onComplete)
     {
-        if (auto self = weakSelf.lock())
+        if (auto self = weak.lock())
             self->SendGameStatePacket(onComplete);
     });
 
@@ -348,7 +348,7 @@ void Session::SetSendDataByUdpAction(SendDataByUdp sendDataFunction)
 void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
 {
     auto self(shared_from_this());
-    boost::asio::post(_rpcPrivateStrand.wrap([self, receivePacket]
+    boost::asio::post(_rpcPrivateStrand, [self, receivePacket]()
     {
         if (self->_inputAction == nullptr)
         {
@@ -357,27 +357,26 @@ void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
         }
 
         auto rpcRequest =
-            std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->GetSessionUuid(), std::move(receivePacket));
+            std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->GetSessionUuid(), receivePacket);
 
-        boost::asio::post(self->_rpcPrivateStrand.wrap([self, rpcRequest]() { self->_inputAction(std::move(rpcRequest)); }));
-        boost::asio::post(self->_rpcPrivateStrand.wrap([self, rpcRequest]() 
+        self->_inputAction(rpcRequest); // Collect input to group
+
+        // process server validation
+        if (rpcRequest->second->method() == RpcMethod::Atk)
+            return;
+
         {
-            if (rpcRequest->second->method() == RpcMethod::Atk)
-                return;
+            std::lock_guard<std::mutex> updateQueueLock(self->_statesQueueMutex);
+            self->_statesQueue.push(*rpcRequest->second);
 
+            // wake-up update own state function
+            if (!self->_isOwnStateUpdating)
             {
-                std::lock_guard<std::mutex> updateQueueLock(self->_statesQueueMutex);
-                self->_statesQueue.push(*rpcRequest->second);
-
-                // wake-up update own state function
-                if (!self->_isOwnStateUpdating)
-                {
-                    self->_isOwnStateUpdating = true;
-                    boost::asio::post(self->_normalPrivateStrand.wrap([self]() { self->AsyncUpdateOwnState(); }));
-                }
+                self->_isOwnStateUpdating = true;
+                boost::asio::post(self->_normalPrivateStrand, [self]() { self->AsyncUpdateOwnState(); });
             }
-        }));
-    }));
+        }
+    });
 }
 
 void Session::EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets)
@@ -396,7 +395,8 @@ void Session::EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>
     if (!_isSerializingUdp)
     {
         _isSerializingUdp = true;
-        boost::asio::post(_rpcPrivateStrand, [this]() { SerializeRpcPacketAndEnqueueData(); });
+        auto self(shared_from_this());
+        boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
     }
 }
 
@@ -459,7 +459,9 @@ void Session::EnqueueTcpSendData(std::shared_ptr<std::string> data)
     if (!_isTcpSending)
     {
         _isTcpSending = true;
-        boost::asio::post(_normalPrivateStrand.wrap([this]() { TcpAsyncWrite(); }));
+
+        auto self(shared_from_this());
+        boost::asio::post(_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
     }
 }
 
@@ -484,18 +486,18 @@ void Session::TcpAsyncWrite()
     const std::int32_t netSize = htonl(dataSize); // 4 byte size Big-Endian
 
     boost::asio::async_write(*_tcpSocketPtr, boost::asio::buffer(&netSize, sizeof(netSize)),
-        _normalPrivateStrand.wrap([self, nextData](const boost::system::error_code& sizeEc, std::size_t)
+        boost::asio::bind_executor(_normalPrivateStrand, [self, nextData](const boost::system::error_code& sizeEc, std::size_t)
     {
         if (sizeEc)
         {
             spdlog::error("{} : TCP error sending size ({})", self->_sessionInfo.uid(), sizeEc.message());
             // If an error occurs, we should probably stop the send loop, but for now, we just log and continue the loop to try the next message.
-            boost::asio::post(self->_normalPrivateStrand.wrap([self]() { self->TcpAsyncWrite(); }));
+            boost::asio::post(self->_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
             return;
         }
 
         boost::asio::async_write(*self->_tcpSocketPtr, boost::asio::buffer(*nextData),
-            self->_normalPrivateStrand.wrap([self, nextData](const boost::system::error_code& dataEc, std::size_t)
+            boost::asio::bind_executor(self->_normalPrivateStrand, [self, nextData](const boost::system::error_code& dataEc, std::size_t)
         {
             if (dataEc)
             {
@@ -503,7 +505,7 @@ void Session::TcpAsyncWrite()
             }
 
             // Continue the loop for the next item.
-            boost::asio::post(self->_normalPrivateStrand.wrap([self]() { self->TcpAsyncWrite(); }));
+            boost::asio::post(self->_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
         }));
     }));
 }
@@ -515,7 +517,7 @@ void Session::TcpAsyncReadSize()
 
     auto self(shared_from_this());
     boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(&_tcpNetSize, sizeof(_tcpNetSize)),
-        _normalPrivateStrand.wrap([self](const boost::system::error_code& sizeEc, std::size_t)
+        boost::asio::bind_executor(_normalPrivateStrand, [self](const boost::system::error_code& sizeEc, std::size_t)
     {
         if (sizeEc)
         {
@@ -552,7 +554,7 @@ void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
 {
     auto self(shared_from_this());
     boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(*dataBuffer),
-        _normalPrivateStrand.wrap([self, dataBuffer](const boost::system::error_code& dataEc, std::size_t) 
+        boost::asio::bind_executor(_normalPrivateStrand, [self, dataBuffer](const boost::system::error_code& dataEc, std::size_t)
     {
         if (dataEc)
         {
@@ -589,7 +591,7 @@ void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
 void Session::AsyncUpdateOwnState()
 {
     auto self(shared_from_this());
-    boost::asio::post(_normalPrivateStrand.wrap([self]()
+    boost::asio::post(_normalPrivateStrand, [self]()
     {
         std::queue<RpcPacket> localQueue;
         {
@@ -657,8 +659,8 @@ void Session::AsyncUpdateOwnState()
         }
 
         // if queue is not empty -> re process
-        boost::asio::post([self]() { self->AsyncUpdateOwnState(); });
-    }));
+        boost::asio::post(self->_normalPrivateStrand, [self]() { self->AsyncUpdateOwnState(); });
+    });
 }
 
 void Session::SendGameStatePacket(CompletionHandler onComplete)
