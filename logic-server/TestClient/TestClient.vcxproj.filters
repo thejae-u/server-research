@@ -1,30 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="3rdparty\imgui\imgui.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdparty\imgui\imgui_draw.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdparty\imgui\backends\imgui_impl_dx11.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdparty\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdparty\imgui\imgui_tables.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdparty\imgui\imgui_widgets.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdparty\implot\implot.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="3rdparty\implot\implot_items.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\logic-server\NetworkData.pb.cc">
       <Filter>src</Filter>
     </ClCompile>
@@ -34,25 +10,49 @@
     <ClCompile Include="VirtualClient.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="3rdparty\imgui\imgui.cpp">
+      <Filter>3rdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\imgui_draw.cpp">
+      <Filter>3rdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\backends\imgui_impl_dx11.cpp">
+      <Filter>3rdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>3rdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\imgui_tables.cpp">
+      <Filter>3rdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\imgui_widgets.cpp">
+      <Filter>3rdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\implot\implot.cpp">
+      <Filter>3rdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\implot\implot_items.cpp">
+      <Filter>3rdParty</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="3rdparty\imgui\imgui.h">
-      <Filter>header</Filter>
-    </ClInclude>
-    <ClInclude Include="3rdparty\imgui\backends\imgui_impl_dx11.h">
-      <Filter>header</Filter>
-    </ClInclude>
-    <ClInclude Include="3rdparty\imgui\backends\imgui_impl_win32.h">
-      <Filter>header</Filter>
-    </ClInclude>
-    <ClInclude Include="3rdparty\implot\implot.h">
-      <Filter>header</Filter>
-    </ClInclude>
     <ClInclude Include="..\logic-server\NetworkData.pb.h">
       <Filter>header</Filter>
     </ClInclude>
     <ClInclude Include="VirtualClient.h">
       <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\imgui\imgui.h">
+      <Filter>3rdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\imgui\backends\imgui_impl_dx11.h">
+      <Filter>3rdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\imgui\backends\imgui_impl_win32.h">
+      <Filter>3rdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\implot\implot.h">
+      <Filter>3rdParty</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -61,6 +61,9 @@
     </Filter>
     <Filter Include="src">
       <UniqueIdentifier>{494d2d43-f06b-4af9-8965-e37193d2fb43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3rdParty">
+      <UniqueIdentifier>{6867cb1d-c482-4438-b9e1-c283ee4e9a6d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -16,6 +16,7 @@ Made with GEMINI CLI
 #include <vector>
 #include <string>
 #include <thread>
+#include <mutex>
 #include <atomic>
 #include <unordered_map>
 #include <numeric>
@@ -42,6 +43,7 @@ std::vector<std::shared_ptr<VirtualClient>> clients;
 std::thread networkThread;
 boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard = boost::asio::make_work_guard(io_context);
 
+std::mutex groupsMapMutex;
 std::unordered_map<std::string, std::vector<std::string>> groupsMap;
 
 // Logic
@@ -62,6 +64,8 @@ void SpawnClients(int count, int groupMaxCount)
 
         auto client = std::make_shared<VirtualClient>(io_context, i, "127.0.0.1", 53200, currentGroupId);
         client->Start();
+
+        std::lock_guard<std::mutex> groupLock(groupsMapMutex);
         groupsMap[currentGroupId].push_back(client->GetUuid());
 
         clients.push_back(client);
@@ -380,11 +384,17 @@ int main(int, char**)
                 {
                     for(int i=0; i<clientSize; ++i)
                     {
-                        auto groupId = clients[i]->GetGroupId();
-                        auto clientsInGroup = groupsMap[groupId];
+                        const auto& groupId = clients[i]->GetGroupId();
 
+                        std::lock_guard<std::mutex> groupsLock(groupsMapMutex);
+                        const auto& clientsInGroupIt = groupsMap.find(groupId);
+
+                        if (clientsInGroupIt == groupsMap.end())
+                            continue;
+
+                        const auto& clientsInGroup = clientsInGroupIt->second;
                         std::uniform_int_distribution<> dis(0, clientsInGroup.size() - 1);
-                        auto targetId = clientsInGroup.at(dis(gen));
+                        const auto& targetId = clientsInGroup.at(dis(gen));
 
                         clients[i]->StartRandomAtkTraffic(atkIntervalMs, targetId);
                     }
