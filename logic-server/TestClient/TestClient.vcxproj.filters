@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="3rdparty\imgui\imgui.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\imgui_draw.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\backends\imgui_impl_dx11.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\imgui_tables.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\imgui\imgui_widgets.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\implot\implot.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="3rdparty\implot\implot_items.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\logic-server\NetworkData.pb.cc">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="TestClientMain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="VirtualClient.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="3rdparty\imgui\imgui.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\imgui\backends\imgui_impl_dx11.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\imgui\backends\imgui_impl_win32.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="3rdparty\implot\implot.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\logic-server\NetworkData.pb.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualClient.h">
+      <Filter>header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="header">
+      <UniqueIdentifier>{b255d561-7840-4a30-aa76-9bc80129eb51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{494d2d43-f06b-4af9-8965-e37193d2fb43}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
