@@ -16,6 +16,7 @@
 #include <google/protobuf/util/json_util.h>
 
 #include "NetworkData.pb.h"
+#include "Monitor.h"
 
 class Session;
 class LockstepGroup;

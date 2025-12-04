@@ -13,12 +13,17 @@ Made With GEMINI CLI
 // Boost UUID generator
 boost::uuids::random_generator uuid_gen;
 
-VirtualClient::VirtualClient(boost::asio::io_context& io_context, int id, std::string serverIp, int serverPort, std::string groupId)
+VirtualClient::VirtualClient(boost::asio::io_context& io_context, int id, std::string serverIp, int serverPort, std::string groupId, int groupIndex, int indexInGroup)
     : _io_context(io_context), _id(id), _serverIp(serverIp), _serverPort(serverPort), _groupId(std::move(groupId)),
-      _tcpSocket(io_context), _udpSocket(io_context), _pingTimer(io_context), _randomUdpTimer(io_context), _randomAtkTimer(io_context)
+      _groupIndex(groupIndex), _indexInGroup(indexInGroup),
+      _tcpSocket(io_context), _udpSocket(io_context), _pingTimer(io_context), _randomUdpTimer(io_context), _randomAtkTimer(io_context), _throughputTimer(io_context)
 {
     // Generate UUID using boost::uuid
     _uuid = boost::uuids::to_string(uuid_gen());
+    
+    // Set Display Names
+    _displayGroupId = std::format("group_{}", _groupIndex);
+    _displayUserId = std::format("group_{}_{}", _groupIndex, _indexInGroup);
 }
 
 VirtualClient::~VirtualClient()
@@ -26,12 +31,17 @@ VirtualClient::~VirtualClient()
     Stop();
 }
 
-void VirtualClient::Start()
+void VirtualClient::Start(std::function<void(SHistory history)> enqueueHistory)
 {
     if (_state != ClientState::Disconnected) return;
 
     _state = ClientState::Connecting;
     DoConnect();
+
+    _enqueueHistory = std::move(enqueueHistory);
+    
+    _lastThroughputTime = std::chrono::steady_clock::now();
+    DoThroughputTick();
 }
 
 void VirtualClient::Stop()
@@ -45,6 +55,33 @@ void VirtualClient::Stop()
     _pingTimer.cancel();
     _randomUdpTimer.cancel();
     _randomAtkTimer.cancel();
+    _throughputTimer.cancel();
+}
+
+void VirtualClient::DoThroughputTick()
+{
+    auto now = std::chrono::steady_clock::now();
+    std::chrono::duration<double> elapsed = now - _lastThroughputTime;
+    if (elapsed.count() >= 1.0)
+    {
+        std::lock_guard<std::mutex> lock(_statsMutex);
+        _stats.txBps = (_bytesSentSinceLastTick * 8.0) / elapsed.count();
+        _stats.rxBps = (_bytesReceivedSinceLastTick * 8.0) / elapsed.count();
+        
+        _bytesSentSinceLastTick = 0;
+        _bytesReceivedSinceLastTick = 0;
+        _lastThroughputTime = now;
+    }
+
+    _throughputTimer.expires_after(std::chrono::milliseconds(1000));
+    auto self(shared_from_this());
+    _throughputTimer.async_wait([self](const boost::system::error_code& ec)
+    {
+        if (!ec)
+        {
+            self->DoThroughputTick();
+        }
+    });
 }
 
 ClientStats VirtualClient::GetStats() const
@@ -74,10 +111,20 @@ void VirtualClient::StopRandomUdpTraffic()
     _randomUdpTimer.cancel();
 }
 
-void VirtualClient::StartRandomAtkTraffic(int intervalMs, std::string targetUuid)
+void VirtualClient::StartRandomAtkTraffic(int intervalMs, std::vector<std::string> targetList)
 {
     _atkIntervalMs = intervalMs;
-    _targetUuid = targetUuid;
+    _targetList = targetList;
+
+    for (int i = 0; i < targetList.size(); ++i)
+    {
+        if (targetList[i] == _uuid)
+        {
+            _ownIndex = i;
+            break;
+        }
+    }
+
     _isRandomAtkActive = true;
 
     DoAtkSimulationLoop();
@@ -93,9 +140,14 @@ void VirtualClient::DoAtkSimulationLoop()
 {
     if (!_isRandomAtkActive || _state != ClientState::Connected) return;
 
+    SHistory history;
     RpcPacket packet;
     packet.set_uid(_uuid);
     packet.set_method(RpcMethod::Atk);
+
+    history.groupId = _displayGroupId;
+    history.userId = _displayUserId;
+    history.method = "atk";
 
     // Set Timestamp
     auto sysNow = std::chrono::system_clock::now();
@@ -103,19 +155,33 @@ void VirtualClient::DoAtkSimulationLoop()
     timestamp->set_seconds(std::chrono::duration_cast<std::chrono::seconds>(sysNow.time_since_epoch()).count());
     timestamp->set_nanos(0);
 
-    // Create AtkData
-    AtkData atkData;
-    atkData.set_victim(_targetUuid);
+    history.time = sysNow;
     
-    // Random Damage
     std::random_device rd;
     std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, _targetList.size() - 1);
+
+    int targetIdx = dis(gen);
+    while (targetIdx == _ownIndex)
+    {
+        targetIdx = dis(gen);
+    }
+
+    // Create AtkData
+    AtkData atkData;
+    atkData.set_victim(_targetList[targetIdx]);
+    std::cout << _displayUserId << " trying attack " << _targetList[targetIdx] << "\n";
+    history.data = std::format("{} atk {}", _displayUserId, _targetList[targetIdx]);
+    
+    // Random Damage
     std::uniform_int_distribution<> distDmg(1, 10);
     atkData.set_dmg(distDmg(gen));
-
     packet.set_data(atkData.SerializeAsString());
 
     SendUdpPacket(packet);
+
+    if (_enqueueHistory)
+        _enqueueHistory(history); // enqueue packet history
 
     _randomAtkTimer.expires_after(std::chrono::milliseconds(_atkIntervalMs));
     auto self(shared_from_this());
@@ -135,14 +201,18 @@ void VirtualClient::DoSimulationLoop()
     auto now = std::chrono::steady_clock::now();
     auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - _simStateStartTime).count();
 
+    SHistory history;
     RpcPacket packet;
     packet.set_uid(_uuid);
+    history.groupId = _displayGroupId;
+    history.userId = _displayUserId;
     
     // Set Timestamp
     auto sysNow = std::chrono::system_clock::now();
     auto timestamp = packet.mutable_timestamp();
     timestamp->set_seconds(std::chrono::duration_cast<std::chrono::seconds>(sysNow.time_since_epoch()).count());
     timestamp->set_nanos(0);
+    history.time = sysNow;
 
     if (_simState == SimulationState::Idle)
     {
@@ -169,6 +239,8 @@ void VirtualClient::DoSimulationLoop()
 
             // Send MoveStart
             packet.set_method(MoveStart);
+            history.method = "move start";
+
             MoveData moveData;
             moveData.set_x(_simX);
             moveData.set_y(_simY);
@@ -177,8 +249,14 @@ void VirtualClient::DoSimulationLoop()
             moveData.set_vertical(_simVertical);
             moveData.set_speed(5.0f); // Fixed speed
             packet.set_data(moveData.SerializeAsString());
+            history.data = std::format("x{} y{} z{}, hor{}, ver{}, spd{}", 
+                std::to_string(_simX), std::to_string(_simY), std::to_string(_simZ), 
+                std::to_string(_simHorizontal), std::to_string(_simVertical), 5.0f);
             
             SendUdpPacket(packet);
+
+            if (_enqueueHistory)
+                _enqueueHistory(history);
         }
     }
     else if (_simState == SimulationState::Moving)
@@ -204,6 +282,8 @@ void VirtualClient::DoSimulationLoop()
 
             // Send MoveStop
             packet.set_method(MoveStop);
+            history.method = "move stop";
+
             MoveData moveData;
             moveData.set_x(_simX);
             moveData.set_y(_simY);
@@ -212,13 +292,21 @@ void VirtualClient::DoSimulationLoop()
             moveData.set_vertical(0);
             moveData.set_speed(0);
             packet.set_data(moveData.SerializeAsString());
+            history.data = std::format("x{} y{} z{}, hor{}, ver{}, spd{}", 
+                std::to_string(_simX), std::to_string(_simY), std::to_string(_simZ)
+                , std::to_string(_simHorizontal), std::to_string(_simVertical), 0);
 
             SendUdpPacket(packet);
+
+            if (_enqueueHistory)
+                _enqueueHistory(history);
         }
         else
         {
             // Keep Moving
             packet.set_method(Move);
+            history.method = "move";
+
             MoveData moveData;
             moveData.set_x(_simX);
             moveData.set_y(_simY);
@@ -227,8 +315,14 @@ void VirtualClient::DoSimulationLoop()
             moveData.set_vertical(_simVertical);
             moveData.set_speed(speed);
             packet.set_data(moveData.SerializeAsString());
+            history.data = std::format("x{} y{} z{}, hor{}, ver{}, spd{}", 
+                std::to_string(_simX), std::to_string(_simY), std::to_string(_simZ)
+                , std::to_string(_simHorizontal), std::to_string(_simVertical), std::to_string(speed));
 
             SendUdpPacket(packet);
+            
+            if (_enqueueHistory)
+                _enqueueHistory(history);
         }
     }
 
@@ -255,6 +349,10 @@ void VirtualClient::DoConnect()
         {
             self->_state = ClientState::Handshake_Udp;
             self->DoReadHeader();
+        }
+        else if(ec == boost::asio::error::connection_refused)
+        {
+            self->_state = ClientState::Connection_Failed;
         }
         else
         {
@@ -287,10 +385,11 @@ void VirtualClient::DoReadBody(uint32_t size)
     _tcpBodyBuffer.resize(size);
 
     boost::asio::async_read(_tcpSocket, boost::asio::buffer(_tcpBodyBuffer),
-        [self](const boost::system::error_code& ec, std::size_t)
+        [self, size](const boost::system::error_code& ec, std::size_t)
     {
         if (!ec)
         {
+            self->_bytesReceivedSinceLastTick += (size + 4); // Body + Header
             RpcPacket packet;
             if (packet.ParseFromArray(self->_tcpBodyBuffer.data(), static_cast<int>(self->_tcpBodyBuffer.size())))
             {
@@ -338,6 +437,10 @@ void VirtualClient::HandleTcpPacket(const RpcPacket& packet)
                 int rtt = std::stoi(packet.data());
                 std::lock_guard<std::mutex> lock(_statsMutex);
                 _stats.rttMs = rtt;
+                SHistory history = { _displayGroupId, _displayUserId, "rtt", std::to_string(rtt), std::chrono::system_clock::now() };
+
+                /*if (_enqueueHistory)
+                    _enqueueHistory(history);*/
             }
             catch (...) {}
             break;
@@ -432,6 +535,7 @@ void VirtualClient::DoUdpReceive()
     {
         if (!ec && bytes_transferred > 2)
         {
+            self->_bytesReceivedSinceLastTick += bytes_transferred;
             // Parse UDP Packet (Size 2 bytes + Body)
             uint16_t payloadSize;
             std::memcpy(&payloadSize, self->_udpBuffer, 2);
@@ -453,8 +557,104 @@ void VirtualClient::DoUdpReceive()
 
 void VirtualClient::HandleUdpPacket(const RpcPacket& packet)
 {
-    // Handle Lockstep data or other UDP messages here
-    // For now, just count them
+    {
+        std::lock_guard<std::mutex> lock(_statsMutex);
+        _stats.rxPackets++;
+    }
+
+    switch (packet.method())
+    {
+    case RpcMethod::MoveStart:
+    case RpcMethod::Move:
+    case RpcMethod::MoveStop:
+    {
+        MoveData moveData;
+        if (moveData.ParseFromString(packet.data()))
+        {
+            long long currentTimestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::seconds(packet.timestamp().seconds())
+            ).count() + packet.timestamp().nanos();
+
+            if (packet.uid() == _uuid)
+            {
+                // Only update if packet is newer
+                if (currentTimestamp > _lastServerTimestamp)
+                {
+                    _lastServerTimestamp = currentTimestamp;
+                    _serverX = moveData.x();
+                    _serverZ = moveData.z();
+                }
+            }
+            else
+            {
+                std::lock_guard<std::mutex> lock(_remoteUsersMutex);
+                auto& user = _remoteUsers[packet.uid()];
+                
+                // Only update if packet is newer
+                if (currentTimestamp > user.lastTimestamp)
+                {
+                    user.lastTimestamp = currentTimestamp;
+                    user.uuid = packet.uid();
+                    user.x = moveData.x();
+                    user.y = moveData.y();
+                    user.z = moveData.z();
+                }
+            }
+        }
+        break;
+    }
+    case RpcMethod::Atk:
+    {
+        AtkData atkData;
+        if (atkData.ParseFromString(packet.data()))
+        {
+            SHistory history;
+            history.groupId = _displayGroupId;
+            history.userId = (packet.uid() == _uuid) ? _displayUserId : packet.uid();
+            history.method = "atk";
+            history.data = std::format("atk -> {} (dmg {})", atkData.victim(), atkData.dmg());
+            history.time = std::chrono::system_clock::now();
+
+            if (_enqueueHistory)
+                _enqueueHistory(history);
+        }
+        break;
+    }
+    case RpcMethod::Hit:
+    {
+        AtkData atkData;
+        if (atkData.ParseFromString(packet.data()))
+        {
+            std::string victimId = atkData.victim();
+            int dmg = atkData.dmg();
+
+            // Update HP
+            if (victimId == _uuid)
+            {
+                // My HP handling (if needed)
+            }
+            else
+            {
+                std::lock_guard<std::mutex> lock(_remoteUsersMutex);
+                if (_remoteUsers.find(victimId) != _remoteUsers.end())
+                {
+                    _remoteUsers[victimId].hp -= dmg;
+                }
+            }
+
+            SHistory history;
+            history.groupId = _displayGroupId;
+            history.userId = (packet.uid() == _uuid) ? _displayUserId : packet.uid(); // Attacker or Server(if system hit)
+            history.method = "hit";
+            history.data = std::format("hit by {} (dmg {})", packet.uid(), dmg);
+            history.time = std::chrono::system_clock::now();
+
+            if (_enqueueHistory)
+                _enqueueHistory(history);
+        }
+        break;
+    }
+    }
 }
 
 void VirtualClient::SendTcpPacket(const RpcPacket& packet)
@@ -469,7 +669,13 @@ void VirtualClient::SendTcpPacket(const RpcPacket& packet)
 
     auto self(shared_from_this());
     boost::asio::async_write(_tcpSocket, boost::asio::buffer(*buffer),
-        [self, buffer](const boost::system::error_code&, std::size_t) {});
+        [self, buffer, netSize, size](const boost::system::error_code& ec, std::size_t)
+    {
+        if (!ec)
+        {
+            self->_bytesSentSinceLastTick += (sizeof(netSize) + size);
+        }
+    });
 }
 
 void VirtualClient::SendUdpPacket(const RpcPacket& packet)
@@ -489,10 +695,11 @@ void VirtualClient::SendUdpPacket(const RpcPacket& packet)
 
     auto self(shared_from_this());
     _udpSocket.async_send_to(boost::asio::buffer(*buffer), _serverUdpEndpoint,
-        [self, buffer](const boost::system::error_code& ec, std::size_t bytes_transferred)
+        [self, buffer, netSize, size](const boost::system::error_code& ec, std::size_t bytes_transferred)
     {
         if (!ec)
         {
+            self->_bytesSentSinceLastTick += (2 + size);
             std::lock_guard<std::mutex> lock(self->_statsMutex);
             self->_stats.txPackets++;
         }

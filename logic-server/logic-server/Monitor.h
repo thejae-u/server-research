@@ -13,12 +13,15 @@ Created by GEMINI CLI
 #include <atomic>
 #include <memory>
 #include <thread>
+#include <chrono>
+#include <psapi.h>
 #include "spdlog/sinks/base_sink.h"
 
 #define FOREGROUND_WHITE FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN
 
 // 콘솔 모니터링 클래스 (싱글톤)
-class ConsoleMonitor {
+class ConsoleMonitor 
+{
 public:
     static ConsoleMonitor& Get();
 
@@ -31,6 +34,7 @@ public:
 
     // 통계 업데이트 메서드들
     void UpdateClientCount(int count);
+    void UpdateGroupCount(int count);
     void UpdateLatency(int ms);
     void UpdateErrorRate();
     void IncrementTcpPacket();
@@ -44,13 +48,14 @@ private:
     void InputThread();
     void Draw();
     void UpdateStatus(); // 초당 패킷 수 계산, Error Rate 계산
+    void UpdateMemoryUsage();
 
     // Win32 Console Handles
     HANDLE _hConsoleOut;
     HANDLE _hConsoleIn;
     HANDLE _hBuffer[2];
     int _currentBufferIndex = 0;
-    
+
     // Threading
     std::atomic<bool> _isRunning = false;
     std::unique_ptr<std::thread> _renderThread;
@@ -63,10 +68,14 @@ private:
 
     // Stats (Atomic for thread safety)
     std::atomic<int> _clientCount = 0;
+    std::atomic<int> _groupCount = 0;
     std::atomic<int> _latencyCount = 0;
     std::atomic<int> _totalLatency = 0;
     std::atomic<double> _avgLatency = 0.0;
     std::atomic<double> _errorRate = 0.0; // 전송과 수신에 대해 count 계산 필요
+
+    // Memory Usage
+    std::atomic<double> _memorySize;
 
     // PPS Calculation
     std::atomic<long long> _tcpPacketCounter = 0;

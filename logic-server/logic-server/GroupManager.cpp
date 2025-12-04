@@ -28,25 +28,24 @@ void GroupManager::Stop()
 void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const std::shared_ptr<Session>& newSession)
 {
     uuid joinGroupId = _toUuid(groupDto->groupid());
+
+    std::lock_guard<std::mutex> groupLock(_groupMutex);
+    auto groupIt = _groups.find(joinGroupId);
+    if (groupIt != _groups.end())
     {
-        std::lock_guard<std::mutex> groupLock(_groupMutex);
-        auto groupIt = _groups.find(joinGroupId);
-        if (groupIt != _groups.end())
+        const auto& [groupId, group] = *groupIt;
+
+        if (group->IsFull())
         {
-            const auto& [groupId, group] = *groupIt;
-
-            if (group->IsFull())
-            {
-                spdlog::error("fatal error: {} is full (invalid situation)", to_string(groupId));
-                return;
-            }
-
-            group->AddMember(newSession);
-
-            spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
-            newSession->Start();
+            spdlog::error("fatal error: {} is full (invalid situation)", to_string(groupId));
             return;
         }
+
+        group->AddMember(newSession);
+
+        spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
+        newSession->Start();
+        return;
     }
 
     const auto newGroup = CreateNewGroup(groupDto);
@@ -54,10 +53,8 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
     newGroup->Start();
     newSession->Start();
 
-    {
-        std::lock_guard<std::mutex> groupLock(_groupMutex);
-        _groups[newGroup->GetGroupId()] = newGroup;
-    }
+    _groups[newGroup->GetGroupId()] = newGroup;
+    ConsoleMonitor::Get().UpdateGroupCount(_groups.size());
 }
 
 std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup(const std::shared_ptr<GroupDto> groupDto)
@@ -89,6 +86,7 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup> emptyGr
     }
 
     _groups.erase(it);
+    ConsoleMonitor::Get().UpdateGroupCount(_groups.size());
 
     spdlog::info("removed empty group {}", to_string(emptyGroup->GetGroupId()));
 }

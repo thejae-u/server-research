@@ -177,9 +177,19 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
         auto attackerIt = _members.find(attackerUid);
         auto victimIt = _members.find(victimUid);
 
-        if (attackerIt == _members.end() || victimIt == _members.end())
+        if (attackerIt == _members.end())
         {
-            spdlog::error("invalid attaker or victim uid (attacker: {}, victim: {})", atkPacket->uid(), atkPacket->data());
+            spdlog::error("invalid attacker uid (attacker: {})", atkPacket->uid());
+            return;
+        }
+
+        if (victimIt == _members.end())
+        {
+            spdlog::error("attacker {} invalid victim uid (victim: {})", atkPacket->uid(), atkData.victim());
+            for (const auto& [id, session] : _members)
+            {
+                spdlog::info("session {} in group {}", to_string(id), _groupInfo->groupid());
+            }
             return;
         }
 

@@ -75,6 +75,7 @@ void ConsoleMonitor::AddLog(const std::string& msg) {
 }
 
 void ConsoleMonitor::UpdateClientCount(int count) { _clientCount = count; }
+void ConsoleMonitor::UpdateGroupCount(int count) { _groupCount = count; }
 void ConsoleMonitor::UpdateLatency(int ms) 
 {
     _totalLatency += ms;
@@ -104,6 +105,21 @@ void ConsoleMonitor::UpdateStatus() {
     }
 }
 
+void ConsoleMonitor::UpdateMemoryUsage()
+{
+    PROCESS_MEMORY_COUNTERS_EX pmc{};
+    if (GetProcessMemoryInfo(GetCurrentProcess(),
+        reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&pmc),
+        sizeof(pmc)))
+    {
+        _memorySize = static_cast<double>(pmc.WorkingSetSize) / (1024.0 * 1024.0);
+    }
+    else
+    {
+        _memorySize = 0;
+    }
+}
+
 void ConsoleMonitor::InputThread() {
     INPUT_RECORD irInBuf[128];
     DWORD cNumRead;
@@ -128,6 +144,7 @@ void ConsoleMonitor::InputThread() {
 void ConsoleMonitor::RenderThread() {
     while (_isRunning) {
         UpdateStatus();
+        UpdateMemoryUsage();
         Draw();
         std::this_thread::sleep_for(std::chrono::milliseconds(50)); // 20 FPS
     }
@@ -148,8 +165,7 @@ void ConsoleMonitor::Draw() {
         ci.Attributes = FOREGROUND_WHITE;
     }
 
-    // 하단 통계 영역 높이 (예: 4줄)
-    int statsHeight = 5;
+    int statsHeight = 8; // 하단 통계영역 높이 (구분선 포함)
     int logAreaHeight = bufferSize.Y - statsHeight;
     if (logAreaHeight < 0) logAreaHeight = 0;
 
@@ -194,8 +210,8 @@ void ConsoleMonitor::Draw() {
         for (int x = 0; x < bufferSize.X; ++x) {
             int idx = lineRow * bufferSize.X + x;
             if (idx < bufferData.size()) {
-                bufferData[idx].Char.UnicodeChar = L'=' ;
-                bufferData[idx].Attributes = FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+                bufferData[idx].Char.UnicodeChar = L'-' ;
+                bufferData[idx].Attributes = FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_INTENSITY;
             }
         }
     }
@@ -218,21 +234,26 @@ void ConsoleMonitor::Draw() {
     };
 
     DrawStatLine(0, L"Connected Clients", std::to_wstring(_clientCount));
+    DrawStatLine(1, L"Created Groups", std::to_wstring(_groupCount));
     
     std::wstringstream ssLatency;
     ssLatency << std::fixed << std::setprecision(2) << _avgLatency.load() << L" ms";
-    DrawStatLine(1, L"Average Latency", ssLatency.str());
+    DrawStatLine(2, L"Average Latency", ssLatency.str());
 
     std::wstringstream ssError;
     ssError << std::fixed << std::setprecision(2) << _errorRate.load() << L" %";
-    DrawStatLine(2, L"Error Rate", ssError.str());
+    DrawStatLine(3, L"Error Rate", ssError.str());
 
     std::wstringstream ssPps;
     ssPps << L"TCP: " << _tcpPps << L" / UDP: " << _udpPps;
-    DrawStatLine(3, L"Packet/Sec", ssPps.str());
+    DrawStatLine(4, L"Packet/Sec", ssPps.str());
+
+    std::wstringstream ssMemory;
+    ssMemory << std::fixed << std::setprecision(2) << _memorySize.load() << L" MB";
+    DrawStatLine(5, L"Memory Usage", ssMemory.str());
 
     // Help Text
-    int helpRow = statsStartRow + 4;
+    int helpRow = statsStartRow + 6;
     if (helpRow < bufferSize.Y) {
         std::wstring helpText = L" [SYSTEM] Monitor Active. Press ENTER to exit.";
         for (size_t i = 0; i < helpText.length(); ++i) {
