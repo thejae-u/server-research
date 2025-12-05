@@ -28,6 +28,10 @@ Made with GEMINI CLI
 #include <psapi.h>
 #include <algorithm>
 #include <format>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <climits> // For INT_MAX
 
 using ll = long long;
 
@@ -99,9 +103,136 @@ static void SpawnClients(int count, int groupMaxCount)
     }
 }
 
-static void StopAllClients() 
+static void StopAllClients()
 {
-    for (auto& client : clients) 
+    if (clients.empty()) return;
+
+    // --- Statistics Gathering & CSV Export Start ---
+
+    // 1. Prepare Directory
+    std::filesystem::path dataDir = "data";
+    if (!std::filesystem::exists(dataDir))
+    {
+        std::filesystem::create_directory(dataDir);
+    }
+
+    // 2. Prepare Filename with Timestamp
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    std::tm bt{};
+    localtime_s(&bt, &in_time_t); // Use localtime_s for thread-safe operation
+    ss << std::put_time(&bt, "%Y-%m-%d_%H-%M-%S");
+    std::string filename = std::format("data/stats_{}.csv", ss.str());
+
+    // 3. Calculate Stats In-Memory
+    struct GroupStats {
+        ll minRtt = INT_MAX;
+        ll maxRtt = 0;
+        ll totalRtt = 0;
+        ll count = 0;
+        ll txPackets = 0;
+        ll rxPackets = 0;
+        int clientCount = 0;
+    };
+    std::map<std::string, GroupStats> groupStatsMap;
+
+    int highestClientMaxRtt = 0;
+    double highestClientAvgRtt = 0.0;
+
+    for (auto& client : clients)
+    {
+        auto stats = client->GetStats();
+
+        // Update overall client max stats
+        if (stats.maxRtt > highestClientMaxRtt) highestClientMaxRtt = stats.maxRtt;
+        double avg = stats.GetAvgRtt();
+        if (avg > highestClientAvgRtt) highestClientAvgRtt = avg;
+
+        // Aggregating for Group Stats
+        auto& gStats = groupStatsMap[client->GetGroupId()];
+        gStats.clientCount++;
+
+        // Count packets regardless of RTT status
+        gStats.txPackets += stats.txPackets;
+        gStats.rxPackets += stats.rxPackets;
+
+        if (stats.rttCount > 0) // Only consider valid RTTs for latency stats
+        {
+            if (stats.minRtt < gStats.minRtt) gStats.minRtt = stats.minRtt;
+            if (stats.maxRtt > gStats.maxRtt) gStats.maxRtt = stats.maxRtt;
+            gStats.totalRtt += stats.totalRtt;
+            gStats.count += stats.rttCount;
+        }
+    }
+
+    double highestGroupAvgRtt = 0.0;
+    double totalClientsInGroups = 0;
+    for (const auto& [groupId, gStats] : groupStatsMap)
+    {
+        double avg = (gStats.count > 0) ? (double)gStats.totalRtt / gStats.count : 0.0;
+        if (avg > highestGroupAvgRtt) highestGroupAvgRtt = avg;
+        totalClientsInGroups += gStats.clientCount;
+    }
+    double avgClientsPerGroup = groupStatsMap.empty() ? 0.0 : totalClientsInGroups / groupStatsMap.size();
+
+    // 4. Write to CSV
+    std::ofstream csvFile(filename);
+    if (csvFile.is_open())
+    {
+        // --- Overall Summary ---
+        csvFile << "--- Overall Summary ---\n";
+        csvFile << "Total Client Count," << clients.size() << "\n";
+        csvFile << "Total Group Count," << groupStatsMap.size() << "\n";
+        csvFile << "Clients per Group," << avgClientsPerGroup << "\n";
+        csvFile << "Highest Client Max RTT," << highestClientMaxRtt << "\n";
+        csvFile << "Highest Client Avg RTT," << highestClientAvgRtt << "\n";
+        csvFile << "Highest Group Avg RTT," << highestGroupAvgRtt << "\n";
+        csvFile << "\n";
+
+        // --- Client Stats ---
+        csvFile << "--- Client Stats ---\n";
+        csvFile << "ClientID,GroupID,MinRTT,AvgRTT,MaxRTT,TxPackets,RxPackets\n";
+
+        for (auto& client : clients)
+        {
+            auto stats = client->GetStats();
+            int validMinRtt = (stats.minRtt == INT_MAX) ? 0 : stats.minRtt;
+
+            csvFile << client->GetId() << "," << client->GetGroupId() << ","
+                << validMinRtt << "," << stats.GetAvgRtt() << "," << stats.maxRtt << ","
+                << stats.txPackets << "," << stats.rxPackets << "\n";
+        }
+        csvFile << "\n";
+
+        // --- Group Stats ---
+        csvFile << "--- Group Stats ---\n";
+        csvFile << "GroupID,ClientCount,MinRTT,AvgRTT,MaxRTT,TotalTxPackets,TotalRxPackets\n";
+
+        for (const auto& [groupId, gStats] : groupStatsMap)
+        {
+            double avg = (gStats.count > 0) ? (double)gStats.totalRtt / gStats.count : 0.0;
+            ll minR = (gStats.minRtt == INT_MAX) ? 0 : gStats.minRtt;
+
+            csvFile << groupId << ","
+                << gStats.clientCount << ","
+                << minR << ","
+                << avg << ","
+                << gStats.maxRtt << ","
+                << gStats.txPackets << ","
+                << gStats.rxPackets << "\n";
+        }
+
+        csvFile.close();
+        std::cout << "Statistics saved to " << filename << std::endl;
+    }
+    else
+    {
+        std::cerr << "Failed to open file for writing: " << filename << std::endl;
+    }
+    // --- Statistics Gathering End ---
+
+    for (auto& client : clients)
     {
         client->Stop();
     }
@@ -114,6 +245,7 @@ static void StopAllClients()
     gMinRtt = INT_MAX;
     gAvgRtt = 0.0;
     gMaxRtt = 0;
+
 }
 
 // Main code
@@ -307,6 +439,8 @@ int main(int, char**)
 
             if (ImGui::Button("Spawn Clients"))
             {
+                targetClientCount = std::min(targetClientCount, 500);
+                groupMaxCount = std::min(groupMaxCount, 500);
                 SpawnClients(targetClientCount, groupMaxCount);
             }
             ImGui::SameLine();
@@ -496,13 +630,12 @@ int main(int, char**)
         {
             if (ImGui::BeginChild("ClientList", ImVec2(0, 200), true))
             {
-                if (ImGui::BeginTable("Clients", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
+                if (ImGui::BeginTable("Clients", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_Resizable))
                 {
-                    ImGui::TableSetupColumn("ID");
-                    ImGui::TableSetupColumn("State");
-                    ImGui::TableSetupColumn("RTT");
                     ImGui::TableSetupColumn("UserId");
-                    ImGui::TableSetupColumn("GroupId");
+                    ImGui::TableSetupColumn("State");
+                    ImGui::TableSetupColumn("Avg RTT");
+                    ImGui::TableSetupColumn("Error Rate");
                     ImGui::TableHeadersRow();
 
                     int clientCounts = clients.size();
@@ -511,15 +644,13 @@ int main(int, char**)
                         auto& client = clients[i];
                         ImGui::TableNextRow();
                         ImGui::TableSetColumnIndex(0);
-                        ImGui::Text("%d", client->GetId());
+                        ImGui::Text("%s", client->GetDisplayUserId().c_str());
                         ImGui::TableSetColumnIndex(1);
                         ImGui::Text("%s", client->GetStateString());
                         ImGui::TableSetColumnIndex(2);
-                        ImGui::Text("%d ms", client->GetStats().rttMs);
+                        ImGui::Text("%.1f ms", client->GetStats().GetAvgRtt());
                         ImGui::TableSetColumnIndex(3);
-                        ImGui::Text("%s", client->GetDisplayUserId().c_str());
-                        ImGui::TableSetColumnIndex(4);
-                        ImGui::Text("%s", client->GetDisplayGroupId().c_str());
+                        ImGui::Text("S : %d / R: %d", client->GetStats().txPackets, client->GetStats().rxPackets);
                     }
                     ImGui::EndTable();
                 }
@@ -562,9 +693,8 @@ int main(int, char**)
                 std::string gid = client->GetGroupId();
                 int gIdx = client->GetGroupIndex();
 
-                if (g_GroupVisibility.find(gid) != g_GroupVisibility.end() && !g_GroupVisibility[gid]) {
+                if (g_GroupVisibility.find(gid) != g_GroupVisibility.end() && !g_GroupVisibility[gid])
                     continue;
-                }
 
                 auto [srvX, serverZ] = client->GetServerPosition();
                 auto& srvPoints = serverGroupPoints[gIdx];

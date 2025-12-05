@@ -54,6 +54,11 @@ static const char* StateToString(ClientState state)
 struct ClientStats
 {
     int rttMs = 0;
+    int minRtt = INT_MAX; // INT_MAX
+    int maxRtt = 0;
+    long long totalRtt = 0;
+    long long rttCount = 0;
+
     int tickGap = 0;
     uint64_t txPackets = 0;
     uint64_t rxPackets = 0;
@@ -63,6 +68,11 @@ struct ClientStats
     uint64_t rxBytes = 0;
     double txBps = 0.0;
     double rxBps = 0.0;
+
+    double GetAvgRtt() const 
+    {
+        return rttCount > 0 ? (double)totalRtt / rttCount : 0.0;
+    }
 };
 
 // Packet history

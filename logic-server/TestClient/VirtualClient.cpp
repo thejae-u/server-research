@@ -8,6 +8,7 @@ Made With GEMINI CLI
 #include <iostream>
 #include <chrono>
 #include <random>
+#include <algorithm>
 #include <boost/uuid/uuid_io.hpp> // Required for boost::uuids::to_string
 
 // Boost UUID generator
@@ -395,7 +396,7 @@ void VirtualClient::DoReadBody(uint32_t size)
             {
                 {
                     std::lock_guard<std::mutex> lock(self->_statsMutex);
-                    self->_stats.rxPackets++;
+                    //self->_stats.rxPackets++;
                 }
                 self->HandleTcpPacket(packet);
             }
@@ -437,6 +438,13 @@ void VirtualClient::HandleTcpPacket(const RpcPacket& packet)
                 int rtt = std::stoi(packet.data());
                 std::lock_guard<std::mutex> lock(_statsMutex);
                 _stats.rttMs = rtt;
+                
+                // Update Statistics
+                if (rtt < _stats.minRtt) _stats.minRtt = rtt;
+                if (rtt > _stats.maxRtt) _stats.maxRtt = rtt;
+                _stats.totalRtt += rtt;
+                _stats.rttCount++;
+
                 SHistory history = { _displayGroupId, _displayUserId, "rtt", std::to_string(rtt), std::chrono::system_clock::now() };
 
                 /*if (_enqueueHistory)
