@@ -25,4 +25,6 @@ public interface IUserService
     Task<InternalResponseDto?> LoginInternalAsync(UserLoginDto userLoginDto);
 
     Task FlushInternalUserAsync();
+
+    Task<int> DeleteAllPlayersAsync();
 }
