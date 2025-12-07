@@ -635,7 +635,7 @@ int main(int, char**)
                     ImGui::TableSetupColumn("UserId");
                     ImGui::TableSetupColumn("State");
                     ImGui::TableSetupColumn("Avg RTT");
-                    ImGui::TableSetupColumn("Error Rate");
+                    ImGui::TableSetupColumn("Send/Receive Udp Packets");
                     ImGui::TableHeadersRow();
 
                     int clientCounts = clients.size();
