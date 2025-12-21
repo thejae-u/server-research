@@ -10,35 +10,14 @@ using Random = UnityEngine.Random;
 [NodeDescription(name: "Delay", story: "Wait Randomly [includeA] to [includeB]", category: "Action/Delay", id: "634d635933dc9a6d1ef1312fb021373b")]
 public partial class DelayAction : Action
 {
-    [SerializeReference] public BlackboardVariable<int> IncludeA;
-    [SerializeReference] public BlackboardVariable<int> IncludeB;
-
-    private float _delayTime;
-    private float _elapsedTime;
-
-    private LogicServerConnector _networkManager;
-
     protected override Status OnStart()
     {
-        _networkManager = LogicServerConnector.Instance;
-
-        int min = IncludeA.Value;
-        int max = IncludeB.Value;
-        _delayTime = (float)Random.Range(min, max + 1) / 100;
-        _elapsedTime = 0;
-
-        return Status.Running;
+        return Status.Failure;
     }
 
     protected override Status OnUpdate()
     {
-        if (!_networkManager.IsSendPacketOn || !_networkManager.IsOnline)
-        {
-            return Status.Running;
-        }
-
-        _elapsedTime += Time.deltaTime;
-        return _elapsedTime < _delayTime ? Status.Running : Status.Success;
+        return Status.Failure;
     }
 
     protected override void OnEnd()

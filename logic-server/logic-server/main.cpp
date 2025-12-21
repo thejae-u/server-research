@@ -7,24 +7,35 @@
 #include "Server.h"
 #include "ContextManager.h"
 #include "InternalConnector.h"
+#include "Monitor.h"
+#include "spdlog/sinks/stdout_color_sinks.h"
 
-const bool TEST_MODE = true;
+constexpr bool NO_WEB_SERVER_MODE = true;
 constexpr unsigned short SERVER_PORT = 53200;
 using namespace boost::asio::ip;
 
 int main()
 {
+    auto monitorSink = std::make_shared<MonitorSink_mt>();
+    auto logger = std::make_shared<spdlog::logger>("monitor", monitorSink);
+    spdlog::set_default_logger(logger);
+    ConsoleMonitor::Get().Start();
+
     spdlog::info("initialize start");
-    const auto ctxThreadCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 100;
-    const std::size_t rpcCtxThreadCount = ctxThreadCount / 5; // 20% of total threads for RPC
-    const std::size_t workCtxThreadCount = ctxThreadCount - rpcCtxThreadCount; // Remaining threads for work context
+    std::size_t coreCount = static_cast<std::size_t>(std::thread::hardware_concurrency()) * 2;
+    if (coreCount == 0)
+        coreCount = 4; // least core count
 
-    auto workThreadContext = ContextManager::Create("work", 
-        static_cast<std::size_t>(workCtxThreadCount * 0.3f), static_cast<std::size_t>(workCtxThreadCount * 0.7f)); // work thread for normal network callback
-    auto rpcThreadContext = ContextManager::Create("rpc",
-        static_cast<std::size_t>(rpcCtxThreadCount * 0.3f), static_cast<std::size_t>(rpcCtxThreadCount * 0.7f)); // rpc thread for udp network callback
+    const std::size_t mainIoThreads = coreCount / 2;
+    const std::size_t mainWorkerThreads = coreCount - mainIoThreads;
 
-    if (!TEST_MODE)
+    const std::size_t rpcIoThreads = coreCount / 2;
+    const std::size_t rpcWorkerThreads = coreCount - rpcIoThreads;
+
+    auto workThreadContext = ContextManager::Create("main", mainIoThreads, mainWorkerThreads);
+    auto rpcThreadContext = ContextManager::Create("rpc", rpcIoThreads, rpcWorkerThreads);
+
+    if (!NO_WEB_SERVER_MODE)
     {
         auto internalConnector = std::make_shared<InternalConnector>();
         if (!internalConnector->GetAccessTokenFromInternal())
@@ -47,10 +58,19 @@ int main()
     spdlog::info("start server...");
     server->Start();
 
-    spdlog::warn("press any key to stop server");
-    std::cin.get();
+    std::cin.clear();
 
-    server->Stop();
+    spdlog::warn("Server is running... Press ENTER to exit.");
+    
+    // Wait for monitor to signal exit (ENTER key pressed)
+    while (ConsoleMonitor::Get().IsRunning()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    
+    ConsoleMonitor::Get().Stop();
+    spdlog::set_default_logger(spdlog::stdout_color_mt("console"));
+
+    server->Stop(1);
 
     workThreadContext->Stop();
     rpcThreadContext->Stop();

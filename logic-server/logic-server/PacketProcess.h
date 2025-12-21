@@ -13,12 +13,19 @@
 using namespace boost::uuids;
 using namespace NetworkData;
 
-static void MakeHitPacket(uuid from, uuid to, std::shared_ptr<RpcPacket>& out)
+static void MakeHitPacket(uuid attacker, uuid victim, std::shared_ptr<RpcPacket>& out, std::int32_t dmg)
 {
     RpcPacket hitPacket;
-    hitPacket.set_uid(to_string(to));
+    hitPacket.set_uid(to_string(victim));
     hitPacket.set_method(RpcMethod::Hit);
-    hitPacket.set_data(to_string(from));
+
+    HitData hitData;
+    hitData.set_attacker(to_string(attacker));
+    hitData.set_dmg(dmg);
+
+    std::string serializedHitData;
+    hitData.SerializeToString(&serializedHitData);
+    hitPacket.set_data(serializedHitData);
 
     out = std::make_shared<RpcPacket>(hitPacket);
 }

@@ -5,7 +5,9 @@ using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Network;
 using NetworkData;
+using Cysharp.Threading.Tasks.Triggers;
 
+[RequireComponent(typeof(MeshRenderer))]
 public class OwnObjectManager : MonoBehaviour
 {
     [SerializeField] private PlayerMoveActions _playerActions;
@@ -13,14 +15,16 @@ public class OwnObjectManager : MonoBehaviour
     [SerializeField] private float _movePacketSendInterval = 16.6f; // in milliseconds
 
     private GameObject _sword;
+    private MeshRenderer _meshRenderer;
     private bool IsOnAttack => _attackMotionRoutine is not null;
     private IEnumerator _attackMotionRoutine;
-
-    private LogicServerConnector _connector;
+    
+    private BaseConnector _connector;
 
     private bool _isMoving;
 
     private Vector3 _cachedDirection;
+    private Vector3 _lastMoveDirection = Vector3.forward;
     private float _lastSendDeltaTime = 0.0f;
     private MoveData _moveData = new()
     {
@@ -33,34 +37,41 @@ public class OwnObjectManager : MonoBehaviour
     };
 
     private readonly RpcPacket _sendPacket = new();
-
-    private bool _isManualMode = false;
+    private Collider[] _hitColliders = new Collider[10]; // 미리 할당된 배열
 
     private void Awake()
     {
         _sword = transform.GetChild(0).gameObject;
+        _meshRenderer = GetComponent<MeshRenderer>();
     }
 
     private void Start()
     {
         if (SyncManager.Instance.isManualMode)
         {
-            _isManualMode = true;
-            _isMoving = false;
-            return;
+            _connector = ManualConnector.Instance;
         }
-
-        _connector = LogicServerConnector.Instance;
-        _connector.StartGameTask();
+        else
+        {
+            _connector = LogicServerConnector.Instance;
+        }
+        
+        SyncManager.Instance.RegisterLocalPlayer(this);
         _isMoving = false;
     }
 
     private void OnEnable()
     {
+        _playerActions.onMoveStartAction -= OnMoveStart;
         _playerActions.onMoveStartAction += OnMoveStart;
+        
+        _playerActions.onMoveAction -= OnMove;
         _playerActions.onMoveAction += OnMove;
+        
+        _playerActions.onMoveStopAction -= OnMoveStop;
         _playerActions.onMoveStopAction += OnMoveStop;
 
+        _playerActions.onAttackAction -= OnAttack;
         _playerActions.onAttackAction += OnAttack;
     }
 
@@ -75,20 +86,6 @@ public class OwnObjectManager : MonoBehaviour
 
     private void Update()
     {
-        if (_isManualMode)
-        {
-            if (!ManualConnector.Instance.IsOnline)
-                return;
-
-            _lastSendDeltaTime += Time.deltaTime * 1000.0f; // Convert to milliseconds
-
-            if (!_isMoving)
-                return;
-
-            MoveTo();
-            return;
-        }
-
         if (!_connector.IsOnline)
             return;
 
@@ -120,10 +117,7 @@ public class OwnObjectManager : MonoBehaviour
         _sendPacket.Timestamp = Timestamp.FromDateTime(DateTime.UtcNow);
         _sendPacket.Data = _moveData.ToByteString();
 
-        if (_isManualMode)
-            ManualConnector.Instance.EnqueueRpcPacketForUdp(_sendPacket);
-        else
-            _connector.EnqueueRpcPacketForUdp(_sendPacket);
+        _connector.EnqueueRpcPacketForUdp(_sendPacket);
     }
 
     public void MoveTo()
@@ -142,6 +136,10 @@ public class OwnObjectManager : MonoBehaviour
     {
         Vector3 dir = transform.right * move.x + transform.forward * move.y;
         _cachedDirection = dir.sqrMagnitude > 0.0001f ? dir.normalized : Vector3.zero;
+        if (_cachedDirection != Vector3.zero)
+        {
+            _lastMoveDirection = _cachedDirection;
+        }
 
         _moveData.Horizontal = dir.x;
         _moveData.Vertical = dir.z;
@@ -174,17 +172,43 @@ public class OwnObjectManager : MonoBehaviour
 
     private IEnumerator AttackMotionRoutine()
     {
+        // AABB Check
+        Vector3 boxSize = new(1f, 1f, 1f);
+        Vector3 center = transform.position + _lastMoveDirection * 1.0f;
+        int numColliders = Physics.OverlapBoxNonAlloc(center, boxSize / 2, _hitColliders, transform.rotation);
+
+        string victimId = "";
+        int damage = 0;
+
+        for (int i = 0; i < numColliders; i++)
+        {
+            var hitCollider = _hitColliders[i];
+            if(!hitCollider.TryGetComponent(out SyncObject syncObject))
+            {
+                continue;
+            }
+
+            if (syncObject != null && !syncObject.IsOwnObject)
+            {
+                victimId = syncObject.User.Uid;
+                damage = _playerStatData.damage;
+            }
+        }
+
+        AtkData atkData = new AtkData
+        {
+            Victim = victimId,
+            Dmg = damage
+        };
+
         RpcPacket attackPacket = new()
         {
             Method = RpcMethod.Atk,
-            Data = ByteString.Empty,
+            Data = atkData.ToByteString(),
             Timestamp = Timestamp.FromDateTime(DateTime.UtcNow)
         };
 
-        if (_isManualMode)
-            ManualConnector.Instance.EnqueueRpcPacketForUdp(attackPacket);
-        else
-            _connector.EnqueueRpcPacketForUdp(attackPacket);
+        _connector.EnqueueRpcPacketForUdp(attackPacket);
 
         const float duration = 0.5f;
         float delta = 0.0f;
@@ -205,5 +229,20 @@ public class OwnObjectManager : MonoBehaviour
 
         _sword.transform.localPosition = originalPosition;
         _attackMotionRoutine = null;
+    }
+
+    public void OnDamage(int damage)
+    {
+        StartCoroutine(DamageEffectRoutine());
+    }
+
+    private IEnumerator DamageEffectRoutine()
+    {
+        if (_meshRenderer == null) yield break;
+
+        Color originalColor = _meshRenderer.material.color;
+        _meshRenderer.material.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        _meshRenderer.material.color = originalColor;
     }
 }

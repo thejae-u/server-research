@@ -46,10 +46,9 @@ public:
     }
 
     void Start() override;
-    void Stop() override;
+    void Stop(bool forceStop) override;
 
     tcp::socket& GetSocket() const { return *_tcpSocketPtr; }
-    void SetGroup(const std::shared_ptr<LockstepGroup>& groupPtr) { _lockstepGroupPtr = groupPtr; }
 
 public: // first handshaking functions
     bool ExchangeUdpPort(std::uint16_t udpPort);
@@ -75,8 +74,6 @@ public: // default session functions
     void CollectInput(std::shared_ptr<RpcPacket> receivePacket);
     void EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets);
 
-    Util::SGameState GetGameState() const { return _gameState; }
-
 private: // tcp functions
     std::mutex _sendTcpQueueMutex;
     std::queue<std::shared_ptr<std::string>> _sendTcpQueue;
@@ -86,12 +83,11 @@ private: // tcp functions
 	void TcpAsyncReadSize();
     void TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer);
 
-    void UpdateOwnState(CompletionHandler onComplete);
-    void SendGameStatePacket(CompletionHandler onComplete);
-
 private: // udp network members
     std::mutex _sendUdpQueueMutex;
     std::queue<RpcPacket> _sendUdpPacketQueue;
+    bool _isTcpSending = false;
+    bool _isSerializingUdp = false;
 
 private: // default members
     using TcpSocket = tcp::socket;
@@ -118,8 +114,7 @@ private: // default members
     // client connected state
     std::atomic<bool> _isConnected = false;
 
-    // group
-    std::shared_ptr<LockstepGroup> _lockstepGroupPtr;
+    // dtos
     UserSimpleDto _sessionInfo;
     GroupDto _groupDto;
 
@@ -128,10 +123,6 @@ private: // rtt timer
     const std::uint32_t _pingDelay = 1000;
     std::chrono::high_resolution_clock::time_point _pingTime;
     std::uint64_t _lastRtt;
-
-private: // update state timer
-    std::shared_ptr<Scheduler> _updateTimer;
-    const std::uint32_t _updateDelay = 1;
 
 public: // callback functions 
     using StopCallback = std::function<void(const std::shared_ptr<Session>&)>;
@@ -151,12 +142,26 @@ private: // callback handlers
     SendDataByUdp _sendDataByUdp;
 
 private: // own state
-    std::mutex _stateMutex;
-    Util::SGameState _gameState;
+    mutable std::mutex _stateMutex;
+    Util::SUserState _userState;
 
-    std::mutex _updatePacketMutex;
-    std::queue<RpcPacket> _updatePacketQueue;
+    // update SUserState(_userState)
+    std::mutex _statesQueueMutex;
+    std::queue<RpcPacket> _statesQueue;
+    bool _isOwnStateUpdating = false;
+    void AsyncUpdateOwnState();
 
+    // call SendGameStatePacket() per _sendStateDelay
     std::shared_ptr<Scheduler> _sendStateTimer;
     const std::uint32_t _sendStateDelay = 500;
+
+    // own state send to client
+    void SendGameStatePacket(CompletionHandler onComplete);
+
+public:
+    Util::SUserState GetGameState() const 
+    {
+        std::lock_guard<std::mutex> lock(_stateMutex);
+        return _userState; 
+    }
 };

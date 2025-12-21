@@ -43,6 +43,13 @@ public class AdminController : ControllerBase
         return Ok();
     }
 
+    [HttpDelete("users/players")]
+    public async Task<IActionResult> DeleteAllPlayers()
+    {
+        int deletedCount = await _userService.DeleteAllPlayersAsync();
+        return Ok(new { Message = $"총 {deletedCount}명의 Player 사용자가 삭제되었습니다." });
+    }
+
     [HttpPost("group/create")]
     public async Task<IActionResult> CreateGroupAdmin([FromBody] CreateGroupRequestDto request)
     {

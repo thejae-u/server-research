@@ -21,40 +21,57 @@ void LockstepGroup::SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallba
 void LockstepGroup::Start()
 {
     _isRunning = true;
-    auto self(shared_from_this());
-    _tickTimer = std::make_shared<Scheduler>(_privateStrand, std::chrono::milliseconds(_fixedDeltaMs), [self](CompletionHandler onComplete) {
-        self->Tick(onComplete);
-        }
-    );
+    auto weakSelf(weak_from_this());
+    _tickTimer = std::make_shared<Scheduler>(_privateStrand, std::chrono::milliseconds(_fixedDeltaMs), [weakSelf](CompletionHandler onComplete)
+    {
+        if (auto self = weakSelf.lock())
+            self->Tick(onComplete);
+    });
 
     _tickTimer->Start();
 }
 
-void LockstepGroup::Stop()
+void LockstepGroup::Stop(bool forceStop)
 {
     _isRunning = false;
-    _tickTimer->Stop();
+    _tickTimer->Stop(1);
+
+    if (forceStop)
+    {
+        std::lock_guard<std::mutex> lock(_memberMutex);
+        if (!_members.empty())
+        {
+            for(const auto& [sessionId, session] : _members)
+            {
+                session->Stop(true);
+            }
+        }
+
+        return;
+    }
+
     _notifyEmptyCallback(shared_from_this());
 }
 
 void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
 {
     {
-        std::lock_guard<std::mutex> lock(_memberMutex); 
+        std::lock_guard<std::mutex> lock(_memberMutex);
         _members[newSession->GetSessionUuid()] = newSession;
     }
 
-    auto self(shared_from_this());
-    newSession->SetGroup(self);
-    newSession->SetStopCallbackByGroup([self](const std::shared_ptr<Session>& session) {
-        self->RemoveMember(session);
-        }
-    );
+    auto weakSelf(weak_from_this());
+    newSession->SetStopCallbackByGroup([weakSelf](const std::shared_ptr<Session>& session)
+    {
+        if (auto self = weakSelf.lock())
+            self->RemoveMember(session);
+    });
 
-    newSession->SetCollectInputAction([self](std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest) {
-        self->CollectInput(std::move(rpcRequest));
-        }
-    );
+    newSession->SetCollectInputAction([weakSelf](std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest)
+    {
+        if (auto self = weakSelf.lock())
+            self->CollectInput(std::move(rpcRequest));
+    });
 
     spdlog::info("{} : added member {}", _groupInfo->groupid(), to_string(newSession->GetSessionUuid()));
 }
@@ -63,15 +80,16 @@ void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
     spdlog::info("{} : removed from {}", to_string(session->GetSessionUuid()), _groupInfo->groupid());
     {
-        std::lock_guard<std::mutex> lock(_memberMutex);
-        _members.erase(session->GetSessionUuid());
+        bool isGroupEmpty = false;
 
-        if (!_members.empty())
         {
-            return;
+            std::lock_guard<std::mutex> lock(_memberMutex);
+            _members.erase(session->GetSessionUuid());
+            isGroupEmpty = _members.empty();
         }
 
-        Stop();
+        if(isGroupEmpty)
+            Stop(false);
     }
 }
 
@@ -85,7 +103,7 @@ void LockstepGroup::CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr
         _inputBuffer[_currentBucket].push_back(std::make_shared<SSendPacket>(newInput));
     }
 
-    // spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Utility::MethodToString(request->method()));
+    spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Util::MethodToString(request->method()));
 
     if (request->method() != RpcMethod::Atk)
     {
@@ -94,7 +112,7 @@ void LockstepGroup::CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr
 
     // make hit packet after check valid attack
     auto self(shared_from_this());
-    boost::asio::post(_privateStrand.wrap([self, request]() { self->AsyncMakeHitPacket(request); }));
+    boost::asio::post(_privateStrand, [self, request]() { self->AsyncMakeHitPacket(request); });
 }
 
 void LockstepGroup::Tick(CompletionHandler onComplete)
@@ -107,16 +125,18 @@ void LockstepGroup::Tick(CompletionHandler onComplete)
     }
 
     auto self(shared_from_this());
-    boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]() {
+    boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]()
+    {
         std::list<std::shared_ptr<SSendPacket>> currentBucketPackets;
         {
             std::lock_guard<std::mutex> bufferLock(self->_bufferMutex);
             currentBucketPackets = self->_inputBuffer[self->_currentBucket];
         }
 
-        boost::asio::post(self->_privateStrand, [self, onComplete, currentBucketPackets]() {
+        boost::asio::post(self->_privateStrand, [self, onComplete, currentBucketPackets]()
+        {
             std::lock_guard<std::mutex> memberLock(self->_memberMutex);
-            for (const auto& [uid, member]  : self->_members)
+            for (const auto& [uid, member] : self->_members)
             {
                 if (!member->IsValid())
                     continue;
@@ -126,56 +146,77 @@ void LockstepGroup::Tick(CompletionHandler onComplete)
 
             ++self->_currentBucket;
             self->_inputCounter = 0;
-            onComplete(); 
-            }
-        );}
-    );
+            onComplete();
+        });
+    });
 }
 
 void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
 {
     // AABB check
-    auto attacker = _toUuid(atkPacket->uid());
-    uuid victim;
+    auto attackerUid = _toUuid(atkPacket->uid());
+    uuid victimUid;
 
     if (atkPacket->data().empty())
         return;
 
-    victim = _toUuid(atkPacket->data());
-
-    Util::SGameState fromState;
-    Util::SGameState toState;
-
+    AtkData atkData;
+    if (!atkData.ParseFromString(atkPacket->data()))
     {
-        std::lock_guard<std::mutex> memberLock(_memberMutex);
-        fromState = _members[attacker]->GetGameState();
-        toState = _members[victim]->GetGameState();
-    }
-
-    // Find User
-    auto fromAABB = Util::SAABB::MakeAABB(fromState.position.x, fromState.position.y, fromState.position.z, 0.5f);
-    auto toAABB = Util::SAABB::MakeAABB(toState.position.x, toState.position.y, toState.position.z, 0.5f);
-
-    if (fromAABB == toAABB) // Hit
-    {
-        auto self(shared_from_this());
-        spdlog::info("hit {} from {}", to_string(victim), to_string(attacker));
-        boost::asio::post(_privateStrand.wrap([self, attacker, victim]() {
-            auto hitPacket = std::make_shared<RpcPacket>();
-            MakeHitPacket(attacker, victim, hitPacket);
-
-            // victim hit rpc packet
-            auto requestPacket = std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>();
-            requestPacket->first = victim;
-            requestPacket->second = hitPacket;
-
-            self->CollectInput(std::move(requestPacket));
-            })
-        );
-
+        spdlog::error("[internal] parsing error by atk data");
         return;
     }
 
-    // No Hit
-    spdlog::info("no hit {} from {}", to_string(victim), to_string(attacker));
+    victimUid = _toUuid(atkData.victim());
+
+    Util::SUserState attackerState;
+    Util::SUserState victimState;
+
+    {
+        std::lock_guard<std::mutex> memberLock(_memberMutex);
+        auto attackerIt = _members.find(attackerUid);
+        auto victimIt = _members.find(victimUid);
+
+        if (attackerIt == _members.end())
+        {
+            spdlog::error("invalid attacker uid (attacker: {})", atkPacket->uid());
+            return;
+        }
+
+        if (victimIt == _members.end())
+        {
+            spdlog::error("attacker {} invalid victim uid (victim: {})", atkPacket->uid(), atkData.victim());
+            for (const auto& [id, session] : _members)
+            {
+                spdlog::info("session {} in group {}", to_string(id), _groupInfo->groupid());
+            }
+            return;
+        }
+
+        attackerState = attackerIt->second->GetGameState();
+        victimState = victimIt->second->GetGameState();
+    }
+
+    // Find User
+    auto attackerAABB = Util::SAABB::MakeAABB(attackerState.position.x, attackerState.position.y, attackerState.position.z, 0.5f);
+    auto victimAABB = Util::SAABB::MakeAABB(victimState.position.x, victimState.position.y, victimState.position.z, 0.5f);
+
+    if (attackerAABB != victimAABB)
+    {
+        return;
+    }
+
+    auto self(shared_from_this());
+    boost::asio::post(_privateStrand, [self, atkData, attackerUid, victimUid]()
+    {
+        auto hitPacket = std::make_shared<RpcPacket>();
+        MakeHitPacket(attackerUid, victimUid, hitPacket, atkData.dmg());
+
+        // victim hit rpc packet
+        auto requestPacket = std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>();
+        requestPacket->first = victimUid;
+        requestPacket->second = hitPacket;
+
+        self->CollectInput(std::move(requestPacket));
+    });
 }

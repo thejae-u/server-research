@@ -31,9 +31,10 @@ class Server final : public Base<Server>
 {
 public:
 	Server(const std::shared_ptr<ContextManager>& mainCtxManager, const std::shared_ptr<ContextManager>& rpcCtxManager, tcp::acceptor& acceptor);
+    ~Server();
 
 	void Start() override;
-	void Stop() override;
+	void Stop(bool forceStop) override;
 
 private:
     using UdpSocket = udp::socket;
@@ -50,6 +51,7 @@ private:
     std::uint16_t _allocatedUdpPort;
 
     std::mutex _sendDataQueueMutex;
+    bool _isSending;
     std::queue<std::shared_ptr<std::pair<udp::endpoint, std::string>>> _sendDataQueue;
 
 	std::shared_ptr<GroupManager> _groupManager;

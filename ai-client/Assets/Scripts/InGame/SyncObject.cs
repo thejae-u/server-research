@@ -11,82 +11,65 @@ public class SyncObject : MonoBehaviour
     [SerializeField] private PlayerStatData _playerStatData; // Player Stat Data for the object
 
     // Several Sync Data can be added to the SyncObject
-    public UserSimpleDto _user { get; private set; }
+    public UserSimpleDto User { get; private set; }
 
-    private LogicServerConnector _connector;
-    private AuthManager _authManager;
+    private BaseConnector _connector;
     private MeshRenderer _meshRenderer;
 
-    private Vector3 _lastNetworkPosition;
-    private readonly Queue<MoveData> _moveQueue = new();
+    private bool _isMoving = false;
+    private Vector3 _direction = Vector3.zero;
+    private Vector3 _targetPosition;
+
     private readonly Queue<AtkData> _atkQueue = new();
 
-    private IEnumerator _syncPositionRoutine = null;
     private IEnumerator _syncAttackRoutine = null;
 
     private GameObject _sword;
 
-    private bool IsOwnObject 
-    { 
-        get 
-        {
-            if (_isManualMode)
-                return Guid.Parse(_user.Uid) == ManualConnector.Instance.UserId;
-            return Guid.Parse(_user.Uid) == _authManager.UserGuid; 
-        } 
-    }
-
-    private bool _isManualMode = false;
+    public bool IsOwnObject => Guid.Parse(User.Uid) == _connector.UserId;
 
     private void Awake()
     {
         _sword = transform.GetChild(0).gameObject;
     }
 
-    public void Init(UserSimpleDto user)
+    public void Init(UserSimpleDto user, BaseConnector connector)
     {
-        if(user is null)
-        {
-            _isManualMode = true;
-            return;
-        }
-
-        _user = user;
+        User = user;
+        _connector = connector;
         _meshRenderer = GetComponent<MeshRenderer>();
+        _targetPosition = transform.position;
 
-        _connector = LogicServerConnector.Instance;
-        _authManager = AuthManager.Instance;
-
-        if (_connector is null || _authManager is null)
-            return;
-
-        if (Guid.Parse(_user.Uid) == _authManager.UserGuid)
+        if (IsOwnObject)
         {
             _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
         }
-
-        _syncPositionRoutine = SyncPositionRoutine();
-        StartCoroutine(_syncPositionRoutine);
     }
 
-    public void ManualModeInit(UserSimpleDto user)
+    public void SetMovementState(RpcMethod method, MoveData moveData)
     {
-        _isManualMode = true;
-
-        _user = user;
-        _meshRenderer = GetComponent<MeshRenderer>();
-
-        if(Guid.Parse(_user.Uid) == ManualConnector.Instance.UserId)
+        Vector3 newPos = new Vector3(moveData.X, moveData.Y, moveData.Z);
+        
+        if (Vector3.Distance(transform.position, newPos) > 5.0f)
         {
-            _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
+            transform.position = newPos;
         }
 
-        _syncPositionRoutine = null;
-    }
+        _targetPosition = newPos;
+        _direction = new Vector3(moveData.Horizontal, 0, moveData.Vertical);
 
-    public void EnqueueMoveData(MoveData moveData)
-    {
-        _moveQueue.Enqueue(moveData);
+        switch (method)
+        {
+            case RpcMethod.MoveStart:
+                _isMoving = true;
+                break;
+            case RpcMethod.Move:
+                _isMoving = true;
+                break;
+            case RpcMethod.MoveStop:
+                _isMoving = false;
+                break;
+        }
     }
 
     public void EnqueueAtkData(AtkData atkData)
@@ -94,58 +77,24 @@ public class SyncObject : MonoBehaviour
         _atkQueue.Enqueue(atkData);
     }
 
-    private IEnumerator SyncPositionRoutine()
+    public void OnDamage(int damage)
     {
-        while (_connector.IsOnline)
-        {
-            if (_moveQueue.Count == 0)
-                continue;
-
-            MoveData nextData = _moveQueue.Dequeue();
-            yield return null;
-        }
-
-        _syncPositionRoutine = null;    
+        StartCoroutine(DamageEffectRoutine());
     }
 
-    public void Sync()
+    private IEnumerator DamageEffectRoutine()
     {
-        if (_syncPositionRoutine is null)
-        {
-            _syncPositionRoutine = ManualSyncPosition();
-            StartCoroutine(_syncPositionRoutine);
-        }
+        if (_meshRenderer == null) yield break;
 
-        if(_syncAttackRoutine is null)
-        {
-            _syncAttackRoutine = ManualSyncAttack();
-            StartCoroutine(_syncAttackRoutine);
-        }
+        Color originalColor = _meshRenderer.material.color;
+        _meshRenderer.material.color = Color.red;
+        yield return new WaitForSeconds(0.1f);
+        _meshRenderer.material.color = originalColor;
     }
-
-    public IEnumerator ManualSyncPosition()
+    
+    public IEnumerator SyncAttackRoutine()
     {
-        if(ManualConnector.Instance.IsOnline)
-        {
-            if (_moveQueue.Count == 0)
-            {
-                _syncPositionRoutine = null;
-                yield break;
-            }
-
-            MoveData nextData = _moveQueue.Dequeue();
-            LogManager.Instance.Log($"{_user.Uid} next Data : {nextData.X},{nextData.Y},{nextData.Z}");
-            Vector3 newPosition = new(nextData.X, nextData.Y, nextData.Z);
-            transform.position = Vector3.Lerp(transform.position, newPosition, 1.0f);
-            yield return null;
-        }
-
-        _syncPositionRoutine = null;
-    }
-
-    public IEnumerator ManualSyncAttack()
-    {
-        if (!ManualConnector.Instance.IsOnline)
+        if (!_connector.IsOnline)
             yield break;
 
         if(_atkQueue.Count == 0)
@@ -179,19 +128,28 @@ public class SyncObject : MonoBehaviour
 
     private void Update()
     {
-        if (_isManualMode)
-        {
-            if (IsOwnObject)
-                _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
-
-            Sync();
-            return;
-        }
-
-        if (!_connector.IsOnline)
+        if (_connector == null || !_connector.IsOnline)
             return;
 
         if (IsOwnObject)
             _meshRenderer.material.color = new Color(0, 1, 0, 0.5f);
+
+        // 1. 로컬 예측 이동 (데드레커닝)
+        if (_isMoving)
+        {
+            transform.position += _direction * (_playerStatData.speed * Time.deltaTime);
+        }
+        else
+        {
+            // 2. 서버 위치와의 오차 보정 (보간)
+            // 단순히 Lerp만 쓰면 뒤로 끌려갈 수 있으므로, 현재 위치와 타겟 위치가 다를 때만 부드럽게 보정
+            transform.position = Vector3.Lerp(transform.position, _targetPosition, Time.deltaTime * 10.0f);
+        }
+
+        if (_syncAttackRoutine is null && _atkQueue.Count > 0)
+        {
+            _syncAttackRoutine = SyncAttackRoutine();
+            StartCoroutine(_syncAttackRoutine);
+        }
     }
 }

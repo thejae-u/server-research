@@ -3,6 +3,7 @@
 
 #include "LockstepGroup.h"
 #include "Util.h"
+#include "Monitor.h"
 
 Session::Session(const std::shared_ptr<ContextManager>& contextManager, const std::shared_ptr<ContextManager>& rpcContextManager)
     : _normalCtxManager(contextManager), _rpcCtxManager(rpcContextManager),
@@ -11,52 +12,50 @@ Session::Session(const std::shared_ptr<ContextManager>& contextManager, const st
     _normalPrivateStrand(_normalCtxManager->GetContext()),
     _rpcPrivateStrand(_rpcCtxManager->GetContext())
 {
-    _gameState = {};
+    _isTcpSending = false;
+    _isSerializingUdp = false;
+    _userState = {};
 }
 
 void Session::Start()
 {
-    auto self(shared_from_this());
+    auto weak(weak_from_this());
 
 	// Set Timers
-    _pingTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_pingDelay), [self](CompletionHandler onComplete) {
-        self->SendPingPacket(onComplete);
-        }
-    );
+    _pingTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_pingDelay), [weak](CompletionHandler onComplete)
+    {
+        if (auto self = weak.lock())
+            self->SendPingPacket(onComplete);
+    });
 
-    _updateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_updateDelay), [self](CompletionHandler onComplete) {
-        self->UpdateOwnState(onComplete);
-        }
-    );
-
-    _sendStateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_sendStateDelay), [self](CompletionHandler onComplete) {
-        self->SendGameStatePacket(onComplete);
-        }
-    );
+    _sendStateTimer = std::make_shared<Scheduler>(_normalPrivateStrand, std::chrono::milliseconds(_sendStateDelay), [weak](CompletionHandler onComplete)
+    {
+        if (auto self = weak.lock())
+            self->SendGameStatePacket(onComplete);
+    });
 
     // Async Functions Start
     TcpAsyncReadSize();
-    TcpAsyncWrite();
-    SerializeRpcPacketAndEnqueueData();
 
     _pingTimer->Start();
-    _updateTimer->Start();
     _sendStateTimer->Start();
     _isConnected = true;
 
     spdlog::info("session {} started", _sessionInfo.uid());
 }
 
-void Session::Stop()
+void Session::Stop(bool forceStop)
 {
     spdlog::info("{} session stopped", _sessionInfo.uid());
     _isConnected = false;
 
     _tcpSocketPtr->close();
 
-    _pingTimer->Stop();
-    _updateTimer->Stop();
-    _sendStateTimer->Stop();
+    _pingTimer->Stop(1);
+    _sendStateTimer->Stop(1);
+
+    if (forceStop)
+        return;
 
     _onStopCallbackByGroup(shared_from_this());
     _onStopCallbackByServer(shared_from_this());
@@ -67,13 +66,11 @@ void Session::AsyncExchangeUdpPortWork(std::uint16_t udpPort, std::function<void
 {
     auto self(shared_from_this());
 
-    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete, udpPort]() {
+    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete, udpPort]()
+    {
         bool success = self->ExchangeUdpPort(udpPort);
-        boost::asio::post(self->_normalPrivateStrand, [self, success, onComplete]() {
-            onComplete(success);
-            });
-        }
-    );
+        boost::asio::post(self->_normalPrivateStrand, [self, success, onComplete]() { onComplete(success); });
+    });
 }
 
 bool Session::ExchangeUdpPort(std::uint16_t udpPort)
@@ -211,14 +208,12 @@ bool Session::ReceiveUserInfo()
 void Session::AsyncReceiveUserInfo(std::function<void(bool success)> onComplete)
 {
     auto self(shared_from_this());
-    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete]() {
+    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete]()
+    {
         bool success = self->ReceiveUserInfo();
 
-        boost::asio::post(self->_normalPrivateStrand, [self, success, onComplete]() {
-            onComplete(success);
-            });
-        }
-    );
+        boost::asio::post(self->_normalPrivateStrand, [self, success, onComplete]() { onComplete(success); });
+    });
 }
 
 bool Session::ReceiveGroupInfo(std::shared_ptr<GroupDto>& groupInfo)
@@ -275,15 +270,13 @@ bool Session::ReceiveGroupInfo(std::shared_ptr<GroupDto>& groupInfo)
 void Session::AsyncReceiveGroupInfo(std::function<void(bool success, std::shared_ptr<GroupDto> groupInfo)> onComplete)
 {
     auto self(shared_from_this());
-    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete]() {
+    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete]()
+    {
         std::shared_ptr<GroupDto> group = nullptr;
         bool success = self->ReceiveGroupInfo(group); // exchange and set group reference
 
-        boost::asio::post(self->_normalPrivateStrand, [self, success, group, onComplete]() {
-            onComplete(success, group);
-            });
-        }
-    );
+        boost::asio::post(self->_normalPrivateStrand, [self, success, group, onComplete]() { onComplete(success, group); });
+    });
 }
 
 // set by LockstepGroup.cpp
@@ -310,34 +303,39 @@ void Session::SerializeRpcPacketAndEnqueueData()
     if (_sendDataByUdp == nullptr)
     {
         spdlog::error("send callback is not set");
+        _isSerializingUdp = false; // Stop the loop if callback is not set
         return;
     }
 
 	auto self(shared_from_this());
 
-	// lock for check empty queue
-	{
-		std::lock_guard<std::mutex> lock(_sendUdpQueueMutex);
-		if (_sendUdpPacketQueue.empty())
-		{
-            boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); }); // restart this function
-			return;
-		}
-	}
-
-	auto nextPacket = DequeueSendUdpPackets(); // this function will lock queue
     std::string serializedData;
-	if(!nextPacket.SerializeToString(&serializedData))
-	{
-		spdlog::error("{} : rpc packet serialize failed", _sessionInfo.uid());
-		boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); }); // restart this function
-		return;
-	}
+    // Dequeue and serialize within the lock to ensure consistency
+    {
+        {
+            std::lock_guard<std::mutex> lock(_sendUdpQueueMutex);
+            if (_sendUdpPacketQueue.empty())
+            {
+                _isSerializingUdp = false; // Stop the loop
+                return;
+            }
+        }
 
-     auto sendDataPair = std::make_shared<std::pair<udp::endpoint, std::string>>(_udpSendEp, serializedData);
+        auto nextPacket = DequeueSendUdpPackets(); // This is called within the lock
+        if (!nextPacket.SerializeToString(&serializedData))
+        {
+            spdlog::error("{} : rpc packet serialize failed", _sessionInfo.uid());
+            // Post again to continue the loop for other packets.
+            boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
+            return;
+        }
+    }
+
+    auto sendDataPair = std::make_shared<std::pair<udp::endpoint, std::string>>(_udpSendEp, serializedData);
     _sendDataByUdp(std::move(sendDataPair));
 
-	boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); }); // restart this function
+    // Post again to process the next item in the queue.
+    boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
 }
 
 // set by server.cpp
@@ -350,7 +348,8 @@ void Session::SetSendDataByUdpAction(SendDataByUdp sendDataFunction)
 void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
 {
     auto self(shared_from_this());
-    boost::asio::post(_rpcPrivateStrand.wrap([self, receivePacket] {
+    boost::asio::post(_rpcPrivateStrand, [self, receivePacket]()
+    {
         if (self->_inputAction == nullptr)
         {
             spdlog::error("collect action is not set");
@@ -358,23 +357,31 @@ void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
         }
 
         auto rpcRequest =
-            std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->GetSessionUuid(), std::move(receivePacket));
+            std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>(self->GetSessionUuid(), receivePacket);
 
-        boost::asio::post(self->_rpcPrivateStrand.wrap([self, rpcRequest]() { self->_inputAction(std::move(rpcRequest)); }));
-        boost::asio::post(self->_rpcPrivateStrand.wrap([self, rpcRequest]() {
-            if (rpcRequest->second->method() == RpcMethod::Atk)
-                return;
+        self->_inputAction(rpcRequest); // Collect input to group
 
+        // process server validation
+        if (rpcRequest->second->method() == RpcMethod::Atk)
+            return;
+
+        {
+            std::lock_guard<std::mutex> updateQueueLock(self->_statesQueueMutex);
+            self->_statesQueue.push(*rpcRequest->second);
+
+            // wake-up update own state function
+            if (!self->_isOwnStateUpdating)
             {
-                std::lock_guard<std::mutex> updateQueueLock(self->_updatePacketMutex);
-                self->_updatePacketQueue.push(*rpcRequest->second);
-            }})
-        ); })
-    );
+                self->_isOwnStateUpdating = true;
+                boost::asio::post(self->_normalPrivateStrand, [self]() { self->AsyncUpdateOwnState(); });
+            }
+        }
+    });
 }
 
 void Session::EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets)
 {
+    std::lock_guard<std::mutex> lock(_sendUdpQueueMutex);
 	for (const auto& packet : sendPackets)
 	{
         // rpc packet deep copy
@@ -382,9 +389,15 @@ void Session::EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>
         listupPacket.CopyFrom(*packet->packet);
 
         // copied RpcPacket push
-	    std::lock_guard<std::mutex> lock(_sendUdpQueueMutex);
 		_sendUdpPacketQueue.push(listupPacket);
 	}
+
+    if (!_isSerializingUdp)
+    {
+        _isSerializingUdp = true;
+        auto self(shared_from_this());
+        boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
+    }
 }
 
 RpcPacket Session::DequeueSendUdpPackets()
@@ -415,6 +428,8 @@ void Session::ProcessTcpRequest(const std::shared_ptr<RpcPacket> packet)
         const auto rtt = Util::StopStopwatch(_pingTime);
         _lastRtt = rtt;
 
+        ConsoleMonitor::Get().UpdateLatency(rtt); // latency average calculate
+
         RpcPacket rttPacket;
         rttPacket.set_method(LAST_RTT);
 
@@ -440,6 +455,14 @@ void Session::EnqueueTcpSendData(std::shared_ptr<std::string> data)
 {
     std::lock_guard<std::mutex> lock(_sendTcpQueueMutex);
     _sendTcpQueue.push(std::move(data));
+
+    if (!_isTcpSending)
+    {
+        _isTcpSending = true;
+
+        auto self(shared_from_this());
+        boost::asio::post(_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
+    }
 }
 
 void Session::TcpAsyncWrite()
@@ -451,7 +474,7 @@ void Session::TcpAsyncWrite()
         std::lock_guard<std::mutex> lock(_sendTcpQueueMutex);
         if (_sendTcpQueue.empty())
         {
-            boost::asio::post(_normalPrivateStrand.wrap([self]() { self->TcpAsyncWrite(); }));
+            _isTcpSending = false;
             return;
         }
 
@@ -463,27 +486,28 @@ void Session::TcpAsyncWrite()
     const std::int32_t netSize = htonl(dataSize); // 4 byte size Big-Endian
 
     boost::asio::async_write(*_tcpSocketPtr, boost::asio::buffer(&netSize, sizeof(netSize)),
-        _normalPrivateStrand.wrap([self, nextData] (const boost::system::error_code& sizeEc, std::size_t) {
-            if (sizeEc)
+        boost::asio::bind_executor(_normalPrivateStrand, [self, nextData](const boost::system::error_code& sizeEc, std::size_t)
+    {
+        if (sizeEc)
+        {
+            spdlog::error("{} : TCP error sending size ({})", self->_sessionInfo.uid(), sizeEc.message());
+            // If an error occurs, we should probably stop the send loop, but for now, we just log and continue the loop to try the next message.
+            boost::asio::post(self->_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
+            return;
+        }
+
+        boost::asio::async_write(*self->_tcpSocketPtr, boost::asio::buffer(*nextData),
+            boost::asio::bind_executor(self->_normalPrivateStrand, [self, nextData](const boost::system::error_code& dataEc, std::size_t)
+        {
+            if (dataEc)
             {
-                spdlog::error("{} : TCP error sending size ({})", self->_sessionInfo.uid(), sizeEc.message());
-                return;
+                spdlog::error("TCP error sending data to {} : {}", self->_sessionInfo.uid(), dataEc.message());
             }
 
-            boost::asio::async_write(*self->_tcpSocketPtr, boost::asio::buffer(*nextData),
-                self->_normalPrivateStrand.wrap([self, nextData](const boost::system::error_code& dataEc, std::size_t) {
-                    if (dataEc)
-                    {
-                        spdlog::error("TCP error sending data to {} : {}", self->_sessionInfo.uid(), dataEc.message());
-                        return;
-                    }
-
-                    boost::asio::post(self->_normalPrivateStrand.wrap([self]() { self->TcpAsyncWrite(); }));
-                    }
-                ));
-            }
-        )
-    );
+            // Continue the loop for the next item.
+            boost::asio::post(self->_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
+        }));
+    }));
 }
 
 void Session::TcpAsyncReadSize()
@@ -493,125 +517,150 @@ void Session::TcpAsyncReadSize()
 
     auto self(shared_from_this());
     boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(&_tcpNetSize, sizeof(_tcpNetSize)),
-        _normalPrivateStrand.wrap([self] (const boost::system::error_code& sizeEc, std::size_t) {
-            if (sizeEc)
+        boost::asio::bind_executor(_normalPrivateStrand, [self](const boost::system::error_code& sizeEc, std::size_t)
+    {
+        if (sizeEc)
+        {
+            if (sizeEc == boost::asio::error::eof
+                || sizeEc == boost::asio::error::connection_reset
+                || sizeEc == boost::asio::error::connection_aborted
+                || sizeEc == boost::asio::error::operation_aborted)
             {
-                if (sizeEc == boost::asio::error::eof
-                    || sizeEc == boost::asio::error::connection_reset
-                    || sizeEc == boost::asio::error::connection_aborted
-                    || sizeEc == boost::asio::error::operation_aborted)
-                {
-                    spdlog::info("session {} : TcpaSyncRead aborted", self->_sessionInfo.uid());
-                    self->Stop();
-                    return;
-                }
-
-                spdlog::error("{} : TCP error receiving size ({})", self->_sessionInfo.uid(), sizeEc.message());
+                spdlog::info("session {} : TcpaSyncRead aborted", self->_sessionInfo.uid());
+                self->Stop(false);
                 return;
             }
 
-            // Convert network byte order to host byte order
-            self->_tcpDataSize = ntohl(self->_tcpNetSize);
+            spdlog::error("{} : TCP error receiving size ({})", self->_sessionInfo.uid(), sizeEc.message());
+            return;
+        }
 
-            if (self->_tcpDataSize > MAX_PACKET_SIZE)
-            {
-                spdlog::error("{} : TCP error receiving data size ({})", self->_sessionInfo.uid(), self->_tcpDataSize);
-                self->TcpAsyncReadSize();
-                return;
-            }
+        // Convert network byte order to host byte order
+        self->_tcpDataSize = ntohl(self->_tcpNetSize);
 
-            const auto dataBuffer = std::make_shared<std::vector<char>>(self->_tcpDataSize, 0);
-            self->TcpAsyncReadData(dataBuffer);
-            }
-        )
-    );
+        if (self->_tcpDataSize > MAX_PACKET_SIZE)
+        {
+            spdlog::error("{} : TCP error receiving data size ({})", self->_sessionInfo.uid(), self->_tcpDataSize);
+            self->TcpAsyncReadSize();
+            return;
+        }
+
+        const auto dataBuffer = std::make_shared<std::vector<char>>(self->_tcpDataSize, 0);
+        self->TcpAsyncReadData(dataBuffer);
+    }));
 }
 
 void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
 {
     auto self(shared_from_this());
     boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(*dataBuffer),
-        _normalPrivateStrand.wrap([self, dataBuffer](const boost::system::error_code& dataEc, std::size_t) {
-            if (dataEc)
-            {
-                if (dataEc == boost::asio::error::eof || dataEc == boost::asio::error::connection_reset)
-                {
-                    self->Stop();
-                    return;
-                }
-
-                spdlog::error("{} : TCP error receiving data ({})", self->_sessionInfo.uid(), dataEc.message());
-                self->TcpAsyncReadSize();
-                return;
-            }
-
-            RpcPacket deserializeRpcPacket;
-            if (!deserializeRpcPacket.ParseFromArray(dataBuffer->data(), static_cast<int>(dataBuffer->size())))
-            {
-                spdlog::error("{} : error parsing rpc packet", self->_sessionInfo.uid());
-                self->TcpAsyncReadSize();
-                return;
-            }
-
-            const auto packetPtr = std::make_shared<RpcPacket>(deserializeRpcPacket);
-            self->TcpAsyncReadSize();
-            self->ProcessTcpRequest(packetPtr);
-            }
-        )
-    );
-}
-
-void Session::UpdateOwnState(CompletionHandler onComplete)
-{
-	auto self(shared_from_this());
-
-	// Dequeue rpc packets and update state
-	RpcPacket nextPacket;
-	{
-		std::lock_guard<std::mutex> lock(_updatePacketMutex);
-        if (_updatePacketQueue.empty())
+        boost::asio::bind_executor(_normalPrivateStrand, [self, dataBuffer](const boost::system::error_code& dataEc, std::size_t)
+    {
+        if (dataEc)
         {
-            onComplete();
+            if (dataEc == boost::asio::error::eof
+                || dataEc == boost::asio::error::connection_reset
+                || dataEc == boost::asio::error::connection_aborted
+                || dataEc == boost::asio::error::operation_aborted)
+            {
+                self->Stop(false);
+                return;
+            }
+
+            spdlog::error("{} : TCP error receiving data ({})", self->_sessionInfo.uid(), dataEc.message());
+            self->TcpAsyncReadSize();
             return;
         }
 
-		nextPacket = _updatePacketQueue.front();
-		_updatePacketQueue.pop();
-	}
+        ConsoleMonitor::Get().IncrementTcpPacket();
 
-    std::lock_guard<std::mutex> stateLock(_stateMutex);
-    switch (nextPacket.method())
+        RpcPacket deserializeRpcPacket;
+        if (!deserializeRpcPacket.ParseFromArray(dataBuffer->data(), static_cast<int>(dataBuffer->size())))
+        {
+            spdlog::error("{} : error parsing rpc packet", self->_sessionInfo.uid());
+            self->TcpAsyncReadSize();
+            return;
+        }
+
+        const auto packetPtr = std::make_shared<RpcPacket>(deserializeRpcPacket);
+        self->TcpAsyncReadSize();
+        self->ProcessTcpRequest(packetPtr);
+    }));
+}
+
+void Session::AsyncUpdateOwnState()
+{
+    auto self(shared_from_this());
+    boost::asio::post(_normalPrivateStrand, [self]()
     {
-    case RpcMethod::MoveStart:
-    case RpcMethod::Move:
-	case RpcMethod::MoveStop:
-	{
-		MoveData newMoveData;
-		// parsing move data and apply
-		if (!newMoveData.ParseFromString(nextPacket.data()))
-		{
-			spdlog::error("{} error parsing move data for update own state", _sessionInfo.uid());
-			onComplete();
-			return;
-		}
+        std::queue<RpcPacket> localQueue;
+        {
+            std::lock_guard<std::mutex> lock(self->_statesQueueMutex);
+            if (self->_statesQueue.empty())
+            {
+                self->_isOwnStateUpdating = false;
+                return;
+            }
 
-		_gameState.position.SetPosition(newMoveData.x(), newMoveData.y(), newMoveData.z());
-		break;
-	}
-    case RpcMethod::Hit:
-    {
-        // 값 만큼 hp 감소
-        std::int32_t value = stoi(nextPacket.data());
-        _gameState.hp -= value;
-        break;
-    }
+            // all update packets moved local queue
+            self->_statesQueue.swap(localQueue);
+        }
 
-    default:
-        spdlog::error("{} invalid method in update state: {}", _sessionInfo.uid(), Util::MethodToString(nextPacket.method()));
-        break;
-    }
+        // dequeue and process moved local queue
+        while (!localQueue.empty())
+        {
+            const auto nextPacket = localQueue.front();
+            localQueue.pop();
 
-	onComplete();
+            switch (nextPacket.method())
+            {
+            case RpcMethod::MoveStart:
+            case RpcMethod::Move:
+            case RpcMethod::MoveStop:
+            {
+                MoveData newMoveData;
+                // parsing move data and apply
+                if (!newMoveData.ParseFromString(nextPacket.data()))
+                {
+                    spdlog::error("{} error parsing move data for update own state", self->_sessionInfo.uid());
+                    return;
+                }
+
+                std::lock_guard<std::mutex> stateLock(self->_stateMutex);
+                self->_userState.position.SetPosition(newMoveData.x(), newMoveData.y(), newMoveData.z());
+                break;
+            }
+            case RpcMethod::Hit:
+            {
+                // 값 만큼 hp 감소
+                std::int32_t value = stoi(nextPacket.data());
+
+                if (value < 0)
+                {
+                    spdlog::error("[internal] invalid value from hit damage: {}, owner: {}", value, nextPacket.uid());
+                    break;
+                }
+
+                std::lock_guard<std::mutex> stateLock(self->_stateMutex);
+                self->_userState.hp -= value;
+                break;
+            }
+            default:
+                spdlog::error("{} invalid method in update state: {}", self->_sessionInfo.uid(), Util::MethodToString(nextPacket.method()));
+                break;
+            }
+        }
+
+        std::lock_guard<std::mutex> lock(self->_statesQueueMutex);
+        if (self->_statesQueue.empty())
+        {
+            self->_isOwnStateUpdating = false;
+            return;
+        }
+
+        // if queue is not empty -> re process
+        boost::asio::post(self->_normalPrivateStrand, [self]() { self->AsyncUpdateOwnState(); });
+    });
 }
 
 void Session::SendGameStatePacket(CompletionHandler onComplete)
@@ -619,11 +668,7 @@ void Session::SendGameStatePacket(CompletionHandler onComplete)
     RpcPacket packet;
     packet.set_method(CLIENT_GAME_INFO);
 
-    Util::SGameState curGameState;
-    {
-        std::lock_guard<std::mutex> lock(_stateMutex);
-        curGameState = GetGameState();
-    }
+    Util::SUserState curGameState = GetGameState();
 
     GameData gameData;
     MoveData* moveData = gameData.mutable_position();

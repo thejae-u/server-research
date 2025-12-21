@@ -82,20 +82,60 @@ public class CachingService : ICachingService
 
     public async Task<IEnumerable<GroupDto>> GetAllGroupInCacheAsync()
     {
-        var groups = new List<GroupDto>();
         var server = _redis.GetServer(_redis.GetEndPoints().First());
+        var keys = server.KeysAsync(pattern: "group:*");
+        var db = _redis.GetDatabase();
 
-        await foreach (var key in server.KeysAsync(pattern: $"{GroupKeyPrefix}*"))
+        var tasks = new List<Task<HashEntry[]>>();
+        var keysList = new List<RedisKey>(); // 키 순서 보장을 위해 저장
+        var batch = db.CreateBatch();
+
+        await foreach (var key in keys)
         {
-            var groupIdString = key.ToString().Replace(GroupKeyPrefix, "");
-            if (Guid.TryParse(groupIdString, out var groupId))
+            keysList.Add(key);
+            tasks.Add(batch.HashGetAllAsync(key));
+        }
+
+        if (keysList.Count == 0) return new List<GroupDto>();
+
+        batch.Execute();
+
+        var results = await Task.WhenAll(tasks);
+        var groups = new List<GroupDto>();
+
+        for (int i = 0; i < results.Length; i++)
+        {
+            var hashEntries = results[i];
+            if (hashEntries.Length == 0) continue;
+
+            var entriesDict = hashEntries.ToStringDictionary();
+
+            // Key에서 GroupId 추출 (prefix 'group:' 제거)
+            var keyStr = keysList[i].ToString();
+            var parts = keyStr.Split(':');
+            if (parts.Length < 2 || !Guid.TryParse(parts[1], out var groupId))
             {
-                var result = await GetGroupInfoInCacheAsync(groupId);
-                if (result is not null)
-                {
-                    groups.Add(result);
-                }
+                continue; 
             }
+            
+            // 필수 필드 확인 (GroupId는 Key에서 가져왔으므로 제외)
+            if (!entriesDict.TryGetValue(GroupNameField, out var name) ||
+                !entriesDict.TryGetValue(OwnerUserField, out var ownerJson) ||
+                !entriesDict.TryGetValue(MembersField, out var playersJson) ||
+                !entriesDict.TryGetValue(CreatedAtField, out var createdAtStr))
+            {
+                continue;
+            }
+
+            var group = new GroupDto
+            {
+                GroupId = groupId,
+                Name = name,
+                Owner = JsonSerializer.Deserialize<UserSimpleDto>(ownerJson)!,
+                Players = JsonSerializer.Deserialize<List<UserSimpleDto>>(playersJson)!,
+                CreatedAt = DateTime.Parse(createdAtStr)
+            };
+            groups.Add(group);
         }
 
         return groups;

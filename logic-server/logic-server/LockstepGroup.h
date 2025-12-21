@@ -54,7 +54,7 @@ public:
 	void SetNotifyEmptyCallback(NotifyEmptyCallback notifyEmptyCallback);
 
 	void Start() override;
-	void Stop() override;
+	void Stop(bool forceStop) override;
 	void AddMember(const std::shared_ptr<Session>& newSession);
 	void RemoveMember(const std::shared_ptr<Session>& session);
 	void CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);
@@ -79,7 +79,7 @@ private:
 
 	std::mutex _memberMutex;
 	std::unordered_map<uuid, std::shared_ptr<Session>> _members;
-	const std::size_t _maxSessionCount = 4;
+	const std::size_t _maxSessionCount = 500;
 
 	std::size_t _fixedDeltaMs;
     std::atomic<std::size_t> _currentBucket = 0;

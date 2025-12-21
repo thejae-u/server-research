@@ -155,6 +155,46 @@ public class UserService : IUserService
         return userDto;
     }
 
+    public async Task<int> DeleteAllPlayersAsync()
+    {
+        // 1. 그룹에서 Player 역할의 유저 ID 제거 (데이터 무결성 유지)
+        var playerIds = _gdbContext.Users
+            .Where(u => u.Role == RoleCaching.Player)
+            .Select(u => u.Uid)
+            .ToHashSet();
+
+        if (playerIds.Count > 0)
+        {
+            var groups = _gdbContext.Groups.ToList();
+            bool groupUpdated = false;
+
+            foreach (var group in groups)
+            {
+                if (group.Players != null)
+                {
+                    // 삭제 대상인 Player ID를 그룹의 플레이어 목록에서 제거
+                    int removedCount = group.Players.RemoveAll(uid => playerIds.Contains(uid));
+                    if (removedCount > 0)
+                    {
+                        groupUpdated = true;
+                    }
+                }
+            }
+
+            if (groupUpdated)
+            {
+                await _gdbContext.SaveChangesAsync();
+            }
+        }
+
+        // 2. Player 역할의 유저 일괄 삭제
+        int deletedCount = await _gdbContext.Users
+            .Where(u => u.Role == RoleCaching.Player)
+            .ExecuteDeleteAsync();
+
+        return deletedCount;
+    }
+
     public async Task<bool> DeleteUserAsync(UserDeleteDto userDeleteDto)
     {
         var user = await _gdbContext.Users.FirstOrDefaultAsync(u => u.Uid == userDeleteDto.Uid);

@@ -18,7 +18,7 @@ public:
 
     Scheduler(IoContext::strand& strand, const std::chrono::milliseconds cycleTime, TaskHandler handler);
     void Start() override;
-    void Stop() override;
+    void Stop(bool forceStop) override;
 
 
 private:

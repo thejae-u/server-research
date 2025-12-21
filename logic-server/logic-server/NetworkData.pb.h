@@ -66,6 +66,9 @@ extern GameDataDefaultTypeInternal _GameData_default_instance_;
 class GroupDto;
 struct GroupDtoDefaultTypeInternal;
 extern GroupDtoDefaultTypeInternal _GroupDto_default_instance_;
+class HitData;
+struct HitDataDefaultTypeInternal;
+extern HitDataDefaultTypeInternal _HitData_default_instance_;
 class InternalData;
 struct InternalDataDefaultTypeInternal;
 extern InternalDataDefaultTypeInternal _InternalData_default_instance_;
@@ -194,7 +197,7 @@ class UserSimpleDto final : public ::google::protobuf::Message
     return reinterpret_cast<const UserSimpleDto*>(
         &_UserSimpleDto_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 4;
+  static constexpr int kIndexInFileMessages = 5;
   friend void swap(UserSimpleDto& a, UserSimpleDto& b) { a.Swap(&b); }
   inline void Swap(UserSimpleDto* other) {
     if (other == this) return;
@@ -658,7 +661,7 @@ class LoginDto final : public ::google::protobuf::Message
     return reinterpret_cast<const LoginDto*>(
         &_LoginDto_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 6;
+  static constexpr int kIndexInFileMessages = 7;
   friend void swap(LoginDto& a, LoginDto& b) { a.Swap(&b); }
   inline void Swap(LoginDto* other) {
     if (other == this) return;
@@ -813,6 +816,214 @@ class LoginDto final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class HitData final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:NetworkData.HitData) */ {
+ public:
+  inline HitData() : HitData(nullptr) {}
+  ~HitData() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(HitData* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(HitData));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR HitData(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline HitData(const HitData& from) : HitData(nullptr, from) {}
+  inline HitData(HitData&& from) noexcept
+      : HitData(nullptr, std::move(from)) {}
+  inline HitData& operator=(const HitData& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline HitData& operator=(HitData&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const HitData& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const HitData* internal_default_instance() {
+    return reinterpret_cast<const HitData*>(
+        &_HitData_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 2;
+  friend void swap(HitData& a, HitData& b) { a.Swap(&b); }
+  inline void Swap(HitData* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(HitData* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  HitData* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<HitData>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const HitData& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const HitData& from) { HitData::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(HitData* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "NetworkData.HitData"; }
+
+ protected:
+  explicit HitData(::google::protobuf::Arena* arena);
+  HitData(::google::protobuf::Arena* arena, const HitData& from);
+  HitData(::google::protobuf::Arena* arena, HitData&& from) noexcept
+      : HitData(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kAttackerFieldNumber = 1,
+    kDmgFieldNumber = 3,
+  };
+  // string attacker = 1;
+  void clear_attacker() ;
+  const std::string& attacker() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_attacker(Arg_&& arg, Args_... args);
+  std::string* mutable_attacker();
+  PROTOBUF_NODISCARD std::string* release_attacker();
+  void set_allocated_attacker(std::string* value);
+
+  private:
+  const std::string& _internal_attacker() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_attacker(
+      const std::string& value);
+  std::string* _internal_mutable_attacker();
+
+  public:
+  // int32 dmg = 3;
+  void clear_dmg() ;
+  ::int32_t dmg() const;
+  void set_dmg(::int32_t value);
+
+  private:
+  ::int32_t _internal_dmg() const;
+  void _internal_set_dmg(::int32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:NetworkData.HitData)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      2, 2, 0,
+      36, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const HitData& from_msg);
+    ::google::protobuf::internal::ArenaStringPtr attacker_;
+    ::int32_t dmg_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_NetworkData_2eproto;
+};
+// -------------------------------------------------------------------
+
 class AtkData final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:NetworkData.AtkData) */ {
  public:
@@ -959,40 +1170,23 @@ class AtkData final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
-    kFromFieldNumber = 1,
-    kToFieldNumber = 2,
+    kVictimFieldNumber = 2,
     kDmgFieldNumber = 3,
   };
-  // string from = 1;
-  void clear_from() ;
-  const std::string& from() const;
+  // string victim = 2;
+  void clear_victim() ;
+  const std::string& victim() const;
   template <typename Arg_ = const std::string&, typename... Args_>
-  void set_from(Arg_&& arg, Args_... args);
-  std::string* mutable_from();
-  PROTOBUF_NODISCARD std::string* release_from();
-  void set_allocated_from(std::string* value);
+  void set_victim(Arg_&& arg, Args_... args);
+  std::string* mutable_victim();
+  PROTOBUF_NODISCARD std::string* release_victim();
+  void set_allocated_victim(std::string* value);
 
   private:
-  const std::string& _internal_from() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_from(
+  const std::string& _internal_victim() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_victim(
       const std::string& value);
-  std::string* _internal_mutable_from();
-
-  public:
-  // string to = 2;
-  void clear_to() ;
-  const std::string& to() const;
-  template <typename Arg_ = const std::string&, typename... Args_>
-  void set_to(Arg_&& arg, Args_... args);
-  std::string* mutable_to();
-  PROTOBUF_NODISCARD std::string* release_to();
-  void set_allocated_to(std::string* value);
-
-  private:
-  const std::string& _internal_to() const;
-  inline PROTOBUF_ALWAYS_INLINE void _internal_set_to(
-      const std::string& value);
-  std::string* _internal_mutable_to();
+  std::string* _internal_mutable_victim();
 
   public:
   // int32 dmg = 3;
@@ -1010,7 +1204,7 @@ class AtkData final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      2, 3, 0,
+      1, 2, 0,
       34, 2>
       _table_;
 
@@ -1028,8 +1222,7 @@ class AtkData final : public ::google::protobuf::Message
     inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
                           ::google::protobuf::Arena* arena, const Impl_& from,
                           const AtkData& from_msg);
-    ::google::protobuf::internal::ArenaStringPtr from_;
-    ::google::protobuf::internal::ArenaStringPtr to_;
+    ::google::protobuf::internal::ArenaStringPtr victim_;
     ::int32_t dmg_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -1098,7 +1291,7 @@ class AccessToken final : public ::google::protobuf::Message
     return reinterpret_cast<const AccessToken*>(
         &_AccessToken_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 8;
+  static constexpr int kIndexInFileMessages = 9;
   friend void swap(AccessToken& a, AccessToken& b) { a.Swap(&b); }
   inline void Swap(AccessToken* other) {
     if (other == this) return;
@@ -1294,7 +1487,7 @@ class RpcPacket final : public ::google::protobuf::Message
     return reinterpret_cast<const RpcPacket*>(
         &_RpcPacket_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 3;
+  static constexpr int kIndexInFileMessages = 4;
   friend void swap(RpcPacket& a, RpcPacket& b) { a.Swap(&b); }
   inline void Swap(RpcPacket* other) {
     if (other == this) return;
@@ -1538,7 +1731,7 @@ class InternalData final : public ::google::protobuf::Message
     return reinterpret_cast<const InternalData*>(
         &_InternalData_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 5;
+  static constexpr int kIndexInFileMessages = 6;
   friend void swap(InternalData& a, InternalData& b) { a.Swap(&b); }
   inline void Swap(InternalData* other) {
     if (other == this) return;
@@ -1734,7 +1927,7 @@ class GroupDto final : public ::google::protobuf::Message
     return reinterpret_cast<const GroupDto*>(
         &_GroupDto_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 7;
+  static constexpr int kIndexInFileMessages = 8;
   friend void swap(GroupDto& a, GroupDto& b) { a.Swap(&b); }
   inline void Swap(GroupDto* other) {
     if (other == this) return;
@@ -1985,7 +2178,7 @@ class GameData final : public ::google::protobuf::Message
     return reinterpret_cast<const GameData*>(
         &_GameData_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 2;
+  static constexpr int kIndexInFileMessages = 3;
   friend void swap(GameData& a, GameData& b) { a.Swap(&b); }
   inline void Swap(GameData* other) {
     if (other == this) return;
@@ -2285,100 +2478,52 @@ inline void MoveData::_internal_set_speed(float value) {
 
 // AtkData
 
-// string from = 1;
-inline void AtkData::clear_from() {
+// string victim = 2;
+inline void AtkData::clear_victim() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.from_.ClearToEmpty();
+  _impl_.victim_.ClearToEmpty();
 }
-inline const std::string& AtkData::from() const
+inline const std::string& AtkData::victim() const
     ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.AtkData.from)
-  return _internal_from();
+  // @@protoc_insertion_point(field_get:NetworkData.AtkData.victim)
+  return _internal_victim();
 }
 template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void AtkData::set_from(Arg_&& arg,
+inline PROTOBUF_ALWAYS_INLINE void AtkData::set_victim(Arg_&& arg,
                                                      Args_... args) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.from_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.AtkData.from)
+  _impl_.victim_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:NetworkData.AtkData.victim)
 }
-inline std::string* AtkData::mutable_from() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_from();
-  // @@protoc_insertion_point(field_mutable:NetworkData.AtkData.from)
+inline std::string* AtkData::mutable_victim() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_victim();
+  // @@protoc_insertion_point(field_mutable:NetworkData.AtkData.victim)
   return _s;
 }
-inline const std::string& AtkData::_internal_from() const {
+inline const std::string& AtkData::_internal_victim() const {
   ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.from_.Get();
+  return _impl_.victim_.Get();
 }
-inline void AtkData::_internal_set_from(const std::string& value) {
+inline void AtkData::_internal_set_victim(const std::string& value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.from_.Set(value, GetArena());
+  _impl_.victim_.Set(value, GetArena());
 }
-inline std::string* AtkData::_internal_mutable_from() {
+inline std::string* AtkData::_internal_mutable_victim() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.from_.Mutable( GetArena());
+  return _impl_.victim_.Mutable( GetArena());
 }
-inline std::string* AtkData::release_from() {
+inline std::string* AtkData::release_victim() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.AtkData.from)
-  return _impl_.from_.Release();
+  // @@protoc_insertion_point(field_release:NetworkData.AtkData.victim)
+  return _impl_.victim_.Release();
 }
-inline void AtkData::set_allocated_from(std::string* value) {
+inline void AtkData::set_allocated_victim(std::string* value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.from_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.from_.IsDefault()) {
-    _impl_.from_.Set("", GetArena());
+  _impl_.victim_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.victim_.IsDefault()) {
+    _impl_.victim_.Set("", GetArena());
   }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.AtkData.from)
-}
-
-// string to = 2;
-inline void AtkData::clear_to() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.to_.ClearToEmpty();
-}
-inline const std::string& AtkData::to() const
-    ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  // @@protoc_insertion_point(field_get:NetworkData.AtkData.to)
-  return _internal_to();
-}
-template <typename Arg_, typename... Args_>
-inline PROTOBUF_ALWAYS_INLINE void AtkData::set_to(Arg_&& arg,
-                                                     Args_... args) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.to_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
-  // @@protoc_insertion_point(field_set:NetworkData.AtkData.to)
-}
-inline std::string* AtkData::mutable_to() ABSL_ATTRIBUTE_LIFETIME_BOUND {
-  std::string* _s = _internal_mutable_to();
-  // @@protoc_insertion_point(field_mutable:NetworkData.AtkData.to)
-  return _s;
-}
-inline const std::string& AtkData::_internal_to() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.to_.Get();
-}
-inline void AtkData::_internal_set_to(const std::string& value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.to_.Set(value, GetArena());
-}
-inline std::string* AtkData::_internal_mutable_to() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  return _impl_.to_.Mutable( GetArena());
-}
-inline std::string* AtkData::release_to() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  // @@protoc_insertion_point(field_release:NetworkData.AtkData.to)
-  return _impl_.to_.Release();
-}
-inline void AtkData::set_allocated_to(std::string* value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.to_.SetAllocated(value, GetArena());
-  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.to_.IsDefault()) {
-    _impl_.to_.Set("", GetArena());
-  }
-  // @@protoc_insertion_point(field_set_allocated:NetworkData.AtkData.to)
+  // @@protoc_insertion_point(field_set_allocated:NetworkData.AtkData.victim)
 }
 
 // int32 dmg = 3;
@@ -2399,6 +2544,80 @@ inline ::int32_t AtkData::_internal_dmg() const {
   return _impl_.dmg_;
 }
 inline void AtkData::_internal_set_dmg(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.dmg_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// HitData
+
+// string attacker = 1;
+inline void HitData::clear_attacker() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.attacker_.ClearToEmpty();
+}
+inline const std::string& HitData::attacker() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:NetworkData.HitData.attacker)
+  return _internal_attacker();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void HitData::set_attacker(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.attacker_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:NetworkData.HitData.attacker)
+}
+inline std::string* HitData::mutable_attacker() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_attacker();
+  // @@protoc_insertion_point(field_mutable:NetworkData.HitData.attacker)
+  return _s;
+}
+inline const std::string& HitData::_internal_attacker() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.attacker_.Get();
+}
+inline void HitData::_internal_set_attacker(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.attacker_.Set(value, GetArena());
+}
+inline std::string* HitData::_internal_mutable_attacker() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.attacker_.Mutable( GetArena());
+}
+inline std::string* HitData::release_attacker() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:NetworkData.HitData.attacker)
+  return _impl_.attacker_.Release();
+}
+inline void HitData::set_allocated_attacker(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.attacker_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.attacker_.IsDefault()) {
+    _impl_.attacker_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:NetworkData.HitData.attacker)
+}
+
+// int32 dmg = 3;
+inline void HitData::clear_dmg() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.dmg_ = 0;
+}
+inline ::int32_t HitData::dmg() const {
+  // @@protoc_insertion_point(field_get:NetworkData.HitData.dmg)
+  return _internal_dmg();
+}
+inline void HitData::set_dmg(::int32_t value) {
+  _internal_set_dmg(value);
+  // @@protoc_insertion_point(field_set:NetworkData.HitData.dmg)
+}
+inline ::int32_t HitData::_internal_dmg() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.dmg_;
+}
+inline void HitData::_internal_set_dmg(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.dmg_ = value;
 }

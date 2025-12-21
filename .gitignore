@@ -637,6 +637,12 @@ InternalId.json
 .editorconfig
 # JetBrains Rider
 
+# Gemini CLI
+**/GEMINI.md
+
+# csv
+**/data
+
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
