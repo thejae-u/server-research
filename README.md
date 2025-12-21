@@ -1,11 +1,21 @@
 # MMO Hybrid-Lockstep Synchronization Research
 
-### Contents
-- OS : Windows
+### Logic Server Contents
+- OS : Windows, Linux
 - Language : C++
 - Using Library
   - Network : Boost.Asio
   - Serialization : Protobuf
-  - Database : SQL Connector
-- IDE : Rider, Visual Studio
-- Game Engine : Unity6
+- Used IDE : Visual Studio
+
+### Web Server Contents
+- OS : Cross Platform
+- Language : C#
+- Framework : ASP.NET
+- Database : Redis(caching), PostgresQL
+- Used IDE : Visual Studio
+
+#### Test Client
+- ImGui
+- DirectX
+- *made with Gemini CLI*
