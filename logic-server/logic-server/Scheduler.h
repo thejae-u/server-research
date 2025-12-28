@@ -1,6 +1,6 @@
 #pragma once
-#include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
+#include <asio.hpp>
+#include <asio/steady_timer.hpp>
 #include <memory>
 #include <functional>
 #include <chrono>
@@ -14,7 +14,7 @@ using TaskHandler = std::function<void(CompletionHandler)>;
 class Scheduler : public Base<Scheduler>
 {
 public:
-    using IoContext = boost::asio::io_context;
+    using IoContext = asio::io_context;
 
     Scheduler(IoContext::strand& strand, const std::chrono::milliseconds cycleTime, TaskHandler handler);
     void Start() override;
@@ -23,7 +23,7 @@ public:
 
 private:
     IoContext::strand& _strand;
-    std::shared_ptr<boost::asio::steady_timer> _timer;
+    std::shared_ptr<asio::steady_timer> _timer;
     std::chrono::milliseconds _cycleTime;
     TaskHandler _handler;
 

@@ -4,7 +4,7 @@
 - OS : Windows, Linux
 - Language : C++
 - Using Library
-  - Network : Boost.Asio
+  - Network : Asio standalone
   - Serialization : Protobuf
 - Used IDE : Visual Studio
 
