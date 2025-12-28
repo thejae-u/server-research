@@ -17,5 +17,5 @@
 
 #### Test Client
 - ImGui
-- DirectX
+- OpenGL
 - *made with Gemini CLI*
