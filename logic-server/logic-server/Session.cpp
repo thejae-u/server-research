@@ -51,14 +51,14 @@ void Session::Stop(bool forceStop)
 
     _tcpSocketPtr->close();
 
-    _pingTimer->Stop(1);
-    _sendStateTimer->Stop(1);
+    _pingTimer->Stop(true);
+    _sendStateTimer->Stop(true);
 
     if (forceStop)
         return;
 
-    _onStopCallbackByGroup(shared_from_this());
-    _onStopCallbackByServer(shared_from_this());
+    if(_onStopCallbackByGroup) _onStopCallbackByGroup(shared_from_this());
+    if(_onStopCallbackByServer) _onStopCallbackByServer(shared_from_this());
 }
 
 // wrapping ExchangeUdpPort, Using Blocking Pool
@@ -66,10 +66,10 @@ void Session::AsyncExchangeUdpPortWork(std::uint16_t udpPort, std::function<void
 {
     auto self(shared_from_this());
 
-    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete, udpPort]()
+    asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete, udpPort]()
     {
         bool success = self->ExchangeUdpPort(udpPort);
-        boost::asio::post(self->_normalPrivateStrand, [self, success, onComplete]() { onComplete(success); });
+        asio::post(self->_normalPrivateStrand, [self, success, onComplete]() { onComplete(success); });
     });
 }
 
@@ -98,18 +98,18 @@ bool Session::ExchangeUdpPort(std::uint16_t udpPort)
     std::vector<char> receiveBuffer;
     uint32_t receiveNetSize = 0;
 
-    // 예외 처리를 위한 system::error_code
+    // 예외 처리를 위한 system::error_code -> std::error_code
     error_code ec;
-    boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec); // send size
-    if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(udpPortPacket), ec); // send data
-    if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(&receiveNetSize, sizeof(uint32_t)), ec); // receive size
+    asio::write(*_tcpSocketPtr, asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec); // send size
+    if (!ec) asio::write(*_tcpSocketPtr, asio::buffer(udpPortPacket), ec); // send data
+    if (!ec) asio::read(*_tcpSocketPtr, asio::buffer(&receiveNetSize, sizeof(uint32_t)), ec); // receive size
 
     // recive size calculate
     const auto receiveDataSize = ntohl(receiveNetSize);
     if (!ec && receiveDataSize > 0)
     {
         receiveBuffer.resize(receiveDataSize);
-        if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(receiveBuffer), ec); // receive data
+        if (!ec) asio::read(*_tcpSocketPtr, asio::buffer(receiveBuffer), ec); // receive data
     }
 
     // 어느 지점에서든 error_code가 있을 때 -> 비정상 작동 종료
@@ -163,15 +163,15 @@ bool Session::ReceiveUserInfo()
 
     // 순차적으로 error_code가 없는 경우 다음 스텝을 진행
     error_code ec;
-    boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
-    if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(serializedData), ec);
-    if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(&receiveNetSize, sizeof(uint32_t)), ec);
+    asio::write(*_tcpSocketPtr, asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
+    if (!ec) asio::write(*_tcpSocketPtr, asio::buffer(serializedData), ec);
+    if (!ec) asio::read(*_tcpSocketPtr, asio::buffer(&receiveNetSize, sizeof(uint32_t)), ec);
 
     const auto receiveDataSize = ntohl(receiveNetSize);
     if (!ec && receiveNetSize > 0)
     {
         receiveBuffer.resize(receiveDataSize);
-        boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(receiveBuffer), ec);
+        asio::read(*_tcpSocketPtr, asio::buffer(receiveBuffer), ec);
     }
 
     // 어느 시점이든 오류가 나면 처리
@@ -208,11 +208,11 @@ bool Session::ReceiveUserInfo()
 void Session::AsyncReceiveUserInfo(std::function<void(bool success)> onComplete)
 {
     auto self(shared_from_this());
-    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete]()
+    asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete]()
     {
         bool success = self->ReceiveUserInfo();
 
-        boost::asio::post(self->_normalPrivateStrand, [self, success, onComplete]() { onComplete(success); });
+        asio::post(self->_normalPrivateStrand, [self, success, onComplete]() { onComplete(success); });
     });
 }
 
@@ -229,15 +229,15 @@ bool Session::ReceiveGroupInfo(std::shared_ptr<GroupDto>& groupInfo)
     std::vector<char> receiveBuffer;
 
     error_code ec;
-    boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
-    if (!ec) boost::asio::write(*_tcpSocketPtr, boost::asio::buffer(serializedData), ec);
-    if (!ec) boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(&receiveNetSize, sizeof(std::uint32_t)), ec);
+    asio::write(*_tcpSocketPtr, asio::buffer(&sendNetSize, sizeof(sendNetSize)), ec);
+    if (!ec) asio::write(*_tcpSocketPtr, asio::buffer(serializedData), ec);
+    if (!ec) asio::read(*_tcpSocketPtr, asio::buffer(&receiveNetSize, sizeof(std::uint32_t)), ec);
 
     const auto receiveDataSize = ntohl(receiveNetSize);
     if (!ec && receiveDataSize > 0)
     {
         receiveBuffer.resize(receiveDataSize);
-        boost::asio::read(*_tcpSocketPtr, boost::asio::buffer(receiveBuffer), ec);
+        asio::read(*_tcpSocketPtr, asio::buffer(receiveBuffer), ec);
     }
 
     if (ec || receiveDataSize == 0)
@@ -270,12 +270,12 @@ bool Session::ReceiveGroupInfo(std::shared_ptr<GroupDto>& groupInfo)
 void Session::AsyncReceiveGroupInfo(std::function<void(bool success, std::shared_ptr<GroupDto> groupInfo)> onComplete)
 {
     auto self(shared_from_this());
-    boost::asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete]()
+    asio::post(_normalCtxManager->GetBlockingPool(), [self, onComplete]()
     {
         std::shared_ptr<GroupDto> group = nullptr;
         bool success = self->ReceiveGroupInfo(group); // exchange and set group reference
 
-        boost::asio::post(self->_normalPrivateStrand, [self, success, group, onComplete]() { onComplete(success, group); });
+        asio::post(self->_normalPrivateStrand, [self, success, group, onComplete]() { onComplete(success, group); });
     });
 }
 
@@ -326,7 +326,7 @@ void Session::SerializeRpcPacketAndEnqueueData()
         {
             spdlog::error("{} : rpc packet serialize failed", _sessionInfo.uid());
             // Post again to continue the loop for other packets.
-            boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
+            asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
             return;
         }
     }
@@ -335,7 +335,7 @@ void Session::SerializeRpcPacketAndEnqueueData()
     _sendDataByUdp(std::move(sendDataPair));
 
     // Post again to process the next item in the queue.
-    boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
+    asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
 }
 
 // set by server.cpp
@@ -348,7 +348,7 @@ void Session::SetSendDataByUdpAction(SendDataByUdp sendDataFunction)
 void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
 {
     auto self(shared_from_this());
-    boost::asio::post(_rpcPrivateStrand, [self, receivePacket]()
+    asio::post(_rpcPrivateStrand, [self, receivePacket]()
     {
         if (self->_inputAction == nullptr)
         {
@@ -373,7 +373,7 @@ void Session::CollectInput(std::shared_ptr<RpcPacket> receivePacket)
             if (!self->_isOwnStateUpdating)
             {
                 self->_isOwnStateUpdating = true;
-                boost::asio::post(self->_normalPrivateStrand, [self]() { self->AsyncUpdateOwnState(); });
+                asio::post(self->_normalPrivateStrand, [self]() { self->AsyncUpdateOwnState(); });
             }
         }
     });
@@ -396,7 +396,7 @@ void Session::EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>
     {
         _isSerializingUdp = true;
         auto self(shared_from_this());
-        boost::asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
+        asio::post(_rpcPrivateStrand, [self]() { self->SerializeRpcPacketAndEnqueueData(); });
     }
 }
 
@@ -461,7 +461,7 @@ void Session::EnqueueTcpSendData(std::shared_ptr<std::string> data)
         _isTcpSending = true;
 
         auto self(shared_from_this());
-        boost::asio::post(_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
+        asio::post(_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
     }
 }
 
@@ -485,19 +485,19 @@ void Session::TcpAsyncWrite()
     const std::int32_t dataSize = static_cast<std::int32_t>(nextData->size()); // 4 byte
     const std::int32_t netSize = htonl(dataSize); // 4 byte size Big-Endian
 
-    boost::asio::async_write(*_tcpSocketPtr, boost::asio::buffer(&netSize, sizeof(netSize)),
-        boost::asio::bind_executor(_normalPrivateStrand, [self, nextData](const boost::system::error_code& sizeEc, std::size_t)
+    asio::async_write(*_tcpSocketPtr, asio::buffer(&netSize, sizeof(netSize)),
+        asio::bind_executor(_normalPrivateStrand, [self, nextData](const std::error_code& sizeEc, std::size_t)
     {
         if (sizeEc)
         {
             spdlog::error("{} : TCP error sending size ({})", self->_sessionInfo.uid(), sizeEc.message());
             // If an error occurs, we should probably stop the send loop, but for now, we just log and continue the loop to try the next message.
-            boost::asio::post(self->_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
+            asio::post(self->_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
             return;
         }
 
-        boost::asio::async_write(*self->_tcpSocketPtr, boost::asio::buffer(*nextData),
-            boost::asio::bind_executor(self->_normalPrivateStrand, [self, nextData](const boost::system::error_code& dataEc, std::size_t)
+        asio::async_write(*self->_tcpSocketPtr, asio::buffer(*nextData),
+            asio::bind_executor(self->_normalPrivateStrand, [self, nextData](const std::error_code& dataEc, std::size_t)
         {
             if (dataEc)
             {
@@ -505,7 +505,7 @@ void Session::TcpAsyncWrite()
             }
 
             // Continue the loop for the next item.
-            boost::asio::post(self->_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
+            asio::post(self->_normalPrivateStrand, [self]() { self->TcpAsyncWrite(); });
         }));
     }));
 }
@@ -516,15 +516,15 @@ void Session::TcpAsyncReadSize()
     _tcpNetSize = 0;
 
     auto self(shared_from_this());
-    boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(&_tcpNetSize, sizeof(_tcpNetSize)),
-        boost::asio::bind_executor(_normalPrivateStrand, [self](const boost::system::error_code& sizeEc, std::size_t)
+    asio::async_read(*_tcpSocketPtr, asio::buffer(&_tcpNetSize, sizeof(_tcpNetSize)),
+        asio::bind_executor(_normalPrivateStrand, [self](const std::error_code& sizeEc, std::size_t)
     {
         if (sizeEc)
         {
-            if (sizeEc == boost::asio::error::eof
-                || sizeEc == boost::asio::error::connection_reset
-                || sizeEc == boost::asio::error::connection_aborted
-                || sizeEc == boost::asio::error::operation_aborted)
+            if (sizeEc == asio::error::eof
+                || sizeEc == asio::error::connection_reset
+                || sizeEc == asio::error::connection_aborted
+                || sizeEc == asio::error::operation_aborted)
             {
                 spdlog::info("session {} : TcpaSyncRead aborted", self->_sessionInfo.uid());
                 self->Stop(false);
@@ -553,15 +553,15 @@ void Session::TcpAsyncReadSize()
 void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
 {
     auto self(shared_from_this());
-    boost::asio::async_read(*_tcpSocketPtr, boost::asio::buffer(*dataBuffer),
-        boost::asio::bind_executor(_normalPrivateStrand, [self, dataBuffer](const boost::system::error_code& dataEc, std::size_t)
+    asio::async_read(*_tcpSocketPtr, asio::buffer(*dataBuffer),
+        asio::bind_executor(_normalPrivateStrand, [self, dataBuffer](const std::error_code& dataEc, std::size_t)
     {
         if (dataEc)
         {
-            if (dataEc == boost::asio::error::eof
-                || dataEc == boost::asio::error::connection_reset
-                || dataEc == boost::asio::error::connection_aborted
-                || dataEc == boost::asio::error::operation_aborted)
+            if (dataEc == asio::error::eof
+                || dataEc == asio::error::connection_reset
+                || dataEc == asio::error::connection_aborted
+                || dataEc == asio::error::operation_aborted)
             {
                 self->Stop(false);
                 return;
@@ -591,7 +591,7 @@ void Session::TcpAsyncReadData(std::shared_ptr<std::vector<char>> dataBuffer)
 void Session::AsyncUpdateOwnState()
 {
     auto self(shared_from_this());
-    boost::asio::post(_normalPrivateStrand, [self]()
+    asio::post(_normalPrivateStrand, [self]()
     {
         std::queue<RpcPacket> localQueue;
         {
@@ -659,7 +659,7 @@ void Session::AsyncUpdateOwnState()
         }
 
         // if queue is not empty -> re process
-        boost::asio::post(self->_normalPrivateStrand, [self]() { self->AsyncUpdateOwnState(); });
+        asio::post(self->_normalPrivateStrand, [self]() { self->AsyncUpdateOwnState(); });
     });
 }
 

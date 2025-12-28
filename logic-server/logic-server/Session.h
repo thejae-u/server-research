@@ -1,13 +1,11 @@
 #pragma once
 
-#include <boost/asio.hpp>
-#include <boost/uuid/uuid.hpp>
+#include <asio.hpp>
+#include <stduuid/uuid.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
 #include <memory>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/string_generator.hpp>
 #include <queue>
 
 #include "Base.h"
@@ -17,11 +15,11 @@
 
 using namespace NetworkData;
 
-using IoContext = boost::asio::io_context;
-using error_code = boost::system::error_code;
-using boost::asio::ip::tcp;
-using boost::asio::ip::udp;
-using boost::uuids::uuid;
+using IoContext = asio::io_context;
+using error_code = std::error_code;
+using asio::ip::tcp;
+using asio::ip::udp;
+using uuids::uuid;
 
 class Server;
 class LockstepGroup;
@@ -69,7 +67,7 @@ private: // internal private functions
 
 public: // default session functions
     bool IsValid() const { return _isConnected; }
-    uuid GetSessionUuid() const { return _toUuid(_sessionInfo.uid()); }
+    uuid GetSessionUuid() const { return *uuid::from_string(_sessionInfo.uid()); }
 
     void CollectInput(std::shared_ptr<RpcPacket> receivePacket);
     void EnqueueSendUdpPackets(const std::list<std::shared_ptr<SSendPacket>> sendPackets);
@@ -93,16 +91,13 @@ private: // default members
     using TcpSocket = tcp::socket;
     using UdpSocket = udp::socket;
 
-    // uuid parser
-    boost::uuids::string_generator _toUuid;
-
-    // boost asio context
+    // asio context
     std::shared_ptr<ContextManager> _normalCtxManager;
     std::shared_ptr<ContextManager> _rpcCtxManager;
-    boost::asio::io_context::strand _normalPrivateStrand;
-    boost::asio::io_context::strand _rpcPrivateStrand;
+    asio::io_context::strand _normalPrivateStrand;
+    asio::io_context::strand _rpcPrivateStrand;
 
-    // boost asio sockets
+    // asio sockets
     std::shared_ptr<TcpSocket> _tcpSocketPtr;
     std::shared_ptr<UdpSocket> _udpSocketPtr;
     udp::endpoint _udpSendEp;

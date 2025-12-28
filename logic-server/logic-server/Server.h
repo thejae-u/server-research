@@ -1,8 +1,6 @@
 #pragma once
-#include <boost/asio.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/random_generator.hpp>
+#include <asio.hpp>
+#include <stduuid/uuid.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -19,10 +17,10 @@
 #include "NetworkData.pb.h"
 #include "ContextManager.h"
 
-using IoContext = boost::asio::io_context;
-using namespace boost::asio::ip;
+using IoContext = asio::io_context;
+using namespace asio::ip;
 using namespace NetworkData;
-
+using uuids::uuid;
 
 class Session;
 class LockstepGroup;
@@ -42,10 +40,9 @@ private:
 	std::shared_ptr<ContextManager> _normalCtxManager;
 	std::shared_ptr<ContextManager> _rpcCtxManager;
 	tcp::acceptor& _acceptor;
-    boost::uuids::string_generator _toUuid;
 
-	boost::asio::io_context::strand _normalPrivateStrand;
-	boost::asio::io_context::strand _rpcPrivateStrand;
+	asio::io_context::strand _normalPrivateStrand;
+	asio::io_context::strand _rpcPrivateStrand;
 
     std::shared_ptr<UdpSocket> _udpSocket;
     std::uint16_t _allocatedUdpPort;

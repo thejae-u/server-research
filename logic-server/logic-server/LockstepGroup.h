@@ -9,11 +9,8 @@
 #include <functional>
 #include <atomic>
 
-#include <boost/asio.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/uuid_hash.hpp>
-#include <boost/uuid/string_generator.hpp>
+#include <asio.hpp>
+#include <stduuid/uuid.h>
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -22,8 +19,8 @@
 #include "PacketProcess.h"
 #include "NetworkData.pb.h"
 
-using IoContext = boost::asio::io_context;
-using namespace boost::uuids;
+using IoContext = asio::io_context;
+using uuids::uuid;
 using namespace NetworkData;
 
 using CompletionHandler = std::function<void()>;
@@ -60,7 +57,7 @@ public:
 	void CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr<RpcPacket>>> rpcRequest);
 	void Tick(CompletionHandler onComplete);
 
-	uuid GetGroupId() const { return _toUuid(_groupInfo->groupid()); }
+	uuid GetGroupId() const { return *uuid::from_string(_groupInfo->groupid()); }
 
 	bool IsFull()
 	{
@@ -72,9 +69,8 @@ public:
 
 private:
 	std::shared_ptr<ContextManager> _ctxManager;
-    boost::asio::io_context::strand _privateStrand;
+    asio::io_context::strand _privateStrand;
 
-	boost::uuids::string_generator _toUuid;
 	std::shared_ptr<GroupDto> _groupInfo;
 
 	std::mutex _memberMutex;

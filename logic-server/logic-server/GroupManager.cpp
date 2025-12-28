@@ -27,23 +27,27 @@ void GroupManager::Stop()
 
 void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const std::shared_ptr<Session>& newSession)
 {
-    uuid joinGroupId = _toUuid(groupDto->groupid());
+    auto joinGroupId = uuids::uuid::from_string(groupDto->groupid());
+    if(!joinGroupId) {
+         spdlog::error("invalid group id: {}", groupDto->groupid());
+         return;
+    }
 
     std::lock_guard<std::mutex> groupLock(_groupMutex);
-    auto groupIt = _groups.find(joinGroupId);
+    auto groupIt = _groups.find(*joinGroupId);
     if (groupIt != _groups.end())
     {
         const auto& [groupId, group] = *groupIt;
 
         if (group->IsFull())
         {
-            spdlog::error("fatal error: {} is full (invalid situation)", to_string(groupId));
+            spdlog::error("fatal error: {} is full (invalid situation)", uuids::to_string(groupId));
             return;
         }
 
         group->AddMember(newSession);
 
-        spdlog::info("session {} is allocated to group {}", to_string(newSession->GetSessionUuid()), to_string(groupId));
+        spdlog::info("session {} is allocated to group {}", uuids::to_string(newSession->GetSessionUuid()), uuids::to_string(groupId));
         newSession->Start();
         return;
     }
@@ -54,21 +58,24 @@ void GroupManager::AddSession(const std::shared_ptr<GroupDto> groupDto, const st
     newSession->Start();
 
     _groups[newGroup->GetGroupId()] = newGroup;
-    ConsoleMonitor::Get().UpdateGroupCount(_groups.size());
+    ConsoleMonitor::Get().UpdateGroupCount((int)_groups.size());
 }
 
 std::shared_ptr<LockstepGroup> GroupManager::CreateNewGroup(const std::shared_ptr<GroupDto> groupDto)
 {
     auto weakSelf(weak_from_this());
     const auto newGroup = std::make_shared<LockstepGroup>(_ctxManager, groupDto);
-    newGroup->SetNotifyEmptyCallback(_privateStrand.wrap([weakSelf](const std::shared_ptr<LockstepGroup> emptyGroup)
+    
+    // Using lambda that posts to strand manually instead of deprecated .wrap()
+    newGroup->SetNotifyEmptyCallback([weakSelf, strand = &_privateStrand](const std::shared_ptr<LockstepGroup>& emptyGroup)
     {
-        if (auto self = weakSelf.lock())
-            self->RemoveEmptyGroup(emptyGroup);
-    }));
+        asio::post(*strand, [weakSelf, emptyGroup]() {
+             if (auto self = weakSelf.lock())
+                self->RemoveEmptyGroup(emptyGroup);
+        });
+    });
 
-    newGroup->Start();
-    spdlog::info("created new group {}", to_string(newGroup->GetGroupId()));
+    spdlog::info("created new group {}", uuids::to_string(newGroup->GetGroupId()));
 
     return newGroup;
 }
@@ -81,12 +88,12 @@ void GroupManager::RemoveEmptyGroup(const std::shared_ptr<LockstepGroup> emptyGr
 
     if (it == _groups.end())
     {
-        spdlog::error("group {} not found in group manager", to_string(groupKey));
+        spdlog::error("group {} not found in group manager", uuids::to_string(groupKey));
         return;
     }
 
     _groups.erase(it);
-    ConsoleMonitor::Get().UpdateGroupCount(_groups.size());
+    ConsoleMonitor::Get().UpdateGroupCount((int)_groups.size());
 
-    spdlog::info("removed empty group {}", to_string(emptyGroup->GetGroupId()));
+    spdlog::info("removed empty group {}", uuids::to_string(emptyGroup->GetGroupId()));
 }

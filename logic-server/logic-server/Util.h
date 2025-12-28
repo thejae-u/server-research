@@ -2,8 +2,7 @@
 #include <string>
 #include <chrono>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
+#include <stduuid/uuid.h>
 
 #include "NetworkData.pb.h"
 using namespace NetworkData;
@@ -56,7 +55,7 @@ namespace Util
 
 	struct UserSimpleDto
 	{
-		boost::uuids::uuid userId;
+		uuids::uuid userId;
 		std::string name;
 	};
 

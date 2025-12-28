@@ -1,4 +1,4 @@
-#include <boost/asio.hpp>
+#include <asio.hpp>
 #include <memory>
 #include <thread>
 #include <vector>
@@ -12,7 +12,7 @@
 
 constexpr bool NO_WEB_SERVER_MODE = true;
 constexpr unsigned short SERVER_PORT = 53200;
-using namespace boost::asio::ip;
+using namespace asio::ip;
 
 int main()
 {
@@ -70,7 +70,7 @@ int main()
     ConsoleMonitor::Get().Stop();
     spdlog::set_default_logger(spdlog::stdout_color_mt("console"));
 
-    server->Stop(1);
+    server->Stop(true);
 
     workThreadContext->Stop();
     rpcThreadContext->Stop();

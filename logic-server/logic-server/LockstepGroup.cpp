@@ -34,7 +34,7 @@ void LockstepGroup::Start()
 void LockstepGroup::Stop(bool forceStop)
 {
     _isRunning = false;
-    _tickTimer->Stop(1);
+    _tickTimer->Stop(true);
 
     if (forceStop)
     {
@@ -73,12 +73,12 @@ void LockstepGroup::AddMember(const std::shared_ptr<Session>& newSession)
             self->CollectInput(std::move(rpcRequest));
     });
 
-    spdlog::info("{} : added member {}", _groupInfo->groupid(), to_string(newSession->GetSessionUuid()));
+    spdlog::info("{} : added member {}", _groupInfo->groupid(), uuids::to_string(newSession->GetSessionUuid()));
 }
 
 void LockstepGroup::RemoveMember(const std::shared_ptr<Session>& session)
 {
-    spdlog::info("{} : removed from {}", to_string(session->GetSessionUuid()), _groupInfo->groupid());
+    spdlog::info("{} : removed from {}", uuids::to_string(session->GetSessionUuid()), _groupInfo->groupid());
     {
         bool isGroupEmpty = false;
 
@@ -103,7 +103,7 @@ void LockstepGroup::CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr
         _inputBuffer[_currentBucket].push_back(std::make_shared<SSendPacket>(newInput));
     }
 
-    spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), to_string(guid), Util::MethodToString(request->method()));
+    spdlog::info("{} collect input: session {} - {}", _groupInfo->groupid(), uuids::to_string(guid), Util::MethodToString(request->method()));
 
     if (request->method() != RpcMethod::Atk)
     {
@@ -112,7 +112,7 @@ void LockstepGroup::CollectInput(std::shared_ptr<std::pair<uuid, std::shared_ptr
 
     // make hit packet after check valid attack
     auto self(shared_from_this());
-    boost::asio::post(_privateStrand, [self, request]() { self->AsyncMakeHitPacket(request); });
+    asio::post(_privateStrand, [self, request]() { self->AsyncMakeHitPacket(request); });
 }
 
 void LockstepGroup::Tick(CompletionHandler onComplete)
@@ -125,7 +125,7 @@ void LockstepGroup::Tick(CompletionHandler onComplete)
     }
 
     auto self(shared_from_this());
-    boost::asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]()
+    asio::post(_ctxManager->GetBlockingPool(), [self, onComplete]()
     {
         std::list<std::shared_ptr<SSendPacket>> currentBucketPackets;
         {
@@ -133,7 +133,7 @@ void LockstepGroup::Tick(CompletionHandler onComplete)
             currentBucketPackets = self->_inputBuffer[self->_currentBucket];
         }
 
-        boost::asio::post(self->_privateStrand, [self, onComplete, currentBucketPackets]()
+        asio::post(self->_privateStrand, [self, onComplete, currentBucketPackets]()
         {
             std::lock_guard<std::mutex> memberLock(self->_memberMutex);
             for (const auto& [uid, member] : self->_members)
@@ -154,8 +154,8 @@ void LockstepGroup::Tick(CompletionHandler onComplete)
 void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
 {
     // AABB check
-    auto attackerUid = _toUuid(atkPacket->uid());
-    uuid victimUid;
+    auto attackerUid = uuids::uuid::from_string(atkPacket->uid());
+    if(!attackerUid) return;
 
     if (atkPacket->data().empty())
         return;
@@ -167,15 +167,16 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
         return;
     }
 
-    victimUid = _toUuid(atkData.victim());
+    auto victimUid = uuids::uuid::from_string(atkData.victim());
+    if(!victimUid) return;
 
     Util::SUserState attackerState;
     Util::SUserState victimState;
 
     {
         std::lock_guard<std::mutex> memberLock(_memberMutex);
-        auto attackerIt = _members.find(attackerUid);
-        auto victimIt = _members.find(victimUid);
+        auto attackerIt = _members.find(*attackerUid);
+        auto victimIt = _members.find(*victimUid);
 
         if (attackerIt == _members.end())
         {
@@ -188,7 +189,7 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
             spdlog::error("attacker {} invalid victim uid (victim: {})", atkPacket->uid(), atkData.victim());
             for (const auto& [id, session] : _members)
             {
-                spdlog::info("session {} in group {}", to_string(id), _groupInfo->groupid());
+                spdlog::info("session {} in group {}", uuids::to_string(id), _groupInfo->groupid());
             }
             return;
         }
@@ -207,14 +208,15 @@ void LockstepGroup::AsyncMakeHitPacket(std::shared_ptr<RpcPacket> atkPacket)
     }
 
     auto self(shared_from_this());
-    boost::asio::post(_privateStrand, [self, atkData, attackerUid, victimUid]()
+    asio::post(_privateStrand, [self, atkData, attackerUid, victimUid]()
     {
         auto hitPacket = std::make_shared<RpcPacket>();
-        MakeHitPacket(attackerUid, victimUid, hitPacket, atkData.dmg());
+        // *attackerUid dereference
+        MakeHitPacket(*attackerUid, *victimUid, hitPacket, atkData.dmg());
 
         // victim hit rpc packet
         auto requestPacket = std::make_shared<std::pair<uuid, std::shared_ptr<RpcPacket>>>();
-        requestPacket->first = victimUid;
+        requestPacket->first = *victimUid;
         requestPacket->second = hitPacket;
 
         self->CollectInput(std::move(requestPacket));
