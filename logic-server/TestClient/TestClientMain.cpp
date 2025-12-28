@@ -4,15 +4,15 @@ Made with GEMINI CLI
 
 */
 
-#define WIN32_LEAN_AND_MEAN
 #include "VirtualClient.h"
 
 #include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "implot.h"
-#include <d3d11.h>
-#include <tchar.h>
+
+#include <GLFW/glfw3.h>
+#include <iostream>
 #include <vector>
 #include <string>
 #include <thread>
@@ -23,31 +23,20 @@ Made with GEMINI CLI
 #include <numeric>
 #include <map>
 #include <random>
-#include <iostream>
 #include <cstdio>
-#include <psapi.h>
 #include <algorithm>
 #include <format>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
-#include <climits> // For INT_MAX
+#include <climits> 
+
+#ifdef _WIN32
+#include <windows.h>
+#include <psapi.h>
+#endif
 
 using ll = long long;
-
-// Data
-static ID3D11Device*            g_pd3dDevice = nullptr;
-static ID3D11DeviceContext*     g_pd3dDeviceContext = nullptr;
-static IDXGISwapChain*          g_pSwapChain = nullptr;
-static UINT                     g_ResizeWidth = 0, g_ResizeHeight = 0;
-static ID3D11RenderTargetView*  g_mainRenderTargetView = nullptr;
-
-// Forward declarations of helper functions
-bool CreateDeviceD3D(HWND hWnd);
-void CleanupDeviceD3D();
-void CreateRenderTarget();
-void CleanupRenderTarget();
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // Network Global
 boost::asio::io_context io_context;
@@ -70,6 +59,11 @@ ll gRttCount = 0;
 ll gMaxRtt = 0;
 ll gMinRtt = INT_MAX;
 double gAvgRtt = 0;
+
+static void glfw_error_callback(int error, const char* description)
+{
+    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
 
 // Logic
 static void SpawnClients(int count, int groupMaxCount)
@@ -121,7 +115,11 @@ static void StopAllClients()
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
     std::stringstream ss;
     std::tm bt{};
-    localtime_s(&bt, &in_time_t); // Use localtime_s for thread-safe operation
+#ifdef _WIN32
+    localtime_s(&bt, &in_time_t); 
+#else
+    localtime_r(&in_time_t, &bt);
+#endif
     ss << std::put_time(&bt, "%Y-%m-%d_%H-%M-%S");
     std::string filename = std::format("data/stats_{}.csv", ss.str());
 
@@ -245,28 +243,44 @@ static void StopAllClients()
     gMinRtt = INT_MAX;
     gAvgRtt = 0.0;
     gMaxRtt = 0;
-
 }
 
 // Main code
 int main(int, char**)
 {
-    // Create application window
-    WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr };
-    ::RegisterClassExW(&wc);
-    HWND hWnd = ::CreateWindowW(wc.lpszClassName, L"", WS_OVERLAPPEDWINDOW, 100, 100, 1920, 1080, nullptr, nullptr, wc.hInstance, nullptr);
-
-    // Initialize Direct3D
-    if (!CreateDeviceD3D(hWnd))
-    {
-        CleanupDeviceD3D();
-        ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit())
         return 1;
-    }
 
-    // Show the window
-    ::ShowWindow(hWnd, SW_SHOWDEFAULT);
-    ::UpdateWindow(hWnd);
+    // Decisions on OpenGL version
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+    // GL ES 2.0 + GLSL 100
+    const char* glsl_version = "#version 100";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+#elif defined(__APPLE__)
+    // GL 3.2 + GLSL 150
+    const char* glsl_version = "#version 150";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
+#else
+    // GL 3.0 + GLSL 130
+    const char* glsl_version = "#version 130";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+#endif
+
+    // Create window with graphics context
+    GLFWwindow* window = glfwCreateWindow(1920, 1080, "ImGui Example", nullptr, nullptr);
+    if (window == nullptr)
+        return 1;
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1); // Enable vsync
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -279,8 +293,8 @@ int main(int, char**)
     ImGui::StyleColorsDark();
 
     // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init(hWnd);
-    ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
     // Start Network Thread
     networkThread = std::thread([]()
@@ -303,23 +317,13 @@ int main(int, char**)
     static std::map<std::string, bool> g_GroupVisibility;
 
     // Main loop
-    bool done = false;
-    while (!done)
+    while (!glfwWindowShouldClose(window))
     {
-        MSG msg;
-        while (::PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
-        {
-            ::TranslateMessage(&msg);
-            ::DispatchMessage(&msg);
-            if (msg.message == WM_QUIT)
-                done = true;
-        }
-        if (done)
-            break;
+        glfwPollEvents();
 
         // Start the Dear ImGui frame
-        ImGui_ImplDX11_NewFrame();
-        ImGui_ImplWin32_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
         // Collect active groups sorted by index
@@ -382,6 +386,8 @@ int main(int, char**)
         if (ImGui::CollapsingHeader("Control Panel", ImGuiTreeNodeFlags_DefaultOpen))
         {
             ImGui::Text("Server: 127.0.0.1:53200");
+#ifdef _WIN32
+            // Windows-specific Console Handling
             static bool isConsoleVisible = false;
             static bool isConsoleAllocated = false;
 
@@ -433,6 +439,7 @@ int main(int, char**)
                     isConsoleVisible = true;
                 }
             }
+#endif
 
             ImGui::InputInt("Client Count", &targetClientCount, 2, 500);
             ImGui::InputInt("Client per Group", &groupMaxCount, 5, 500);
@@ -450,8 +457,8 @@ int main(int, char**)
             }
 
             ImGui::Separator();
-            ImGui::Text("Active Clients: %d", clients.size());
-            ImGui::Text("Active Groups: %d", groupsMap.size());
+            ImGui::Text("Active Clients: %llu", clients.size());
+            ImGui::Text("Active Groups: %llu", groupsMap.size());
             ImGui::Text("Memory: %.2f MB", GetMemoryUsage());
 
             // Calculate Stats
@@ -493,13 +500,13 @@ int main(int, char**)
 
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
-                ImGui::Text("%d", gMinRtt);
+                ImGui::Text("%lld", gMinRtt);
 
                 ImGui::TableSetColumnIndex(1);
                 ImGui::Text("%.2lf", gAvgRtt);
 
                 ImGui::TableSetColumnIndex(2);
-                ImGui::Text("%d", gMaxRtt);
+                ImGui::Text("%lld", gMaxRtt);
                 ImGui::EndTable();
             }
 
@@ -650,7 +657,7 @@ int main(int, char**)
                         ImGui::TableSetColumnIndex(2);
                         ImGui::Text("%.1f ms", client->GetStats().GetAvgRtt());
                         ImGui::TableSetColumnIndex(3);
-                        ImGui::Text("S : %d / R: %d", client->GetStats().txPackets, client->GetStats().rxPackets);
+                        ImGui::Text("S : %lld / R: %lld", client->GetStats().txPackets, client->GetStats().rxPackets);
                     }
                     ImGui::EndTable();
                 }
@@ -735,127 +742,40 @@ int main(int, char**)
         // Update Window Title with FPS
         {
             static double lastTime = 0.0;
-            double currentTime = ImGui::GetTime();
+            double currentTime = glfwGetTime();
             if (currentTime - lastTime > 0.5) // Update every 500ms
             {
-                std::wstring title = std::format(L"Logic Server Tester with Gemini CLI - {:.1f} FPS", io.Framerate);
-                ::SetWindowTextW(hWnd, title.c_str());
+                std::string title = std::format("Logic Server Tester with Gemini CLI (OpenGL) - {:.1f} FPS", io.Framerate);
+                glfwSetWindowTitle(window, title.c_str());
                 lastTime = currentTime;
             }
         }
 
         // Rendering
         ImGui::Render();
-        const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
-        g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
-        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        g_pSwapChain->Present(1, 0); // Present with vsync
+        glfwSwapBuffers(window);
     }
 
     // Cleanup
     io_context.stop();
     if (networkThread.joinable()) networkThread.join();
     
-    ImGui_ImplDX11_Shutdown();
-    ImGui_ImplWin32_Shutdown();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
-    CleanupDeviceD3D();
-    ::DestroyWindow(hWnd);
-    ::UnregisterClassW(wc.lpszClassName, wc.hInstance);
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
     return 0;
-}
-
-// Helper functions
-
-bool CreateDeviceD3D(HWND hWnd)
-{
-    // Setup swap chain
-    DXGI_SWAP_CHAIN_DESC sd;
-    ZeroMemory(&sd, sizeof(sd));
-    sd.BufferCount = 2;
-    sd.BufferDesc.Width = 0;
-    sd.BufferDesc.Height = 0;
-    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    sd.BufferDesc.RefreshRate.Numerator = 60;
-    sd.BufferDesc.RefreshRate.Denominator = 1;
-    sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.OutputWindow = hWnd;
-    sd.SampleDesc.Count = 1;
-    sd.SampleDesc.Quality = 0;
-    sd.Windowed = TRUE;
-    sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-
-    UINT createDeviceFlags = 0;
-    D3D_FEATURE_LEVEL featureLevel;
-    const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
-    HRESULT res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
-    if (res == DXGI_ERROR_UNSUPPORTED) // Try high-performance WARP software driver if hardware is not available.
-        res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
-    if (res != S_OK)
-        return false;
-
-    CreateRenderTarget();
-    return true;
-}
-
-void CleanupDeviceD3D()
-{
-    CleanupRenderTarget();
-    if (g_pSwapChain) { g_pSwapChain->Release(); g_pSwapChain = nullptr; }
-    if (g_pd3dDeviceContext) { g_pd3dDeviceContext->Release(); g_pd3dDeviceContext = nullptr; }
-    if (g_pd3dDevice) { g_pd3dDevice->Release(); g_pd3dDevice = nullptr; }
-}
-
-void CreateRenderTarget()
-{
-    ID3D11Texture2D* pBackBuffer;
-    g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-    if (pBackBuffer != 0)
-        g_pd3dDevice->CreateRenderTargetView(pBackBuffer, nullptr, &g_mainRenderTargetView);
-    pBackBuffer->Release();
-}
-
-void CleanupRenderTarget()
-{
-    if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = nullptr; }
-}
-
-// Forward declare message handler from imgui_impl_win32.cpp
-extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-        return true;
-
-    switch (msg)
-    {
-    case WM_SIZE:
-        if (wParam != SIZE_MINIMIZED)
-        {
-            if (g_pd3dDevice != nullptr)
-            {
-                CleanupRenderTarget();
-                g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
-                CreateRenderTarget();
-            }
-        }
-        return 0;
-    case WM_SYSCOMMAND:
-        if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
-            return 0;
-        break;
-    case WM_DESTROY:
-        ::PostQuitMessage(0);
-        return 0;
-    }
-    return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
 void EnqueueHistory(SHistory history)
@@ -871,6 +791,7 @@ void EnqueueHistory(SHistory history)
 
 double GetMemoryUsage()
 {
+#ifdef _WIN32
     PROCESS_MEMORY_COUNTERS_EX pmc {};
     if (GetProcessMemoryInfo(GetCurrentProcess(),
         reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&pmc),
@@ -878,6 +799,7 @@ double GetMemoryUsage()
     {
         return static_cast<double>(pmc.WorkingSetSize) / (1024.0 * 1024.0);
     }
-
+#endif
+    // TODO: Linux implementation
     return 0.0;
 }
