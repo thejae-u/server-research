@@ -1,4 +1,5 @@
-# MMO Hybrid-Lockstep Synchronization Research
+# Lockstep Synchronization Research
+- 락스텝 동기화에 관한 개인 연구 프로젝트
 
 ### Logic Server Contents
 - OS : Windows, Linux
