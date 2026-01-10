@@ -20,3 +20,7 @@
 - ImGui
 - OpenGL
 - *made with Gemini CLI*
+
+```sh
+vcpkg install asio protobuf spdlog cpr
+```
